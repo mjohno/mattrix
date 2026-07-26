@@ -2,7 +2,7 @@
 
 **Inputs:** fresh successful `gate` YAML and either its separate chat-only proposal or terminal state.
 
-1. Run `gate`. It runs the same complete validation as `lint` and returns the full current context. Present its successful YAML verbatim, including the complete `current_step` (intent, criteria, `do`, `validate`, `retro`, `next_steps`, and `recommendation`); do not replace it with a summary. Then present any chat-only proposal separately and request review.
+1. Run `gate`. It runs the same complete validation as `lint`, then runs `context` internally and returns that full current context. Do not run a separate `context` command before presenting this gate. Present its successful YAML verbatim, including the complete `current_step` (intent, criteria, `do`, `validate`, `retro`, `next_steps`, and `recommendation`); do not replace it with a summary. Then present any chat-only proposal separately and request review.
 2. On exact `approved` with a displayed proposal, promote exactly that proposal before doing any work:
    ```bash
    python scripts/step_cli.py --file STEP-<slug>.yaml approve \

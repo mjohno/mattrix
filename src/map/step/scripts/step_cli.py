@@ -6,7 +6,7 @@ Primary protocol commands:
   context  show resumable state
   approve  merge lessons and record the exactly-approved chat proposal before execution
   record   record current-step evidence, goal-progress retro, and next choices
-  gate     lint and show the next approval-gate context
+  gate     lint, then run built-in context for the next approval gate
   lint     validate state shape
 
 
@@ -64,7 +64,7 @@ PROTOCOL_HELP = """step protocol workflow:
                                        merge lessons and persist the approved proposal before execution
   5. record --do ... --validate ... --retro ... --next-steps ... --recommendation ...
                                        record execution evidence, goal-progress reflection, and improvement actions
-  6. gate                              lint the complete state and show approval-gate context
+  6. gate                              lint, then run built-in context for the approval gate
 
 Invariants:
   - never execute a proposed step before approve succeeds
@@ -493,8 +493,13 @@ def context_payload(data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def read_context(args: argparse.Namespace) -> dict[str, Any]:
+    """Read the same resumable context used by context and gate."""
+    return context_payload(read_step_file(resolve_file(args)))
+
+
 def command_context(args: argparse.Namespace) -> int:
-    emit(context_payload(read_step_file(resolve_file(args))))
+    emit(read_context(args))
     return EXIT_OK
 
 
@@ -602,9 +607,9 @@ def command_gate(args: argparse.Namespace) -> int:
     if errors:
         emit({"ok": False, "errors": errors})
         return EXIT_LINT
-    # A gate is a validated context view. Reuse the context payload so its current
-    # step always includes criteria, execution evidence, validation, and next choices.
-    emit({"ok": True, **context_payload(data)})
+    # A successful gate runs the context read internally, so callers always receive
+    # the same complete resumable state after validation.
+    emit({"ok": True, **read_context(args)})
     return EXIT_OK
 
 
@@ -669,7 +674,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_record.add_argument("--recommendation", help="YAML null or slug string")
     p_record.set_defaults(func=command_record, resource="current")
 
-    p_gate = sub.add_parser("gate", help="protocol: lint and show approval-gate context")
+    p_gate = sub.add_parser("gate", help="protocol: lint, then run built-in context for the approval gate")
     p_gate.set_defaults(func=command_gate, resource="continuation")
 
     p_lint = sub.add_parser("lint", help="validate the complete workflow state")
@@ -755,9 +760,13 @@ class StepCliSelfTest(unittest.TestCase):
         self.run_cli("start", "--goal", "Goal")
         self.approve_first()
         self.record_complete(next_steps="[second-step]", recommendation="second-step")
+        context = yaml.safe_load(self.run_cli("context").stdout)
         gated = yaml.safe_load(self.run_cli("gate").stdout)
         linted = yaml.safe_load(self.run_cli("lint").stdout)
         self.assertTrue(gated["ok"])
+        self.assertEqual(
+            {key: value for key, value in gated.items() if key != "ok"}, context
+        )
         self.assertEqual(gated["current_step"]["do"]["summary"], "Did")
         self.assertEqual(gated["current_step"]["validate"]["result"], "success")
         self.assertEqual(gated["current_step"]["next_steps"], ["second-step"])
