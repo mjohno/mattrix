@@ -12,9 +12,15 @@ Goal: Define a self-contained local workspace layout for Git remotes, projects, 
 Non-Goals: Do not define permissions, branch policy, agent workflow, backup behavior, container configuration, or repository lifecycle operations.
 Use-When: Use when a task needs the canonical local layout for Git remotes, projects, or checkouts.
 
+## Environment
+
+- `WORK_ROOT`: Required environment variable identifying the workspace root. Its value is the base path for the workspace layout contract.
+
 ## Selection
 
 Default: load the workspace layout contract.
+
+When checking workspace conformance, also load the workspace checklist.
 
 ## Context Loading
 
@@ -24,6 +30,9 @@ When invoked alone, respond only with `Loaded: references/workspace_contract.md.
 
 Default path:
 - `references/workspace_contract.md`
+
+Check path:
+- `references/workspace_checklist.md`
 
 ## Next Steps
 

@@ -2,7 +2,8 @@
 
 ## Terms
 
-- **Workspace:** A top-level, selected local domain.
+- **Workspace:** A top-level, selected local domain rooted at the path in `WORK_ROOT`.
+- **WORK_ROOT:** A required environment variable whose value identifies the workspace root.
 - **Remote:** A bare Git repository serving a project locally.
 - **Project:** The working-copy home corresponding to a remote.
 - **Checkout:** A named working tree for a project.
@@ -10,7 +11,7 @@
 ## Layout
 
 ```text
-<workspace>/
+$WORK_ROOT/
   remotes/
     [<organization-directory>/...]
       <project>.git/
@@ -26,7 +27,7 @@
 Example:
 
 ```text
-<workspace>/
+$WORK_ROOT/
   remotes/
     <group-a>/
       <project-a>.git/
@@ -45,3 +46,4 @@ Example:
 4. A remote’s `<project>.git` name corresponds to its project’s `<project>` directory name.
 5. A primary checkout uses the project-established branch name, such as `main` or `master`.
 6. Additional checkouts are siblings of the primary checkout.
+7. Each checkout's `local` Git remote uses a relative path that resolves to its project's canonical local bare remote.
