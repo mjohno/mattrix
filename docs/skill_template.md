@@ -3,7 +3,7 @@ name: [skill-name]
 description: [concise overview with "Use when..." triggers]
 metadata:
   type: skill
-  category: [input|transform|output|map]
+  category: [input|output|map]
 ---
 
 <!-- Resolve every relative path in this SKILL.md from this file's directory. -->
@@ -21,7 +21,7 @@ Use-When: [triggers for invoking this skill]
 - [information this skill reads or receives; reference input_*.md or keep inline]
 
 ## 2. Processes
-- [transformations, steps, or workflow behavior this skill performs]
+- [actions, steps, or workflow behavior this skill performs]
 
 ## 3. Outputs
 - [information this skill creates, returns, writes, or updates]

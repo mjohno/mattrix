@@ -28,7 +28,7 @@ Create or update a skill package that is structurally valid and beautifully simp
 4. **Determine Category**: Choose the valid category for the selected type:
    - `interface` type → `interface` category
    - `vocabulary` type → `interface` category
-   - `skill` type → `input`, `transform`, `output`, or `map`
+   - `skill` type → `input`, `output`, or `map`
    - `protocol` type → `map` category, with top-level `disable_model_invocation: true`
    - `persona` type → `persona` category
 5. **Determine Interface Role**: If the package is an interface, ensure it defines artifact shape, schema, protocol, conventions, or quality criteria without performing operational work. It must select a minimal default contract reference, select optional references/assets only from explicit caller intent or domain clues, and load selected content silently into context. If the package is vocabulary, ensure it defines only non-skill-owned project terms, has `disable_model_invocations: true`, and contains no operational sections.
@@ -56,7 +56,7 @@ Create or update a skill package that is structurally valid and beautifully simp
 #### Interface packages
 
 - Define the desired state of a noun/domain and supply applicable conventions, checks, templates, schemas, or protocol rules.
-- Stay passive: do not perform artifact production, external retrieval, transformation, evaluation, persistence, or orchestration.
+- Stay passive: do not produce or revise artifacts, retrieve external data, evaluate, persist, or orchestrate.
 - Default to one compact contract reference when possible.
 - Select optional references/assets only from explicit context, such as check/review intent, language, backend, domain, or constraints.
 - Load selected package-local references/assets into context without pasting, quoting, summarizing, or otherwise reproducing their contents in chat. When invoked alone, acknowledge only the selected relative paths; when composed, continue the consuming task without an interface-only response.
@@ -130,7 +130,7 @@ Assert a pass/fail test over an existing skill package against the appropriate c
 
 1. **Read Frontmatter**: Extract `metadata.type` and `metadata.category` from SKILL.md.
    - Both are required. Missing or invalid → Critical failure.
-   - Valid pairs: `interface/interface`, `vocabulary/interface`, `skill/input`, `skill/transform`, `skill/output`, `skill/map`, `protocol/map`, `persona/persona`.
+   - Valid pairs: `interface/interface`, `vocabulary/interface`, `skill/input`, `skill/output`, `skill/map`, `protocol/map`, `persona/persona`.
    - `protocol/map` also requires top-level `disable_model_invocation: true`.
 2. **Check Interface Contracts**: If `metadata.type: interface`, verify it exposes contract data only, selects a minimal default contract plus optional references/assets only when intent/domain requires them, and loads selected contents without emitting them in chat. If `metadata.type: vocabulary`, verify it is context-only, has `disable_model_invocations: true`, and does not overlap existing skill names or skill descriptions.
 3. **Load Checklist**:

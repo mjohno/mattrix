@@ -1,6 +1,6 @@
 ---
 name: change
-description: Use when output, transform, or map skills need the temporary local change workspace contract.
+description: Use when output or map skills need the temporary local change workspace contract.
 metadata:
   type: interface
   category: interface
@@ -40,7 +40,7 @@ Optional paths:
 
 - `draft` — create a first-pass `CHANGE.md` from the template.
 - `modify` — revise an existing change workspace artifact while preserving boundaries.
-- `transform/check` — check change workspace conformance with `change_checklist.md`.
+- `output/check` — check change workspace conformance with `change_checklist.md`.
 - `map/coordinate` — orchestrate local work using prompt coordinates or change-scoped `COORDS.md`.
 
 ## Minimal Example

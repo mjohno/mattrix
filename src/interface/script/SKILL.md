@@ -1,6 +1,6 @@
 ---
 name: script
-description: Use when output, transform, or map skills need script-domain conventions, quality checks, and templates.
+description: Use when output or map skills need script-domain conventions, quality checks, and templates.
 metadata:
   type: interface
   category: interface
@@ -45,8 +45,8 @@ Optional paths:
 - `outline` — create a script skeleton using applicable template data.
 - `draft` — produce a first-pass script.
 - `modify` — update an existing script against the contract.
-- `transform/check` — check script conformance with `script_checklist.md`.
-- `transform/review` — review script quality with `script_quality.md`.
+- `output/check` — check script conformance with `script_checklist.md`.
+- `output/review` — review script quality with `script_quality.md`.
 - `map/step` — run a bounded implementation or verification step.
 
 ## Minimal Example

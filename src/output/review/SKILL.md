@@ -2,7 +2,8 @@
 name: review
 description: Review any artifact against its criteria using one or more persona skills as evaluation perspectives.
 metadata:
-  category: transform
+  type: skill
+  category: output
 ---
 
 # review
@@ -47,8 +48,8 @@ You may accept both from the same prompt or request them separately if missing.
 Structured review report using `assets/template_report.md` with findings categorized P1–P5 per `assets/severity.md`. Default: output to prompt. Write to file when an output path is provided.
 
 ## 4. Next Steps
-- `transform/check` — run a check on the artifact against requirements, checklists, acceptance or target criteria
-- `transform/review` — re-review after fixes are applied
+- `output/check` — run a check on the artifact against requirements, checklists, acceptance or target criteria
+- `output/review` — re-review after fixes are applied
 - `output/annotate` — add inline annotations for tracking findings (NOTE) and fixes (TODO)
 - `draft` with `interface/plan` — create a plan to address findings
 

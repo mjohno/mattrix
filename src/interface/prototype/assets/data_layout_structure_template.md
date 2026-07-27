@@ -48,7 +48,7 @@ What storage, migration, performance, compliance, or production concerns are int
 - Render:
 - Query/filter:
 - Import/export:
-- Transform/map:
+- Output/map:
 
 ## Privacy / Sensitivity Notes
 - 

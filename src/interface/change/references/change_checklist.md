@@ -4,7 +4,7 @@ Use this for conformance checks. A change interface/workspace passes when every 
 
 ## Critical
 
-- [ ] Defines `change` as an interface/noun contract, not a workflow, output artifact, transform, map, or persona.
+- [ ] Defines `change` as an interface/noun contract, not a workflow, output artifact, map, or persona.
 - [ ] Package metadata uses `metadata.type: interface` and `metadata.category: interface`.
 - [ ] Defines a change as a target plus an intended or possible delta.
 - [ ] Uses `./tmp/changes/<change-id>/` as the default local workspace path.

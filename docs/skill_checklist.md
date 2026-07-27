@@ -7,7 +7,7 @@ Inherits all items from [base_checklist.md](base_checklist.md). Apply base items
 ## Skill-Specific CRITICAL
 
 - [ ] **CRITICAL** `metadata.type: skill`
-- [ ] **CRITICAL** `metadata.category` is `input`, `transform`, `output`, or `map`
+- [ ] **CRITICAL** `metadata.category` is `input`, `output`, or `map`
 - [ ] **CRITICAL** Under `# [Name]`: Goal (mandatory), Non-Goals (mandatory), Use-When (mandatory)
 - [ ] **CRITICAL** Section 0: Prerequisites present
 - [ ] **CRITICAL** Section 1: Inputs present (inline OR references/input_*.md / assets/input_*.md)

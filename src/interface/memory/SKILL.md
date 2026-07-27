@@ -33,7 +33,6 @@ Default path:
 
 - `input/remember` — retrieve structured memory context.
 - `output/memorize` — append memory log entries.
-- `transform/learn` — reduce memory into stable summary updates.
 - `map/dream` — compact and rewrite memory summary/log with approval where required.
 
 ## Minimal Example

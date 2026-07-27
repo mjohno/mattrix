@@ -2,7 +2,8 @@
 name: check
 description: Use when you need to validate whether an object, solution, result or outcome meets its target or acceptance criteria.
 metadata:
-  category: transform
+  type: skill
+  category: output
 ---
 
 # check
@@ -53,7 +54,7 @@ Use-When: Use when you need to validate whether an object, solution, result, out
 **Prompt:** Check whether the hypothesis is valid given the results of the report.
 **Outcome:** Prompt output with hypothesis evaluation: supported/not supported/insufficient evidence, provenance status where source evidence is provided, plus high/medium/low confidence level and data needed for further checks.
 
-### Example 2: Task completion check
+### Example 3: Task completion check
 
 **Prompt:** Check whether the completed tasks meet the acceptance criteria outlined in the project plan.
 **Outcome:** Prompt output with task evaluation: 5 tasks passed, 3 tasks partially met. Provided suggestions for how to address the partial successes.

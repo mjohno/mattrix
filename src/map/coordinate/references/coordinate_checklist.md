@@ -4,7 +4,7 @@ Use this for conformance checks. The `coordinate` skill passes when every critic
 
 ## Critical
 
-- [ ] Defines `coordinate` as a map skill, not a persona, interface, output skill, transform, or artifact contract.
+- [ ] Defines `coordinate` as a map skill, not a persona, interface, output skill, or artifact contract.
 - [ ] Package metadata uses `metadata.type: skill` and `metadata.category: map`.
 - [ ] Focuses on orchestration: maintaining coords, choosing next steps, delegating when useful, reconciling results, updating state, and reporting progress.
 - [ ] Uses prompt-only coords when no change ID is supplied.

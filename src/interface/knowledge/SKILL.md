@@ -44,8 +44,8 @@ Optional paths:
 
 - `input/lookup` — resolve bundles operationally, search MKF metadata, and load selected concepts.
 - `output/record` — create or update MKF concepts and rebuild generated indexes.
-- `transform/check` — check MKF conformance with `knowledge_checklist.md`.
-- `transform/review` — review MKF quality with `knowledge_quality.md`.
+- `output/check` — check MKF conformance with `knowledge_checklist.md`.
+- `output/review` — review MKF quality with `knowledge_quality.md`.
 
 ## Minimal Example
 

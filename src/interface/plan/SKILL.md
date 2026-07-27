@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Use when output, transform, or map skills need the plan artifact contract for ordered gap-closing work.
+description: Use when output or map skills need the plan artifact contract for ordered gap-closing work.
 metadata:
   type: interface
   category: interface
@@ -40,8 +40,8 @@ Optional paths:
 
 - `draft` — create a first-pass plan from source context.
 - `modify` — revise an existing plan while preserving stable IDs.
-- `transform/check` — check plan conformance with `plan_checklist.md`.
-- `transform/review` — review plan quality with `plan_quality.md`.
+- `output/check` — check plan conformance with `plan_checklist.md`.
+- `output/review` — review plan quality with `plan_quality.md`.
 - `map/step` — execute one plan item or task packet.
 
 ## Minimal Example

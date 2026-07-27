@@ -46,8 +46,8 @@ Optional paths are listed in the selected contract's profile table.
 - `outline` — create the prototype skeleton from the selected template.
 - `draft` — fill the selected template with first-pass content.
 - `modify` — revise an existing prototype while preserving selected quality criteria.
-- `transform/check` — check prototype conformance against selected criteria.
-- `transform/review` — review prototype quality before validation effort.
+- `output/check` — check prototype conformance against selected criteria.
+- `output/review` — review prototype quality before validation effort.
 
 ## Minimal Example
 

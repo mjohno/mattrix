@@ -42,8 +42,8 @@ Optional paths:
 
 - `draft` — create a first-pass task packet.
 - `modify` — revise a task packet while preserving stable IDs.
-- `transform/check` — check task conformance with `task_checklist.md`.
-- `transform/review` — review task quality with `task_quality.md`.
+- `output/check` — check task conformance with `task_checklist.md`.
+- `output/review` — review task quality with `task_quality.md`.
 - `map/step` — execute one task packet.
 
 ## Minimal Example

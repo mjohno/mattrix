@@ -32,9 +32,8 @@ When invoked alone, respond only with `Loaded: <relative path(s)>.` When compose
 
 ## Next Steps
 
-- `transform/evaluate` (execution) — evaluate the artifact against each question and answer with reasoning.
+- `output/check` — evaluate the artifact against each question, report the reasoning, or validate that a revision addresses prior findings.
 - `interface/plan` — create gap-closing work from unanswered or low-confidence questions.
-- `transform/check` — validate that a revised artifact addresses prior questionnaire findings.
 - `output/annotate` — add inline annotations for tracking findings (NOTE) and fixes (TODO).
 
 ## Minimal Example

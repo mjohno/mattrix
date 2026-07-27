@@ -35,8 +35,8 @@ Use-When: You need to stress-test a plan or design by exploring all decision bra
 
 ## 4. Next Steps
 - `modify` with `interface/plan` — if the plan needs restructuring based on findings
-- `transform/review` — if findings need structured critique against specs or personas
-- `transform/check` — if decisions, claims, or assumptions need validation against criteria or evidence
+- `output/review` — if findings need structured critique against specs or personas
+- `output/check` — if decisions, claims, or assumptions need validation against criteria or evidence
 
 ## 5. Examples
 
