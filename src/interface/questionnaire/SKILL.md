@@ -1,6 +1,6 @@
 ---
 name: questionnaire
-description: Return the canonical layout and question quality criteria for producing questionnaire contracts.
+description: Use when another skill needs the canonical questionnaire layout and question quality criteria.
 metadata:
   type: interface
   category: interface
@@ -12,9 +12,9 @@ Goal: Provide the contract shape and criteria that define good questionnaire que
 Non-Goals: Do not execute questionnaires, discover specs or personas, produce severity reports, remediate findings, or actually define questions for a specific artifact. Discovery and question-writing are upstream tasks performed by skills that consume this interface.
 Use-When: Another skill needs the questionnaire contract template and quality criteria before producing evaluation questions for an artifact.
 
-## References
+## Selection
 
-Return selected package-local files in fenced code blocks. If caller intent is unclear, assume the default reference only.
+If caller intent is unclear, assume the default reference only.
 
 | Reference | When |
 |---|---|
@@ -23,6 +23,12 @@ Return selected package-local files in fenced code blocks. If caller intent is u
 | `references/questionnaire_quality.md` | Caller asks to evaluate contract quality |
 
 If requested needs fall outside this interface, state the unsupported need and hand off.
+
+## Context Loading
+
+Load each selected package-local reference or asset into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
+
+When invoked alone, respond only with `Loaded: <relative path(s)>.` When composed with another task, continue that task without an interface-only response.
 
 ## Next Steps
 
@@ -35,16 +41,6 @@ If requested needs fall outside this interface, state the unsupported need and h
 
 **Prompt:** "Use the questionnaire interface for evaluating auth-module design against SPEC-auth using security and adversarial lenses."
 
-**Return:**
-
-file_path: references/questionnaire_contract.md
-```markdown
-[contract contents: design rules + contract rules]
-```
-
-file_path: assets/questionnaire_template.md
-```markdown
-[template contents]
-```
+**Direct invocation response:** `Loaded: references/questionnaire_contract.md.`
 
 **Instantiated example:** `QUESTIONNAIRE-auth-module` with security + adversarial lenses, 5 questions mapped to REQ-001, REQ-003, ACC-002, ACC-003, and internal consistency.

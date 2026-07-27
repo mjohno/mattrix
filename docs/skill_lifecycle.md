@@ -31,7 +31,7 @@ Create or update a skill package that is structurally valid and beautifully simp
    - `skill` type → `input`, `transform`, `output`, or `map`
    - `protocol` type → `map` category, with top-level `disable_model_invocation: true`
    - `persona` type → `persona` category
-5. **Determine Interface Role**: If the package is an interface, ensure it defines artifact shape, schema, protocol, conventions, or quality criteria without performing operational work. It must select a minimal default contract reference, select optional references/assets only from explicit caller intent or domain clues, return selected paths, and expose loaded contents as context. If the package is vocabulary, ensure it defines only non-skill-owned project terms, has `disable_model_invocations: true`, and contains no operational sections.
+5. **Determine Interface Role**: If the package is an interface, ensure it defines artifact shape, schema, protocol, conventions, or quality criteria without performing operational work. It must select a minimal default contract reference, select optional references/assets only from explicit caller intent or domain clues, and load selected content silently into context. If the package is vocabulary, ensure it defines only non-skill-owned project terms, has `disable_model_invocations: true`, and contains no operational sections.
 6. **Place the Package**:
    - Interface nouns and vocabulary packages live under `src/interface/<name>/SKILL.md`.
    - Invocable verb skills live under their data-flow category.
@@ -59,7 +59,7 @@ Create or update a skill package that is structurally valid and beautifully simp
 - Stay passive: do not perform artifact production, external retrieval, transformation, evaluation, persistence, or orchestration.
 - Default to one compact contract reference when possible.
 - Select optional references/assets only from explicit context, such as check/review intent, language, backend, domain, or constraints.
-- Return selected file paths relative to the package `SKILL.md` and expose loaded file contents in fenced code blocks.
+- Load selected package-local references/assets into context without pasting, quoting, summarizing, or otherwise reproducing their contents in chat. When invoked alone, acknowledge only the selected relative paths; when composed, continue the consuming task without an interface-only response.
 - Populate `references/` with compact contract rules and optional intent-specific details. Use names such as `<artifact>_contract.md`, `<artifact>_checklist.md`, `<artifact>_quality.md`, or `<domain>_contract.md`.
 - Add templates or data to `assets/` only when they should not live inside the compact contract. Use domain-specific names such as `<domain>_template.<ext>` when a template is not generic.
 
@@ -100,7 +100,7 @@ Create or update a skill package that is structurally valid and beautifully simp
 - X Process steps numbered 1–20 — if it takes this many, consider breaking into sub-skills
 - X Non-goals that just repeat the goal in negative form ("We do not fail")
 - X Interface skill that performs work instead of defining a contract
-- X Interface skill that duplicates long contract details already present in selected references/assets
+- X Interface skill that duplicates, pastes, quotes, summarizes, or otherwise reproduces selected reference/asset contents in chat
 - X Interface skill that loads optional checklists, quality criteria, or templates by default without caller intent
 - X Interface skill that produces a brief unless the noun itself is a brief
 - X Vocabulary package that defines a specialized skill-owned verb such as `review`, `record`, or `commit`
@@ -132,7 +132,7 @@ Assert a pass/fail test over an existing skill package against the appropriate c
    - Both are required. Missing or invalid → Critical failure.
    - Valid pairs: `interface/interface`, `vocabulary/interface`, `skill/input`, `skill/transform`, `skill/output`, `skill/map`, `protocol/map`, `persona/persona`.
    - `protocol/map` also requires top-level `disable_model_invocation: true`.
-2. **Check Interface Contracts**: If `metadata.type: interface`, verify it exposes contract data only, selects a minimal default contract plus optional references/assets only when intent/domain requires them, returns selected paths, and requires loaded contents in fenced code blocks. If `metadata.type: vocabulary`, verify it is context-only, has `disable_model_invocations: true`, and does not overlap existing skill names or skill descriptions.
+2. **Check Interface Contracts**: If `metadata.type: interface`, verify it exposes contract data only, selects a minimal default contract plus optional references/assets only when intent/domain requires them, and loads selected contents without emitting them in chat. If `metadata.type: vocabulary`, verify it is context-only, has `disable_model_invocations: true`, and does not overlap existing skill names or skill descriptions.
 3. **Load Checklist**:
    - `metadata.type: interface` → [interface_checklist.md](interface_checklist.md)
    - `metadata.type: vocabulary` → [vocab_checklist.md](vocab_checklist.md)

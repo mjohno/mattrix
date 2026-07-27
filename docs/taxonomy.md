@@ -39,7 +39,7 @@ Passive noun/domain contract packages that supply conventions, quality checks, t
 - Examples: `interface/spec`, `interface/rfc`, `interface/plan`, `interface/task`, `interface/code`, `interface/prose`, `interface/script`, `interface/prototype`, `interface/memory`, `interface/knowledge-base`, `interface/vocab`
 - Defines the desired state of a noun-like artifact, protocol, domain, or context vocabulary
 - May select an applicable domain from context, such as a script language or storage backend
-- Returns the minimal selected reference/asset file paths and exposes their loaded contents to consuming skills, except vocabulary packages whose SKILL.md body is the human-loaded context
+- Loads the minimal selected reference/asset contents into context without emitting them in chat; when invoked alone, acknowledges only selected relative paths. Vocabulary packages remain human-loaded context.
 - Domain- or intent-specific materials should be clearly named, e.g. `python_template.py`, `plan_quality.md`, `plan_checklist.md`, or `github_protocol.md`
 - **Do NOT use if** the package performs artifact production, external retrieval, transformation, evaluation, persistence, or orchestration — it only supplies contract data or vocabulary context for other skills to apply
 
@@ -123,7 +123,7 @@ Personas modify how information is evaluated at any pipeline stage:
 
 - `metadata.type` describes how the package is used at runtime; `metadata.category` describes role and placement.
 - Categories describe primary role. Packages may touch adjacent concerns, but their category reflects the dominant behavior.
-- `interface` packages define shared contracts and are discoverable for model use. They may return applicable conventions, checks, templates, schemas, or protocol rules, but they do not operate on the artifact themselves.
+- `interface` packages define shared contracts and are discoverable for model use. They load applicable conventions, checks, templates, schemas, or protocol rules into context without emitting their contents, but do not operate on the artifact themselves.
 - `vocabulary` packages are not model-invocable; they are compact context definitions loaded by a human.
 - Loading package-local interface references/assets is part of exposing contract data, not external retrieval.
 - `transform` intentionally covers both evaluation and derivation; split it only if future usage shows a concrete need.

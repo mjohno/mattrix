@@ -14,7 +14,7 @@ Use-When: Another skill needs the `change` interface contract before creating, u
 
 ## Selection
 
-Default: return only the compact change contract.
+Default: load only the compact change contract.
 
 Also select:
 - `change_template.md` when the caller asks to create, scaffold, outline, or draft a `CHANGE.md` file.
@@ -23,9 +23,11 @@ Also select:
 If caller intent is unclear, assume default contract only and state the assumption.
 If requested change needs fall outside this interface, state the unsupported need and hand off to the appropriate skill.
 
-## Return
+## Context Loading
 
-Always return selected package-local paths followed by loaded contents in fenced code blocks.
+Load each selected package-local reference or asset into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
+
+When invoked alone, respond only with `Loaded: <relative path(s)>.` When composed with another task, continue that task without an interface-only response.
 
 Default path:
 - `references/change_contract.md`
@@ -44,9 +46,4 @@ Optional paths:
 ## Minimal Example
 
 Prompt: "Use the change interface for auth error cleanup."
-Return:
-
-file_path: references/change_contract.md
-```markdown
-[loaded compact change contract]
-```
+Direct invocation response: `Loaded: references/change_contract.md.`

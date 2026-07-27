@@ -11,9 +11,9 @@ Inherits all items from [base_checklist.md](base_checklist.md). Apply base items
 - [ ] **CRITICAL** Under `# [Name]`: Goal (mandatory), Non-Goals (mandatory), Use-When (mandatory)
 - [ ] **CRITICAL** Selection rules identify the default minimal contract reference(s)/asset(s).
 - [ ] **CRITICAL** Optional references/assets are selected only from explicit caller intent, domain, or constraints.
-- [ ] **CRITICAL** Return instructions identify selected package-local paths relative to the interface `SKILL.md`.
-- [ ] **CRITICAL** Return instructions require loaded reference/asset contents in fenced code blocks.
-- [ ] **CRITICAL** Includes one minimal example with a prompt and returned file path/content block.
+- [ ] **CRITICAL** Context-loading instructions identify selected package-local paths relative to the interface `SKILL.md`.
+- [ ] **CRITICAL** Context-loading instructions require selected references/assets to be loaded without emitting their contents in chat.
+- [ ] **CRITICAL** Includes one minimal example with a prompt and a direct-invocation loaded-path acknowledgement.
 - [ ] **CRITICAL** Interface defines contract data only and does not create, modify, evaluate, persist, retrieve external data, or orchestrate work.
 
 ## Interface-Specific QUALITY
@@ -24,7 +24,7 @@ Inherits all items from [base_checklist.md](base_checklist.md). Apply base items
 - [ ] **QUALITY** Generic rules are separated from language/platform-specific or intent-specific details when domains exist.
 - [ ] **QUALITY** Optional references/assets are clearly named by use, e.g. `[domain]_contract.md`, `[artifact]_checklist.md`, or `[artifact]_quality.md`.
 - [ ] **QUALITY** Templates are examples or canonical shapes consumed by verb skills, not mandatory generation behavior unless explicitly stated.
-- [ ] **QUALITY** Minimal default output includes only selected assumptions, selected paths, and loaded selected contents.
+- [ ] **QUALITY** Minimal default output is no interface-only response when composed, or selected paths only for a direct interface invocation.
 - [ ] **QUALITY** Missing or unsupported domains are stated as assumptions/unknowns with a concrete handoff.
 - [ ] **QUALITY** The minimal example is short and does not duplicate the full contract.
 

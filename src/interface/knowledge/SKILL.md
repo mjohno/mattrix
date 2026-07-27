@@ -16,7 +16,7 @@ Use-When: `input/lookup`, `output/record`, or another skill needs the shared MKF
 
 ## Selection
 
-Default: return only the compact knowledge contract.
+Default: load only the compact knowledge contract.
 
 Also select:
 - `concept_frontmatter_template.md` when the caller asks to record or draft a concept.
@@ -26,9 +26,11 @@ Also select:
 If caller intent is unclear, assume default contract only and state the assumption.
 If requested knowledge needs fall outside this interface, state the unsupported need and hand off to `input/lookup` or `output/record`.
 
-## Return
+## Context Loading
 
-Always return selected package-local paths followed by loaded contents in fenced code blocks.
+Load each selected package-local reference or asset into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
+
+When invoked alone, respond only with `Loaded: <relative path(s)>.` When composed with another task, continue that task without an interface-only response.
 
 Default path:
 - `references/knowledge_contract.md`
@@ -48,9 +50,4 @@ Optional paths:
 ## Minimal Example
 
 Prompt: "Use the knowledge interface before recording a new concept."
-Return:
-
-file_path: references/knowledge_contract.md
-```markdown
-[loaded compact knowledge contract]
-```
+Direct invocation response: `Loaded: references/knowledge_contract.md.`

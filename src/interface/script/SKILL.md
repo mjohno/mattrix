@@ -14,7 +14,7 @@ Use-When: Another skill needs the `script` interface before drafting, modifying,
 
 ## Selection
 
-Default: return only the compact script contract.
+Default: load only the compact script contract.
 
 Also select:
 - `python_contract.md` when Python is selected from language, file extension, shebang, runtime clues, or unspecified language default.
@@ -25,9 +25,11 @@ Also select:
 If caller intent is unclear, assume default contract only and state the assumption.
 If the script domain is unsupported, return the generic contract, state unavailable domain-specific refs/assets, and hand off to `modify` to add a domain reference.
 
-## Return
+## Context Loading
 
-Always return selected package-local paths followed by loaded contents in fenced code blocks.
+Load each selected package-local reference or asset into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
+
+When invoked alone, respond only with `Loaded: <relative path(s)>.` When composed with another task, continue that task without an interface-only response.
 
 Default path:
 - `references/script_contract.md`
@@ -50,9 +52,4 @@ Optional paths:
 ## Minimal Example
 
 Prompt: "Use the script interface for a file organizer script with dry-run support."
-Return:
-
-file_path: references/script_contract.md
-```markdown
-[loaded compact script contract]
-```
+Direct invocation response: `Loaded: references/script_contract.md.`

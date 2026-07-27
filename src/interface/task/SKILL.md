@@ -14,7 +14,7 @@ Use-When: Another skill needs the `task` interface contract before drafting, mod
 
 ## Selection
 
-Default: return only the compact task contract.
+Default: load only the compact task contract.
 
 Also select:
 - `task_extraction.md` when the caller asks to extract a task from a plan item, annotation, spec, review finding, or prompt.
@@ -24,9 +24,11 @@ Also select:
 If caller intent is unclear, assume default contract only and state the assumption.
 If requested task needs fall outside this interface, state the unsupported need and hand off to the appropriate skill.
 
-## Return
+## Context Loading
 
-Always return selected package-local paths followed by loaded contents in fenced code blocks.
+Load each selected package-local reference or asset into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
+
+When invoked alone, respond only with `Loaded: <relative path(s)>.` When composed with another task, continue that task without an interface-only response.
 
 Default path:
 - `references/task_contract.md`
@@ -47,9 +49,4 @@ Optional paths:
 ## Minimal Example
 
 Prompt: "Use the task interface for plan item AUTH-2."
-Return:
-
-file_path: references/task_contract.md
-```markdown
-[loaded compact task contract]
-```
+Direct invocation response: `Loaded: references/task_contract.md.`

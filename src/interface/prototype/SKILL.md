@@ -14,7 +14,7 @@ Use-When: Another skill needs the `prototype` interface before outlining, drafti
 
 ## Selection
 
-Default: return the compact prototype contract, choose the best-fit profile when possible, and list other profiles as course-correction options.
+Default: load the compact prototype contract, choose the best-fit profile when possible, and retain other profiles as course-correction options in context.
 
 Also select:
 - The selected profile template when the caller asks to outline or draft a prototype.
@@ -30,9 +30,11 @@ Profiles:
 If caller intent is unclear, assume default contract only and state the assumption.
 If requested prototype needs fall outside this interface, state the unsupported need and hand off to the appropriate skill.
 
-## Return
+## Context Loading
 
-Always return selected package-local paths followed by loaded contents in fenced code blocks.
+Load each selected package-local reference or asset into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
+
+When invoked alone, respond only with `Loaded: <relative path(s)>.` When composed with another task, continue that task without an interface-only response.
 
 Default path:
 - `references/prototype_contract.md`
@@ -50,9 +52,4 @@ Optional paths are listed in the selected contract's profile table.
 ## Minimal Example
 
 Prompt: "Use the prototype interface to validate account recovery escalation support."
-Return:
-
-file_path: references/prototype_contract.md
-```markdown
-[loaded compact prototype contract with selected profile and alternate profiles]
-```
+Direct invocation response: `Loaded: references/prototype_contract.md.`

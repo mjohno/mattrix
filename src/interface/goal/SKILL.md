@@ -14,7 +14,7 @@ Use-When: Another skill needs the `goal` interface contract before drafting, mod
 
 ## Selection
 
-Default: return only the compact SMART goal contract.
+Default: load only the compact SMART goal contract.
 
 Also select:
 - `goal_template.md` when the caller asks to outline or draft a goal.
@@ -23,9 +23,11 @@ Also select:
 If caller intent is unclear, assume the default contract only and state the assumption.
 If the requested need falls outside this interface, state the unsupported need and hand off to the appropriate skill.
 
-## Return
+## Context Loading
 
-Always return selected package-local paths followed by loaded contents in fenced code blocks.
+Load each selected package-local reference or asset into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
+
+When invoked alone, respond only with `Loaded: <relative path(s)>.` When composed with another task, continue that task without an interface-only response.
 
 Default path:
 - `references/goal_contract.md`
@@ -45,9 +47,4 @@ Optional paths:
 ## Minimal Example
 
 Prompt: "Use the goal interface to draft a goal for reducing response times."
-Return:
-
-file_path: references/goal_contract.md
-```markdown
-[loaded compact SMART goal contract]
-```
+Direct invocation response: `Loaded: references/goal_contract.md.`

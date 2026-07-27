@@ -17,15 +17,17 @@ Use-When: [triggers for loading this interface as passive contract context]
 
 ## Selection
 
-Default: return only the minimal contract reference needed for common use.
+Default: load only the minimal contract reference needed for common use.
 
 Also select:
 - `[optional_reference].md` when [explicit caller intent/domain condition].
 - `[optional_asset]` when [explicit caller intent/domain condition].
 
-## Return
+## Context Loading
 
-Always return selected package-local paths followed by loaded contents in fenced code blocks.
+Load each selected package-local reference or asset into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
+
+When invoked alone, respond only with `Loaded: <relative path(s)>.` When composed with another task, continue that task without an interface-only response.
 
 Default path:
 - `references/[minimal_contract].md`
@@ -41,9 +43,4 @@ Optional paths:
 ## Minimal Example
 
 Prompt: "Use the `[interface-name]` interface for `[artifact/context]`."
-Return:
-
-file_path: references/[minimal_contract].md
-```markdown
-[loaded minimal contract contents]
-```
+Direct invocation response: `Loaded: references/[minimal_contract].md.`

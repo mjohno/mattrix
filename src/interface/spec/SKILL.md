@@ -14,7 +14,7 @@ Use-When: Another skill needs the `spec` interface contract before outlining, dr
 
 ## Selection
 
-Default: return only the compact spec contract.
+Default: load only the compact spec contract.
 
 Also select:
 - `spec_template.md` when the caller asks to outline or draft a spec.
@@ -24,9 +24,11 @@ Also select:
 If caller intent is unclear, assume default contract only and state the assumption.
 If requested spec needs fall outside this interface, state the unsupported need and hand off to the appropriate skill.
 
-## Return
+## Context Loading
 
-Always return selected package-local paths followed by loaded contents in fenced code blocks.
+Load each selected package-local reference or asset into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
+
+When invoked alone, respond only with `Loaded: <relative path(s)>.` When composed with another task, continue that task without an interface-only response.
 
 Default path:
 - `references/spec_contract.md`
@@ -49,9 +51,4 @@ Optional paths:
 ## Minimal Example
 
 Prompt: "Use the spec interface for replacing the authentication module."
-Return:
-
-file_path: references/spec_contract.md
-```markdown
-[loaded compact spec contract]
-```
+Direct invocation response: `Loaded: references/spec_contract.md.`
