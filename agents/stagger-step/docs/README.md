@@ -7,7 +7,9 @@
 ```bash
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli init --goal "Ship the change"
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli validate
-# `session` renders the YAML gate, then accepts the human response in the same process.
+# One-shot approval promotes work, runs its cycle, and prints the next gate.
+STEP_FILE=STEP-example.yaml python -m stagger_step.cli gate approved
+# `session` keeps accepting responses in the same process until break or completion.
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli session
 ```
 
@@ -21,7 +23,7 @@ The coordinator selects durable gate lessons from existing lessons, completed hi
 
 ## Pi RPC adapter discovery
 
-The adapter uses `pi --mode rpc --no-session --name stagger-step-<role>`, sends a JSONL `prompt`, waits for `agent_end`/`agent_settled`, extracts assistant text, and parses YAML. A fresh subprocess is started for each role invocation, so it cannot carry cross-role context. The adapter terminates it before a user gate.
+By default, the adapter uses `pi --mode rpc --no-session --name stagger-step-<role>`, sends a JSONL `prompt`, waits for `agent_end`/`agent_settled`, extracts assistant text, and parses YAML. `--harness-session on` instead supplies a stable role- and STEP-file-specific Pi `--session-id`, allowing Pi to retain that role's session across CLI invocations. A fresh subprocess is still started for each role invocation, and role sessions remain distinct. The adapter terminates it before a user gate.
 
 Supported discovery evidence: Pi RPC documents `prompt`, `abort`, `new_session`, `get_state`, and `agent_settled`; command rejection has `success: false`; malformed YAML is a diagnosed harness error. Adapter retries connection/process failures twice with bounded exponential backoff and never infers a transition from a harness failure. Pi version/capabilities are not persisted in STEP state; callers may inspect RPC `get_state` diagnostics separately.
 

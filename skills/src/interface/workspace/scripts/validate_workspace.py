@@ -13,11 +13,11 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-from pathlib import Path, PureWindowsPath
 import re
 import subprocess
 import sys
-from typing import Sequence
+from collections.abc import Sequence
+from pathlib import Path, PureWindowsPath
 
 log = logging.getLogger(__name__)
 
@@ -103,7 +103,9 @@ def canonical_local_target(checkout: Path, remote_url: str) -> Path:
     return (checkout / remote_url).resolve()
 
 
-def project_path_for_remote(remote: Path, remotes_root: Path, projects_root: Path) -> Path:
+def project_path_for_remote(
+    remote: Path, remotes_root: Path, projects_root: Path
+) -> Path:
     """Map ``remotes/.../project.git`` to ``projects/.../project``."""
     relative_remote = remote.relative_to(remotes_root)
     return projects_root / relative_remote.with_suffix("")
@@ -120,7 +122,11 @@ def find_remotes(remotes_root: Path) -> list[Path]:
 def child_directories(directory: Path) -> list[Path]:
     """Return immediate child directories, excluding symlinks."""
     return sorted(
-        (path for path in directory.iterdir() if path.is_dir() and not path.is_symlink()),
+        (
+            path
+            for path in directory.iterdir()
+            if path.is_dir() and not path.is_symlink()
+        ),
         key=lambda path: str(path),
     )
 
@@ -147,7 +153,9 @@ def validate_workspace(root: Path) -> list[str]:
         project = project_path_for_remote(remote, remotes_root, projects_root)
         expected_projects.add(project)
         if not project.is_dir():
-            failures.append(f"remote has no matching project directory: {remote} -> {project}")
+            failures.append(
+                f"remote has no matching project directory: {remote} -> {project}"
+            )
 
     discovered_projects: set[Path] = set()
     for candidate in projects_root.rglob("*"):
@@ -172,7 +180,9 @@ def validate_workspace(root: Path) -> list[str]:
 
         for checkout in checkouts:
             if not is_worktree(checkout):
-                failures.append(f"checkout is not a valid non-bare Git working tree: {checkout}")
+                failures.append(
+                    f"checkout is not a valid non-bare Git working tree: {checkout}"
+                )
                 continue
 
             local_url = git_value(checkout, "remote", "get-url", "local")
@@ -180,7 +190,10 @@ def validate_workspace(root: Path) -> list[str]:
                 failures.append(f"checkout has no local remote: {checkout}")
                 continue
             if not is_relative_git_path(local_url):
-                failures.append(f"checkout local remote is not a relative path: {checkout}: {local_url}")
+                failures.append(
+                    "checkout local remote is not a relative path: "
+                    f"{checkout}: {local_url}"
+                )
                 continue
 
             expected_remote = remotes_root / project.relative_to(projects_root)
@@ -196,7 +209,9 @@ def validate_workspace(root: Path) -> list[str]:
             reachable, diagnostic = run_git(checkout, "ls-remote", "local")
             if not reachable:
                 detail = f" ({diagnostic})" if diagnostic else ""
-                failures.append(f"checkout local remote is unreachable: {checkout}{detail}")
+                failures.append(
+                    f"checkout local remote is unreachable: {checkout}{detail}"
+                )
 
     return failures
 
@@ -214,7 +229,10 @@ def main(args: argparse.Namespace) -> int:
     """Validate WORK_ROOT and return a stable process exit code."""
     root = workspace_root()
     if root is None:
-        print("FAIL: WORK_ROOT must name an existing workspace directory.", file=sys.stderr)
+        print(
+            "FAIL: WORK_ROOT must name an existing workspace directory.",
+            file=sys.stderr,
+        )
         return 1
 
     failures = validate_workspace(root)
@@ -236,7 +254,9 @@ def run_tests() -> int:
             self.assertTrue(is_relative_git_path("../../../remotes/team/app.git"))
             self.assertTrue(is_relative_git_path("remotes/team/app.git"))
             self.assertFalse(is_relative_git_path("/workspace/remotes/team/app.git"))
-            self.assertFalse(is_relative_git_path("file:///workspace/remotes/team/app.git"))
+            self.assertFalse(
+                is_relative_git_path("file:///workspace/remotes/team/app.git")
+            )
             self.assertFalse(is_relative_git_path("git@example.test:team/app.git"))
 
         def test_remote_to_project_mapping(self) -> None:

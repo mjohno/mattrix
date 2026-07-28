@@ -21,8 +21,9 @@ import re
 import sys
 import tempfile
 import unittest
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -57,8 +58,8 @@ def env_bundles() -> list[tuple[str, Path]]:
 def parse_bundle_arg(value: str) -> tuple[str, Path]:
     """Parse a --bundle value as NAME=PATH or PATH."""
     if "=" in value:
-        name, path = value.split("=", 1)
-        return normalize_bundle_name(name), Path(path).expanduser().resolve()
+        name, path_text = value.split("=", 1)
+        return normalize_bundle_name(name), Path(path_text).expanduser().resolve()
     path = Path(value).expanduser().resolve()
     return normalize_bundle_name(path.name or "BUNDLE"), path
 
@@ -73,7 +74,7 @@ def parse_simple_yaml(raw: str) -> dict[str, Any]:
         if line.startswith("  - ") and current_key:
             data.setdefault(current_key, [])
             if isinstance(data[current_key], list):
-                data[current_key].append(line[4:].strip().strip('"\''))
+                data[current_key].append(line[4:].strip().strip("\"'"))
             continue
         if ":" not in line:
             continue
@@ -85,13 +86,15 @@ def parse_simple_yaml(raw: str) -> dict[str, Any]:
             data[key] = []
         elif value.startswith("[") and value.endswith("]"):
             inner = value[1:-1].strip()
-            data[key] = [] if not inner else [
-                item.strip().strip('"\'') for item in inner.split(",")
-            ]
+            data[key] = (
+                []
+                if not inner
+                else [item.strip().strip("\"'") for item in inner.split(",")]
+            )
         elif value.lower() in {"true", "false"}:
             data[key] = value.lower() == "true"
         else:
-            data[key] = value.strip('"\'')
+            data[key] = value.strip("\"'")
     return data
 
 
@@ -121,7 +124,11 @@ def count_matches(haystack: str, query_terms: Iterable[str]) -> int:
 def first_excerpt(text: str, query_terms: Iterable[str], width: int = 180) -> str:
     """Return a compact excerpt around the first matching query term."""
     lower = text.lower()
-    positions = [lower.find(term.lower()) for term in query_terms if lower.find(term.lower()) >= 0]
+    positions = [
+        lower.find(term.lower())
+        for term in query_terms
+        if lower.find(term.lower()) >= 0
+    ]
     if not positions:
         return ""
     pos = min(positions)
@@ -164,7 +171,9 @@ def search_file(
         metadata_fields = {
             "type": frontmatter.get("type", ""),
             "title": frontmatter.get("title", ""),
-            "tags": " ".join(str(x) for x in frontmatter.get("tags", []) if x is not None),
+            "tags": " ".join(
+                str(x) for x in frontmatter.get("tags", []) if x is not None
+            ),
             "description": frontmatter.get("description", ""),
         }
         metadata_hits = 0
@@ -176,7 +185,9 @@ def search_file(
         if metadata_hits:
             tier = "frontmatter"
             score = 200 + metadata_hits * 10
-            excerpt = "; ".join(f"{field}: {metadata_fields[field]}" for field in matched_fields)
+            excerpt = "; ".join(
+                f"{field}: {metadata_fields[field]}" for field in matched_fields
+            )
         else:
             body_hits = count_matches(body, query_terms)
             if body_hits:
@@ -254,9 +265,7 @@ def search_bundles(
                 match["bundle_order"] = order
                 results.append(match)
 
-    results.sort(
-        key=lambda r: (r["bundle_order"], -int(r["score"]), r["concept_id"])
-    )
+    results.sort(key=lambda r: (r["bundle_order"], -int(r["score"]), r["concept_id"]))
     for result in results:
         result.pop("bundle_order", None)
 
@@ -302,7 +311,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(args: argparse.Namespace) -> int:
     """Run the search workflow and return an exit code."""
-    bundles = [parse_bundle_arg(value) for value in args.bundle] if args.bundle else env_bundles()
+    bundles = (
+        [parse_bundle_arg(value) for value in args.bundle]
+        if args.bundle
+        else env_bundles()
+    )
     output = search_bundles(args.query, bundles, args.limit)
     print(json.dumps(output, indent=2, ensure_ascii=False))
     return 0 if output["results"] or not output["errors"] else 2

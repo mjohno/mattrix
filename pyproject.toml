@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mattrix-quality"
+version = "0.1.0"
+description = "Monorepo-wide Python quality-tool configuration"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+quality = [
+  "black>=25.1.0",
+  "mypy>=1.14.0",
+  "pylint>=3.3.0",
+  "ruff>=0.9.0",
+  "PyYAML>=6.0",
+  "types-PyYAML>=6.0",
+]
+
+[tool.setuptools]
+packages = []
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+exclude = '''
+/(\.git|\.mypy_cache|\.pytest_cache|\.ruff_cache|\.venv|build|dist|tmp)/
+'''
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+exclude = [".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".venv", "build", "dist", "tmp"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_configs = true
+exclude = '''(?x)(^\.venv/|^tmp/|^agents/stagger-step/tests/|/build/|/dist/)'''
+
+[tool.pylint.main]
+py-version = "3.11"
+recursive = true
+ignore-paths = ['^\.venv/', '^tmp/', '^agents/stagger-step/tests/', '/build/', '/dist/']
+
+[tool.pylint.format]
+max-line-length = 88
+
+[tool.pylint.messages_control]
+# Keep Pylint focused on correctness. Existing command handlers and bundled scripts
+# deliberately use terse CLI functions and dense validation/control-flow code.
+disable = [
+  "broad-exception-caught",
+  "consider-using-with",
+  "duplicate-code",
+  "import-outside-toplevel",
+  "missing-class-docstring",
+  "missing-function-docstring",
+  "missing-module-docstring",
+  "redefined-builtin",
+  "redefined-outer-name",
+  "subprocess-run-check",
+  "too-few-public-methods",
+  "too-many-branches",
+  "too-many-locals",
+  "too-many-nested-blocks",
+  "too-many-return-statements",
+  "too-many-statements",
+  "unnecessary-lambda",
+]

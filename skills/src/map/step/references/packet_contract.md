@@ -40,7 +40,6 @@ current_packet: # the normalized worker packet
   criteria: [observable criterion]
   do: {summary: work performed, evidence: [evidence]}
   validate: {result: success, evidence: [evidence]}
-outcome: progressed # progressed | partial | blocked | failed
 retro:
   wins: [effective progress]
   issues: [friction, failure, or lack of progress]

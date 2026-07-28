@@ -40,8 +40,10 @@ def parse_simple_yaml(raw: str) -> dict[str, Any]:
         if line.startswith("  - ") and current_key:
             data.setdefault(current_key, [])
             if not isinstance(data[current_key], list):
-                raise ValueError(f"line {line_no}: cannot append list item to scalar {current_key}")
-            data[current_key].append(line[4:].strip().strip('"\''))
+                raise ValueError(
+                    f"line {line_no}: cannot append list item to scalar {current_key}"
+                )
+            data[current_key].append(line[4:].strip().strip("\"'"))
             continue
         if ":" not in line:
             raise ValueError(f"line {line_no}: expected key: value")
@@ -55,13 +57,15 @@ def parse_simple_yaml(raw: str) -> dict[str, Any]:
             data[key] = []
         elif value.startswith("[") and value.endswith("]"):
             inner = value[1:-1].strip()
-            data[key] = [] if not inner else [
-                item.strip().strip('"\'') for item in inner.split(",")
-            ]
+            data[key] = (
+                []
+                if not inner
+                else [item.strip().strip("\"'") for item in inner.split(",")]
+            )
         elif value.lower() in {"true", "false"}:
             data[key] = value.lower() == "true"
         else:
-            data[key] = value.strip('"\'')
+            data[key] = value.strip("\"'")
     return data
 
 
@@ -85,26 +89,33 @@ def validate(path: Path) -> dict[str, Any]:
     try:
         text = path.read_text(encoding="utf-8")
         frontmatter, _ = split_frontmatter(text)
-    except Exception as exc:  # noqa: BLE001 - validator returns user-facing parse errors.
+    except (
+        Exception
+    ) as exc:  # noqa: BLE001 - validator returns user-facing parse errors.
         errors.append(str(exc))
 
     if frontmatter:
         for key in REQUIRED:
             if key not in frontmatter:
                 errors.append(f"missing required field: {key}; {REQUIRED_HINT}")
-            elif (
-                key != "tags"
-                and (frontmatter[key] is None or str(frontmatter[key]).strip() == "")
+            elif key != "tags" and (
+                frontmatter[key] is None or str(frontmatter[key]).strip() == ""
             ):
-                errors.append(f"required field is empty: {key}; provide a non-empty value")
+                errors.append(
+                    f"required field is empty: {key}; provide a non-empty value"
+                )
         tags = frontmatter.get("tags")
         if "tags" in frontmatter and not isinstance(tags, list):
-            errors.append("tags must be a YAML list; use tags: [] when there are no tags")
+            errors.append(
+                "tags must be a YAML list; use tags: [] when there are no tags"
+            )
         for key in frontmatter:
             if key not in KNOWN:
                 warnings.append(f"unknown frontmatter key preserved: {key}")
         if "timestamp" in frontmatter:
-            warnings.append("timestamp is not required by MKF and should not be auto-maintained")
+            warnings.append(
+                "timestamp is not required by MKF and should not be auto-maintained"
+            )
 
     return {
         "path": str(path),
@@ -141,7 +152,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Validate MKF concept frontmatter.")
     parser.add_argument("paths", nargs="*", help="Markdown concept paths to validate")
-    parser.add_argument("--json", action="store_true", help="Emit JSON output to stdout")
+    parser.add_argument(
+        "--json", action="store_true", help="Emit JSON output to stdout"
+    )
     parser.add_argument(
         "--log-level",
         default="CRITICAL",
@@ -161,7 +174,9 @@ def main(args: argparse.Namespace) -> int:
     ok = all(result["valid"] for result in results)
 
     if args.json:
-        print(json.dumps({"valid": ok, "results": results}, indent=2, ensure_ascii=False))
+        print(
+            json.dumps({"valid": ok, "results": results}, indent=2, ensure_ascii=False)
+        )
     else:
         emit_human_results(results)
     return 0 if ok else 1
@@ -201,7 +216,9 @@ def run_tests() -> int:
                 path.write_text("---\ntitle: Bad\n---\nBody\n", encoding="utf-8")
                 result = validate(path)
                 self.assertFalse(result["valid"])
-                self.assertTrue(any("missing required field: type" in e for e in result["errors"]))
+                self.assertTrue(
+                    any("missing required field: type" in e for e in result["errors"])
+                )
 
     suite = unittest.TestLoader().loadTestsFromTestCase(TestValidateFrontmatter)
     result = unittest.TextTestRunner(verbosity=2, stream=sys.stderr).run(suite)

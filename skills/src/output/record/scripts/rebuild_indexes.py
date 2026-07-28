@@ -21,8 +21,9 @@ import re
 import sys
 import tempfile
 import unittest
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ def parse_simple_yaml(raw: str) -> dict[str, Any]:
         if line.startswith("  - ") and current_key:
             data.setdefault(current_key, [])
             if isinstance(data[current_key], list):
-                data[current_key].append(line[4:].strip().strip('"\''))
+                data[current_key].append(line[4:].strip().strip("\"'"))
             continue
         if ":" not in line:
             continue
@@ -51,11 +52,13 @@ def parse_simple_yaml(raw: str) -> dict[str, Any]:
             data[key] = []
         elif value.startswith("[") and value.endswith("]"):
             inner = value[1:-1].strip()
-            data[key] = [] if not inner else [
-                item.strip().strip('"\'') for item in inner.split(",")
-            ]
+            data[key] = (
+                []
+                if not inner
+                else [item.strip().strip("\"'") for item in inner.split(",")]
+            )
         else:
-            data[key] = value.strip('"\'')
+            data[key] = value.strip("\"'")
     return data
 
 
@@ -183,7 +186,9 @@ def validate_index_text(text: str) -> list[str]:
     return errors
 
 
-def rebuild(bundle_root: Path, force: bool = False, dry_run: bool = False) -> dict[str, Any]:
+def rebuild(
+    bundle_root: Path, force: bool = False, dry_run: bool = False
+) -> dict[str, Any]:
     """Rebuild or plan generated indexes for a bundle root."""
     written: list[str] = []
     would_write: list[str] = []
@@ -196,7 +201,10 @@ def rebuild(bundle_root: Path, force: bool = False, dry_run: bool = False) -> di
             skipped.append(
                 {
                     "path": str(index_path),
-                    "reason": "existing non-generated index; rerun with --force to overwrite it",
+                    "reason": (
+                        "existing non-generated index; rerun with --force "
+                        "to overwrite it"
+                    ),
                 }
             )
             continue
@@ -247,7 +255,10 @@ def missing_root_result(root: Path) -> dict[str, Any]:
         "skipped": [],
         "errors": [
             {
-                "error": "bundle root not found; provide an existing MKF bundle directory path",
+                "error": (
+                    "bundle root not found; provide an existing MKF bundle "
+                    "directory path"
+                ),
                 "path": str(root),
             }
         ],
@@ -281,7 +292,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Show intended writes without modifying files",
     )
-    parser.add_argument("--json", action="store_true", help="Emit JSON output to stdout")
+    parser.add_argument(
+        "--json", action="store_true", help="Emit JSON output to stdout"
+    )
     parser.add_argument(
         "--log-level",
         default="CRITICAL",

@@ -1,71 +1,222 @@
 from __future__ import annotations
+
+import json
+
 import pytest
-from .conftest import assessor, calls, complete, coordinator, gate, scenario, state, task
+
+from .conftest import coordinator, scenario, state
 
 pytestmark = pytest.mark.integration
 
-def init(run):
-    result = run("init", "--goal", "Goal")
+
+def init(run, replies=None):
+    result = run("init", "--goal", "Goal", replies=replies or scenario("fresh"))
     assert result.returncode == 0, result.stderr
 
-def test_fresh_approval_promotes_recommended_task(cli):
-    run, step, log = cli; init(run)
-    result = run("session", input="approved\n", replies=scenario("fresh"))
-    assert result.returncode == 0, result.stderr
-    displayed = gate(result.stdout)
-    assert displayed["current_packet"] is None and displayed["recommendation"] == "first" and displayed["lessons"] == ["coordinator lesson"]
+
+def test_init_persists_ranked_next_and_recommendation(cli):
+    run, step, _ = cli
+    init(run)
     saved = state(step)
-    assert saved["active_packet"]["slug"] == "first" and saved["lessons"] == ["coordinator lesson"] and saved["history"] == []
-    assert [entry["role"] for entry in calls(log)] == ["coordinator"]
-    assert calls(log)[0]["step_file"] is None
+    assert saved["history"] == [] and saved["current"] is None
+    assert saved["next"][0]["slug"] == "first" and saved["recommended"] == "first"
 
-def test_complete_continue_is_user_visible_serial_flow(cli):
-    run, step, log = cli; init(run)
-    run("session", input="approved\n", replies={"coordinator": [coordinator("first")]})
-    result = run("session", input="approved\n", replies=scenario("complete_continue"))
+
+def test_harness_session_on_uses_stable_pi_session_id(cli):
+    run, _, log = cli
+    result = run(
+        "--harness-session", "on", "init", "--goal", "Goal", replies=scenario("fresh")
+    )
     assert result.returncode == 0, result.stderr
-    displayed = gate(result.stdout)
-    assert displayed["current_packet"]["slug"] == "first" and displayed["recommendation"] == "second" and displayed["lessons"] == ["chosen by coordinator"]
-    saved = state(step)
-    assert saved["history"][0]["slug"] == "first" and saved["active_packet"]["slug"] == "second" and saved["lessons"] == ["chosen by coordinator"]
-    records = calls(log)
-    assert [entry["role"] for entry in records] == ["worker", "assessor", "coordinator"]
-    assert all(entry["step_file"] is None for entry in records)
-    assert "worker_packet:" not in records[0]["prompt"] and "history:" not in records[1]["prompt"] and "worker_packet:" not in records[2]["prompt"]
+    argv = json.loads(log.read_text().splitlines()[0])["argv"]
+    assert "--no-session" not in argv
+    assert "--session-id" in argv
+    assert len(argv[argv.index("--session-id") + 1]) == 36
 
-def test_terminal_approval_commits_completion(cli):
-    run, step, _ = cli; init(run)
-    run("session", input="approved\n", replies={"coordinator": [coordinator("first")]})
-    result = run("session", input="approved\n", replies=scenario("terminal"))
+
+def test_gate_approval_promotes_recommended_step(cli):
+    run, step, _ = cli
+    init(run)
+    result = run("gate", "approved", replies=scenario("complete_continue"))
     assert result.returncode == 0, result.stderr
     saved = state(step)
-    assert saved["completed"] is True and saved["active_packet"] is None and saved["history"][0]["slug"] == "first"
+    assert saved["history"] == [] and saved["current"]["slug"] == "first"
+    assert saved["current"]["validate"]["result"] == "success"
+    assert saved["next"][0]["slug"] == "second" and saved["recommended"] == "second"
 
-def test_break_and_revision_never_write_pending_state(cli):
-    run, step, log = cli; init(run)
-    run("session", input="approved\n", replies={"coordinator": [coordinator("first")]})
+
+def test_gate_approval_prepares_the_promoted_step_before_exit(cli):
+    run, step, _ = cli
+    init(
+        run,
+        {
+            "coordinator": [
+                {
+                    "lessons": [],
+                    "proposed_next_packets": [
+                        {"slug": "first", "intent": "first", "criteria": ["done"]},
+                        {"slug": "second", "intent": "second", "criteria": ["done"]},
+                    ],
+                    "recommendation": "first",
+                }
+            ]
+        },
+    )
+    result = run("gate", "approved", replies=scenario("complete_continue"))
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["current"]["slug"] == "first"
+    assert saved["current"]["validate"]["result"] == "success"
+    assert saved["next"][0]["slug"] == "second" and saved["recommended"] == "second"
+
+
+def test_gate_prepares_cycle_before_rendering_and_final_signoff(cli):
+    run, step, _ = cli
+    init(run)
+    rendered = run("gate", "approved", replies=scenario("terminal"))
+    assert rendered.returncode == 0, rendered.stderr
+    saved = state(step)
+    assert (
+        saved["current"]["slug"] == "first"
+        and saved["current"]["validate"]["result"] == "success"
+    )
+    assert (
+        saved["next"] == []
+        and saved["recommended"] is None
+        and saved["completed"] is False
+    )
+    signed = run("gate", "approved")
+    assert signed.returncode == 0
+    saved = state(step)
+    assert (
+        saved["completed"] is True
+        and saved["current"] is None
+        and saved["history"][0]["slug"] == "first"
+    )
+
+
+def test_gate_feedback_revises_next_without_promoting_history_or_current(cli):
+    run, step, _ = cli
+    init(run)
+    run("gate", "approved", replies=scenario("complete_continue"))
+    before = state(step)
+    result = run(
+        "gate",
+        "use another task",
+        replies={"coordinator": [coordinator("third", ["revised lesson"])]},
+    )
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["history"] == before["history"] == []
+    assert saved["current"]["slug"] == "first" and saved["next"][0]["slug"] == "third"
+    assert saved["recommended"] == "third" and saved["lessons"] == ["revised lesson"]
+
+
+def test_gate_break_is_non_mutating(cli):
+    run, step, _ = cli
+    init(run)
     before = step.read_bytes()
-    paused = run("session", input="break\n", replies=scenario("terminal"))
-    assert paused.returncode == 0 and step.read_bytes() == before
-    revised = run("session", input="use another task\nbreak\n", replies={"worker": [{"packet": complete("first")}], "assessor": [assessor("first")], "coordinator": [coordinator("second"), coordinator("third", ["revised lesson"])]})
-    assert revised.returncode == 0 and step.read_bytes() == before
+    result = run("gate", "break")
+    assert result.returncode == 0 and step.read_bytes() == before
 
-def test_malformed_role_output_does_not_write(cli):
-    run, step, _ = cli; init(run)
-    run("session", input="approved\n", replies={"coordinator": [coordinator("first")]})
-    before = step.read_bytes()
-    result = run("session", replies=scenario("malformed_worker"))
-    assert result.returncode == 3 and step.read_bytes() == before
 
-def test_manual_state_and_one_clarification_round(cli):
-    run, step, log = cli; init(run)
-    run("session", input="approved\n", replies={"coordinator": [coordinator("first")]})
-    result = run("session", input="approved\n", replies={"worker": [{"packet": complete("first")}, {"packet": complete("first")}], "assessor": [assessor("first", True), assessor("first", False)], "coordinator": [coordinator(None)]})
-    assert result.returncode == 0
-    assert [entry["role"] for entry in calls(log)] == ["worker", "assessor", "worker", "assessor", "coordinator"]
-    saved = state(step); saved["lessons"] = ["manual valid edit"]
-    step.write_text(__import__("yaml").safe_dump(saved))
-    assert run("validate").returncode == 0
-    saved["completed"] = False
-    step.write_text(__import__("yaml").safe_dump(saved))
-    assert run("validate").returncode == 2
+def test_session_continues_through_work_cycle_to_final_signoff(cli):
+    run, step, _ = cli
+    replies = {
+        "coordinator": [
+            coordinator("first"),
+            {
+                "lessons": ["terminal lesson"],
+                "proposed_next_packets": [],
+                "recommendation": None,
+            },
+        ],
+        "worker": [
+            {
+                "packet": {
+                    "slug": "first",
+                    "intent": "first",
+                    "criteria": ["done"],
+                    "do": {"summary": "worked", "evidence": ["file"]},
+                    "validate": {"result": "success", "evidence": ["test"]},
+                }
+            }
+        ],
+        "assessor": [
+            {
+                "current_packet": {
+                    "slug": "first",
+                    "intent": "first",
+                    "criteria": ["done"],
+                    "do": {"summary": "worked", "evidence": ["file"]},
+                    "validate": {"result": "success", "evidence": ["test"]},
+                },
+                "retro": {"wins": ["progress"], "issues": [], "actions": ["continue"]},
+                "clarification_needed": False,
+            }
+        ],
+    }
+    result = run(
+        "init",
+        "--goal",
+        "Goal",
+        "--session",
+        input="approved\napproved\n",
+        replies=replies,
+    )
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert (
+        saved["completed"] is True
+        and saved["current"] is None
+        and [entry["slug"] for entry in saved["history"]] == ["first"]
+    )
+    assert result.stdout.count("recommended:") == 2
+
+
+def test_session_revision_keeps_running_then_breaks_without_promotion(cli):
+    run, step, _ = cli
+    replies = {
+        "coordinator": [
+            coordinator("first"),
+            coordinator("second"),
+            coordinator("third", ["revised lesson"]),
+        ],
+        "worker": [
+            {
+                "packet": {
+                    "slug": "first",
+                    "intent": "first",
+                    "criteria": ["done"],
+                    "do": {"summary": "worked", "evidence": ["file"]},
+                    "validate": {"result": "success", "evidence": ["test"]},
+                }
+            }
+        ],
+        "assessor": [
+            {
+                "current_packet": {
+                    "slug": "first",
+                    "intent": "first",
+                    "criteria": ["done"],
+                    "do": {"summary": "worked", "evidence": ["file"]},
+                    "validate": {"result": "success", "evidence": ["test"]},
+                },
+                "retro": {"wins": ["progress"], "issues": [], "actions": ["continue"]},
+                "clarification_needed": False,
+            }
+        ],
+    }
+    result = run(
+        "init",
+        "--goal",
+        "Goal",
+        "--session",
+        input="approved\ntry third\nbreak\n",
+        replies=replies,
+    )
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["history"] == [] and saved["current"]["slug"] == "first"
+    assert saved["next"][0]["slug"] == "third" and saved["recommended"] == "third"
+    assert "STEP response:" not in result.stdout

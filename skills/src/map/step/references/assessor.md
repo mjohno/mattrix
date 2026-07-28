@@ -17,7 +17,6 @@ current_packet:
   validate:
     result: success
     evidence: [all checks passed]
-outcome: progressed
 retro:
   wins: [CLI behavior is verified]
   issues: []
@@ -33,7 +32,7 @@ python scripts/normalize_packet.py assessor \
   --criteria "All role commands pass" \
   --do-summary "Ran the command checks" --do-evidence "command output" \
   --validate-result success --validate-evidence "all checks passed" \
-  --outcome progressed --retro-wins "CLI behavior is verified" \
+  --retro-wins "CLI behavior is verified" \
   --retro-actions "Keep command examples current"
 ```
 

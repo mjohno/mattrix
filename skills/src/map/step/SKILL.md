@@ -34,7 +34,7 @@ Use-When: An orchestrator needs coordinator, worker, or assessor instructions an
 
 - A coordinator proposal with selected lessons, ranked next-task packets, and recommendation.
 - A worker packet with Do and Validate evidence.
-- An assessor packet with outcome, retro, actions, and optional clarification request.
+- An assessor packet with retro, actions, and optional clarification request.
 - A nonzero normalization result for malformed role output; no STEP file access or mutation.
 
 ## 4. Next Steps
@@ -61,7 +61,7 @@ python scripts/normalize_packet.py worker \
 python scripts/normalize_packet.py assessor \
   --slug validate-cli --intent "Verify the role CLI" --criteria "All role commands pass" \
   --do-summary "Ran the command checks" --validate-result success \
-  --outcome progressed --retro-wins "CLI behavior is verified" \
+  --retro-wins "CLI behavior is verified" \
   --retro-actions "Keep command examples current"
 ```
 
