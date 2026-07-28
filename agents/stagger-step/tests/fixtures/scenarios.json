@@ -1,0 +1,170 @@
+{
+  "fresh": {
+    "coordinator": [
+      {
+        "lessons": [
+          "coordinator lesson"
+        ],
+        "proposed_next_packets": [
+          {
+            "slug": "first",
+            "intent": "first",
+            "criteria": [
+              "done"
+            ]
+          }
+        ],
+        "recommendation": "first"
+      }
+    ]
+  },
+  "complete_continue": {
+    "worker": [
+      {
+        "packet": {
+          "slug": "first",
+          "intent": "first",
+          "criteria": [
+            "done"
+          ],
+          "do": {
+            "summary": "worked",
+            "evidence": [
+              "file"
+            ]
+          },
+          "validate": {
+            "result": "success",
+            "evidence": [
+              "test"
+            ]
+          }
+        }
+      }
+    ],
+    "assessor": [
+      {
+        "current_packet": {
+          "slug": "first",
+          "intent": "first",
+          "criteria": [
+            "done"
+          ],
+          "do": {
+            "summary": "worked",
+            "evidence": [
+              "file"
+            ]
+          },
+          "validate": {
+            "result": "success",
+            "evidence": [
+              "test"
+            ]
+          }
+        },
+        "outcome": "progressed",
+        "retro": {
+          "wins": [
+            "progress"
+          ],
+          "issues": [],
+          "actions": [
+            "continue"
+          ]
+        },
+        "clarification_needed": false
+      }
+    ],
+    "coordinator": [
+      {
+        "lessons": [
+          "chosen by coordinator"
+        ],
+        "proposed_next_packets": [
+          {
+            "slug": "second",
+            "intent": "second",
+            "criteria": [
+              "done"
+            ]
+          }
+        ],
+        "recommendation": "second"
+      }
+    ]
+  },
+  "terminal": {
+    "worker": [
+      {
+        "packet": {
+          "slug": "first",
+          "intent": "first",
+          "criteria": [
+            "done"
+          ],
+          "do": {
+            "summary": "worked",
+            "evidence": [
+              "file"
+            ]
+          },
+          "validate": {
+            "result": "success",
+            "evidence": [
+              "test"
+            ]
+          }
+        }
+      }
+    ],
+    "assessor": [
+      {
+        "current_packet": {
+          "slug": "first",
+          "intent": "first",
+          "criteria": [
+            "done"
+          ],
+          "do": {
+            "summary": "worked",
+            "evidence": [
+              "file"
+            ]
+          },
+          "validate": {
+            "result": "success",
+            "evidence": [
+              "test"
+            ]
+          }
+        },
+        "outcome": "progressed",
+        "retro": {
+          "wins": [
+            "progress"
+          ],
+          "issues": [],
+          "actions": [
+            "continue"
+          ]
+        },
+        "clarification_needed": false
+      }
+    ],
+    "coordinator": [
+      {
+        "lessons": [
+          "terminal lesson"
+        ],
+        "proposed_next_packets": [],
+        "recommendation": null
+      }
+    ]
+  },
+  "malformed_worker": {
+    "worker": [
+      "not: [valid"
+    ]
+  }
+}
