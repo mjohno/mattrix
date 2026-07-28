@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from .conftest import coordinator, scenario, state
+from .conftest import assessor, complete, coordinator, scenario, state
 
 pytestmark = pytest.mark.integration
 
@@ -44,6 +44,20 @@ def test_gate_approval_promotes_recommended_step(cli):
     assert saved["current"]["validate"]["result"] == "success"
     assert saved["next"][0]["slug"] == "second" and saved["recommended"] == "second"
 
+
+def test_duplicate_next_slug_is_renamed_after_approval(cli):
+    run, step, _ = cli; init(run)
+    replies = {
+        "worker": [{"packet": complete("first")}],
+        "assessor": [assessor("first")],
+        "coordinator": [coordinator("first")],
+    }
+    result = run("gate", "approved", replies=replies)
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["current"]["slug"] == "first"
+    assert saved["next"][0]["slug"] == "first-1"
+    assert saved["recommended"] == "first-1"
 
 def test_gate_approval_prepares_the_promoted_step_before_exit(cli):
     run, step, _ = cli

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from pathlib import Path
+import re
 from typing import Any
 
 import yaml
@@ -29,6 +30,47 @@ class TransitionError(StateError):
 
 def _dedupe(values: list[str]) -> list[str]:
     return list(dict.fromkeys(value.strip() for value in values if value.strip()))
+
+
+def _unique_slug(slug: str, used: set[str]) -> str:
+    """Keep a slug when available; otherwise advance its trailing integer."""
+    if slug not in used:
+        return slug
+    match = re.fullmatch(r"(.+?)(?:-(\d+))?", slug)
+    assert match is not None
+    stem, suffix = match.groups()
+    index = int(suffix) + 1 if suffix is not None else 1
+    candidate = f"{stem}-{index}"
+    while candidate in used:
+        index += 1
+        candidate = f"{stem}-{index}"
+    return candidate
+
+
+def _unique_proposals(
+    proposals: Any, recommendation: Any, reserved: set[str]
+) -> tuple[Any, Any]:
+    """Rename coordinator proposals that collide with current or completed work."""
+    if not isinstance(proposals, list):
+        return proposals, recommendation
+    used = set(reserved)
+    normalized: list[Any] = []
+    normalized_recommendation = recommendation
+    recommendation_updated = False
+    for proposal in proposals:
+        if not isinstance(proposal, dict) or not isinstance(proposal.get("slug"), str):
+            normalized.append(proposal)
+            continue
+        original = proposal["slug"]
+        slug = _unique_slug(original, used)
+        copied = deepcopy(proposal)
+        copied["slug"] = slug
+        normalized.append(copied)
+        used.add(slug)
+        if original == recommendation and not recommendation_updated:
+            normalized_recommendation = slug
+            recommendation_updated = True
+    return normalized, normalized_recommendation
 
 
 class StepLoop:
@@ -179,6 +221,12 @@ class StepLoop:
             response.get("lessons"),
             response.get("proposed_next_packets"),
             response.get("recommendation"),
+        )
+        reserved = {step["slug"] for step in state["history"]}
+        if state["current"] is not None:
+            reserved.add(state["current"]["slug"])
+        proposals, recommendation = _unique_proposals(
+            proposals, recommendation, reserved
         )
         candidate = deepcopy(state)
         candidate["lessons"] = _dedupe(lessons or [])
