@@ -15,3 +15,17 @@ Dependencies flow from `agents` and `kb` to `skills`. No skill or KB component d
 `agents/stagger-step` owns STEP state, deterministic transitions, and user gates. Pi.dev is a replaceable execution harness behind that agent's adapter; it is not a STEP-state authority.
 
 Mattrix does not store business data, business-domain knowledge, or production application data.
+
+## Docker image
+
+Build the local Docker image, tagged `mattrix:latest`:
+
+```sh
+python3 make.py docker-build
+```
+
+Pass `--quiet` to suppress successful-build output:
+
+```sh
+python3 make.py docker-build --quiet
+```
