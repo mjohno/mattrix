@@ -1,5 +1,5 @@
 ---
-name: knowledge
+name: knowledge-base
 description: Use when lookup or record needs the passive MKF contract.
 metadata:
   type: interface
@@ -8,15 +8,15 @@ metadata:
     - knowledge
     - mkf
 ---
-# knowledge
+# knowledge-base
 
-Goal: Define the passive MKF concept, bundle, and manual discovery contract for knowledge consumers.
+Goal: Define the passive MKF concept, bundle, and manual discovery contract for knowledge-base consumers.
 Non-Goals: Do not perform lookup, resolve bundles operationally, write concepts, rebuild indexes, rank matches, or synthesize answers.
 Use-When: `input/lookup`, `output/record`, or another skill needs the shared MKF contract before reading, checking, reviewing, or writing knowledge.
 
 ## Selection
 
-Default: load only the compact knowledge contract.
+Default: load only the compact knowledge-base contract.
 
 Also select:
 - `concept_frontmatter_template.md` when the caller asks to record or draft a concept.
@@ -24,7 +24,7 @@ Also select:
 - `knowledge_quality.md` when the caller asks to review MKF quality.
 
 If caller intent is unclear, assume default contract only and state the assumption.
-If requested knowledge needs fall outside this interface, state the unsupported need and hand off to `input/lookup` or `output/record`.
+If requested knowledge-base work falls outside this interface, state the unsupported need and hand off to `input/lookup` or `output/record`.
 
 ## Context Loading
 
@@ -49,5 +49,5 @@ Optional paths:
 
 ## Minimal Example
 
-Prompt: "Use the knowledge interface before recording a new concept."
+Prompt: "Use the knowledge-base interface before recording a new concept."
 Direct invocation response: `Loaded: references/knowledge_contract.md.`

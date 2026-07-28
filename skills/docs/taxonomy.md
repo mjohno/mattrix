@@ -35,7 +35,7 @@ Valid pairs:
 Passive noun/domain contract packages that supply conventions, quality checks, templates, schemas, protocols, artifact shapes, vocabulary, or storage rules used by verb skills.
 - Declares `metadata.category: interface` with either `metadata.type: interface` or `metadata.type: vocabulary`
 - Selected and loaded when another skill needs artifact shape, schema, protocol, conventions, quality criteria, or storage rules; vocabulary packages are human-loaded instead
-- Lives as direct packages under `src/interface/<name>/SKILL.md`
+- Lives as direct packages under `../src/interface/<name>/SKILL.md`
 - Examples: `interface/spec`, `interface/rfc`, `interface/plan`, `interface/task`, `interface/code`, `interface/prose`, `interface/script`, `interface/prototype`, `interface/memory`, `interface/knowledge-base`, `interface/vocab`
 - Defines the desired state of a noun-like artifact, protocol, domain, or context vocabulary
 - May select an applicable domain from context, such as a script language or storage backend

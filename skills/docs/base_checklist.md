@@ -5,7 +5,7 @@ Shared compliance items for all skills — personas and data-flow skills alike. 
 ## CRITICAL
 
 - [ ] **CRITICAL** `metadata.type` is present and is `interface`, `vocabulary`, `skill`, `protocol`, or `persona`
-- [ ] **CRITICAL** `metadata.category` is present and matches a category in `docs/taxonomy.md`
+- [ ] **CRITICAL** `metadata.category` is present and matches a category in `taxonomy.md`
 - [ ] **CRITICAL** `metadata.type` and `metadata.category` form a valid pair: `interface/interface`, `vocabulary/interface`, `skill/input`, `skill/output`, `skill/map`, `protocol/map`, or `persona/persona`
 - [ ] **CRITICAL** Description includes "Use when..." triggers
 - [ ] **CRITICAL** SKILL.md is under 100 lines

@@ -16,8 +16,8 @@ Use-When: The user explicitly asks to record durable knowledge or a workflow exp
 
 ## 0. Prerequisites
 - One unambiguous target bundle name or explicit bundle path
-- Shared contract: `../../interface/knowledge/SKILL.md`
-- Knowledge contract: `../../interface/knowledge/references/knowledge_contract.md`
+- Shared contract: `../../interface/knowledge-base/SKILL.md`
+- Knowledge contract: `../../interface/knowledge-base/references/knowledge_contract.md`
 - Record process: `references/record_process.md`
 
 ## 1. Inputs
@@ -27,7 +27,7 @@ Use-When: The user explicitly asks to record durable knowledge or a workflow exp
 - Optional concept type: `undefined`, `index`, `checklist`, `template`, or another type
 
 ## 2. Processes
-1. Read the shared `knowledge` references only as needed.
+1. Read the shared `knowledge-base` references only as needed.
 2. Resolve exactly one target bundle or explicit bundle path; ask when missing or ambiguous.
 3. Determine concept path/ID, check collisions by path/title/resource, and ask before overwrite or substantial replacement.
 4. Draft or update the concept using local templates when useful, preserving unknown frontmatter keys and citations.
@@ -42,7 +42,7 @@ Use-When: The user explicitly asks to record durable knowledge or a workflow exp
 
 ## 4. Next Steps
 - `../../input/lookup/SKILL.md` — retrieve existing MKF concepts before writing or to verify discoverability
-- `../../interface/knowledge/references/knowledge_contract.md` — interpret concept requirements
+- `../../interface/knowledge-base/references/knowledge_contract.md` — interpret concept requirements
 
 ## 5. Examples
 

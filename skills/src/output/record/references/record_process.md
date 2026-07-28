@@ -24,7 +24,7 @@ Create or update one MKF concept safely, enforce the shared contract programmati
 ### Frontmatter validation
 
 ```sh
-python src/output/record/scripts/validate_frontmatter.py path/to/concept.md
+python scripts/validate_frontmatter.py path/to/concept.md
 ```
 
 Use before finalizing a concept and after generating indexes.
@@ -32,7 +32,7 @@ Use before finalizing a concept and after generating indexes.
 ### Index rebuilding
 
 ```sh
-python src/output/record/scripts/rebuild_indexes.py path/to/bundle
+python scripts/rebuild_indexes.py path/to/bundle
 ```
 
 Use after successful record writes/updates.

@@ -33,10 +33,10 @@ Create or update a skill package that is structurally valid and beautifully simp
    - `persona` type → `persona` category
 5. **Determine Interface Role**: If the package is an interface, ensure it defines artifact shape, schema, protocol, conventions, or quality criteria without performing operational work. It must select a minimal default contract reference, select optional references/assets only from explicit caller intent or domain clues, and load selected content silently into context. If the package is vocabulary, ensure it defines only non-skill-owned project terms, has `disable_model_invocations: true`, and contains no operational sections.
 6. **Place the Package**:
-   - Interface nouns and vocabulary packages live under `src/interface/<name>/SKILL.md`.
+   - Interface nouns and vocabulary packages live under `../src/interface/<name>/SKILL.md`.
    - Invocable verb skills live under their data-flow category.
-   - Protocol packages live under `src/map/<name>/SKILL.md`.
-   - Persona lenses live under `src/persona/<name>/SKILL.md`.
+   - Protocol packages live under `../src/map/<name>/SKILL.md`.
+   - Persona lenses live under `../src/persona/<name>/SKILL.md`.
 7. **Component Identification**: Determine if the package requires `scripts/`, `references/`, or `assets/`.
 8. **Constraint Check**: Verify the name uses `kebab-case` and every relative package-file path in `SKILL.md` is resolved from the directory containing that file; never use repository-root-relative package paths.
 

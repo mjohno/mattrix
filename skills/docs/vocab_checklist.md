@@ -33,7 +33,7 @@ Inherits applicable items from [base_checklist.md](base_checklist.md), except wh
 
 Before adding or changing a term:
 
-1. List existing skill names under `src/*/*/SKILL.md`.
+1. List existing skill names under `../src/*/*/SKILL.md`.
 2. Search skill descriptions and `Use-When` lines for the proposed term.
 3. If the term matches a skill name, reject it from vocab.
 4. If the term is already substantively defined by a skill description, update that skill instead of adding a vocab term.

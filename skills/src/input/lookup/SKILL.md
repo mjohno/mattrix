@@ -17,8 +17,8 @@ Use-When: The user explicitly asks to look up durable knowledge or retrieve MKF 
 ## 0. Prerequisites
 - User query text
 - Bundle selector(s), all-bundle request, or explicit bundle path
-- Shared contract: `../../interface/knowledge/SKILL.md`
-- Knowledge contract: `../../interface/knowledge/references/knowledge_contract.md`
+- Shared contract: `../../interface/knowledge-base/SKILL.md`
+- Knowledge contract: `../../interface/knowledge-base/references/knowledge_contract.md`
 - Bundle discovery: `references/bundle_discovery.md`
 - Lookup process: `references/lookup_process.md`
 
@@ -29,7 +29,7 @@ Use-When: The user explicitly asks to look up durable knowledge or retrieve MKF 
 - Optional result limit
 
 ## 2. Processes
-1. Read the shared `knowledge` contract only as needed for MKF concept shape.
+1. Read the shared `knowledge-base` contract only as needed for MKF concept shape.
 2. Resolve selected bundle roots using lookup-owned `references/bundle_discovery.md`.
 3. Use `scripts/search_mkf.py` for MKF search instead of ad hoc grep.
 4. Search in deterministic order: resolved bundle path order, directory/file/concept-name matches, frontmatter metadata, then body content.
@@ -43,7 +43,7 @@ Use-When: The user explicitly asks to look up durable knowledge or retrieve MKF 
 
 ## 4. Next Steps
 - `../../output/record/SKILL.md` — create or update durable MKF concepts
-- `../../interface/knowledge/references/knowledge_contract.md` — interpret selected concept structure
+- `../../interface/knowledge-base/references/knowledge_contract.md` — interpret selected concept structure
 
 ## 5. Examples
 

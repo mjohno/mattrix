@@ -11,7 +11,7 @@ Use `scripts/search_mkf.py`.
 Recommended invocation shape:
 
 ```sh
-python src/input/lookup/scripts/search_mkf.py --query "search terms" --bundle NAME=/path/to/bundle --limit 10
+python scripts/search_mkf.py --query "search terms" --bundle NAME=/path/to/bundle --limit 10
 ```
 
 The script may also resolve bundles from the environment when no explicit `--bundle` is supplied.
