@@ -1,6 +1,16 @@
 from __future__ import annotations
 from copy import deepcopy
+from pathlib import Path
 from typing import Any
+
+
+_REFERENCES = Path(__file__).resolve().parents[4] / "skills" / "src" / "map" / "step" / "references"
+_ROLE_REFERENCES = {
+    "coordinator": _REFERENCES / "coordinator.md",
+    "worker": _REFERENCES / "worker.md",
+    "assessor": _REFERENCES / "assessor.md",
+}
+_PACKET_CONTRACT = _REFERENCES / "packet_contract.md"
 from .harness import Harness, HarnessError
 from .state import StateError, validate_gate, validate_state, validate_task
 
@@ -64,11 +74,20 @@ class StepLoop:
         gate = {"goal": state["goal"], "lessons": lessons, "current_packet": current, "proposed_next_packets": proposal["proposed_next_packets"], "recommendation": proposal.get("recommendation")}
         return validate_gate(gate)
 
-    # TODO(role-contract-context-1): Include only the invoked role's reference path and the shared packet-contract path in its Pi prompt so runtime role behavior explicitly consumes skills/map/step contracts.
     @staticmethod
     def _prompt(role: str, context: dict[str, Any]) -> str:
         import yaml
-        return f"You are the STEP {role}. Return only a YAML packet conforming to your role contract. You have no STEP-file access and cannot contact another role.\n\ncontext:\n" + yaml.safe_dump(context, sort_keys=False)
+        try:
+            role_reference = _ROLE_REFERENCES[role]
+        except KeyError as exc:
+            raise TransitionError(f"unknown STEP role: {role}") from exc
+        return (
+            f"You are the STEP {role}. Read your role contract at {role_reference} "
+            f"and the shared packet contract at {_PACKET_CONTRACT} before responding. "
+            "Return only a YAML packet conforming to those contracts. You have no "
+            "STEP-file access and cannot contact another role.\n\ncontext:\n"
+            + yaml.safe_dump(context, sort_keys=False)
+        )
 
     def approve(self, state: dict[str, Any], gate: dict[str, Any], user_input: str) -> dict[str, Any]:
         validate_state(state); validate_gate(gate)

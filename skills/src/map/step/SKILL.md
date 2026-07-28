@@ -27,7 +27,7 @@ Use-When: An orchestrator needs coordinator, worker, or assessor instructions an
 
 1. Load the role reference and the shared packet contract.
 2. Give the role only its declared context; never provide STEP operations or another role's private context.
-3. Normalize the returned YAML packet with `python scripts/normalize_packet.py <role> <input.yaml>`.
+3. Build and normalize the returned packet with the role-specific command, such as `python scripts/normalize_packet.py worker --slug task --intent "Complete task" --criteria done --do-summary "Completed task" --validate-result success`.
 4. Return the validated packet to the orchestrator, which independently validates it against STEP state.
 
 ## 3. Outputs
@@ -45,10 +45,27 @@ Use-When: An orchestrator needs coordinator, worker, or assessor instructions an
 
 ## 5. Examples
 
-### Example 1: Normalize coordinator output
+### Example 1: Build role packets
 
-**Prompt:** Load the coordinator role contract and normalize its YAML packet.
-**Outcome:** Load [`references/coordinator.md`](references/coordinator.md) and [`references/packet_contract.md`](references/packet_contract.md), then validate the packet with `scripts/normalize_packet.py`; return its result without operating STEP state.
+Each role implies its packet type, so task fields use the same option names:
+
+```sh
+python scripts/normalize_packet.py coordinator \
+  --lessons "Keep validation evidence" \
+  --slug validate-cli --intent "Verify the role CLI" --criteria "All role commands pass" \
+  --recommendation validate-cli
+python scripts/normalize_packet.py worker \
+  --slug validate-cli --intent "Verify the role CLI" --criteria "All role commands pass" \
+  --do-summary "Ran the command checks" --do-evidence "command output" \
+  --validate-result success --validate-evidence "all checks passed"
+python scripts/normalize_packet.py assessor \
+  --slug validate-cli --intent "Verify the role CLI" --criteria "All role commands pass" \
+  --do-summary "Ran the command checks" --validate-result success \
+  --outcome progressed --retro-wins "CLI behavior is verified" \
+  --retro-actions "Keep command examples current"
+```
+
+Repeat list options—such as `--lessons`, `--criteria`, `--do-evidence`, and `--retro-wins`—for every item. For coordinator proposals, repeat `--slug`, `--intent`, and `--criteria` together once per proposed task.
 
 ## Role references
 
