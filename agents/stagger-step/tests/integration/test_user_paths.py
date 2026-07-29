@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 
 import pytest
+from stagger_step.harness import HarnessError, PiRpcHarness
 
-from .conftest import assessor, complete, coordinator, scenario, state
+from .conftest import FAKE, assessor, calls, complete, coordinator, scenario, state
 
 pytestmark = pytest.mark.integration
 
@@ -31,6 +32,12 @@ def test_default_harness_sessions_name_roles_log_ids_and_keep_state_clean(cli):
     assert "--session-id" in argv
     assert len(argv[argv.index("--session-id") + 1]) == 36
     assert argv[argv.index("--name") + 1] == "STEP-qual-coordinator"
+    assert "--extension" in argv
+    assert argv[argv.index("--extension") + 1].endswith("pi-extension/index.ts")
+    assert argv[argv.index("--step-role") + 1] == "coordinator"
+    assert "stagger_step_finalize_coordinator exactly once" in json.loads(
+        log.read_text().splitlines()[0]
+    )["prompt"]
     assert "pi role sessions" in result.stderr
     assert all(f"{role}=" in result.stderr for role in ("coordinator", "worker", "assessor"))
     assert "session" not in step.read_text()
@@ -81,6 +88,122 @@ def test_invalid_worker_packet_is_corrected_in_its_persistent_session(cli):
     assert "worker.packet.do.summary" in worker_calls[1]["prompt"]
     assert "required" in worker_calls[1]["prompt"]
     assert worker_calls[0]["argv"][worker_calls[0]["argv"].index("--session-id") + 1] == worker_calls[1]["argv"][worker_calls[1]["argv"].index("--session-id") + 1]
+
+
+def test_missing_coordinator_finalizer_is_repaired_in_the_same_role_session(cli):
+    run, step, log = cli
+    result = run(
+        "init",
+        "--goal",
+        "Goal",
+        replies={"coordinator": ["no_finalizer", coordinator("first")]},
+    )
+    assert result.returncode == 0, result.stderr
+    coordinator_calls = [call for call in calls(log) if call["role"] == "coordinator"]
+    assert len(coordinator_calls) == 2
+    assert "Do not return YAML directly" in coordinator_calls[1]["prompt"]
+    assert (
+        coordinator_calls[0]["argv"][coordinator_calls[0]["argv"].index("--session-id") + 1]
+        == coordinator_calls[1]["argv"][coordinator_calls[1]["argv"].index("--session-id") + 1]
+    )
+    assert state(step)["next"][0]["slug"] == "first"
+
+
+def test_missing_finalizer_is_repaired_in_the_same_role_session(cli):
+    run, step, log = cli
+    init(run)
+    result = run(
+        "gate",
+        "approved",
+        replies={
+            "worker": ["no_finalizer", {"packet": complete("first")}],
+            "assessor": [assessor("first")],
+            "coordinator": [coordinator("second")],
+        },
+    )
+    assert result.returncode == 0, result.stderr
+    worker_calls = [
+        json.loads(line) for line in log.read_text().splitlines() if '"role": "worker"' in line
+    ]
+    assert len(worker_calls) == 2
+    assert "Do not return YAML directly" in worker_calls[1]["prompt"]
+    saved = state(step)
+    assert saved["current"]["slug"] == "first"
+
+
+def test_missing_assessor_finalizer_is_repaired_in_the_same_role_session(cli):
+    run, step, log = cli
+    init(run)
+    result = run(
+        "gate",
+        "approved",
+        replies={
+            "worker": [{"packet": complete("first")}],
+            "assessor": ["no_finalizer", assessor("first")],
+            "coordinator": [coordinator("second")],
+        },
+    )
+    assert result.returncode == 0, result.stderr
+    assessor_calls = [call for call in calls(log) if call["role"] == "assessor"]
+    assert len(assessor_calls) == 2
+    assert "Do not return YAML directly" in assessor_calls[1]["prompt"]
+    assert (
+        assessor_calls[0]["argv"][assessor_calls[0]["argv"].index("--session-id") + 1]
+        == assessor_calls[1]["argv"][assessor_calls[1]["argv"].index("--session-id") + 1]
+    )
+    assert state(step)["current"]["slug"] == "first"
+
+
+def test_repeated_close_retries_and_keeps_step_state_unchanged(cli):
+    run, step, log = cli
+    init(run)
+    before = step.read_bytes()
+    result = run("gate", "approved", replies={"worker": ["close", "close", "close"]})
+    assert result.returncode == 3
+    assert "RPC closed before settlement" in result.stderr
+    assert len([call for call in calls(log) if call["role"] == "worker"]) == 3
+    assert step.read_bytes() == before
+
+
+def test_wrong_finalizer_is_rejected_without_step_state_mutation(cli):
+    run, step, log = cli
+    init(run)
+    before = step.read_bytes()
+    result = run(
+        "gate", "approved", replies={"worker": ["wrong_finalizer", "wrong_finalizer"]}
+    )
+    assert result.returncode == 3
+    assert "without stagger_step_finalize_worker" in result.stderr
+    assert len([call for call in calls(log) if call["role"] == "worker"]) == 2
+    assert step.read_bytes() == before
+
+
+def test_timeout_retries_against_fake_pi(tmp_path, monkeypatch):
+    scenario_path = tmp_path / "scenario.json"
+    log_path = tmp_path / "pi.log"
+    scenario_path.write_text(json.dumps({"worker": ["sleep", "sleep"]}))
+    monkeypatch.setenv("FAKE_PI_SCENARIO", str(scenario_path))
+    monkeypatch.setenv("FAKE_PI_LOG", str(log_path))
+    harness = PiRpcHarness(
+        command=(str(FAKE),), timeout_seconds=0.2, retries=1, session_enabled=False
+    )
+
+    with pytest.raises(HarnessError, match="RPC timed out before settlement"):
+        harness.invoke("worker", "test timeout")
+
+    assert len(calls(log_path)) == 2
+
+
+def test_second_missing_finalizer_keeps_step_state_unchanged(cli):
+    run, step, _ = cli
+    init(run)
+    before = step.read_bytes()
+    result = run(
+        "gate", "approved", replies={"worker": ["no_finalizer", "no_finalizer"]}
+    )
+    assert result.returncode == 3
+    assert "without stagger_step_finalize_worker" in result.stderr
+    assert step.read_bytes() == before
 
 
 def test_second_invalid_worker_packet_keeps_step_state_unchanged(cli):

@@ -56,12 +56,34 @@ def main() -> int:
         flush=True,
     )
     text = reply if isinstance(reply, str) else json.dumps(reply)
+    if reply != "no_finalizer":
+        tool_name = (
+            "stagger_step_finalize_wrong"
+            if reply == "wrong_finalizer"
+            else f"stagger_step_finalize_{role}"
+        )
+        print(
+            json.dumps(
+                {
+                    "type": "tool_execution_end",
+                    "toolName": tool_name,
+                    "result": {
+                        "content": [{"type": "text", "text": text}],
+                        "isError": False,
+                    },
+                }
+            ),
+            flush=True,
+        )
     print(
         json.dumps(
             {
                 "type": "agent_end",
                 "messages": [
-                    {"role": "assistant", "content": [{"type": "text", "text": text}]}
+                    {
+                        "role": "assistant",
+                        "content": [{"type": "text", "text": "ignored assistant text"}],
+                    }
                 ],
             }
         ),

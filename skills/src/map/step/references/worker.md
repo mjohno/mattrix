@@ -19,14 +19,4 @@ packet:
     evidence: [all checks passed]
 ```
 
-Example CLI (for an orchestrator):
-
-```sh
-python scripts/normalize_packet.py worker \
-  --slug validate-cli --intent "Verify the role CLI" \
-  --criteria "All role commands pass" \
-  --do-summary "Ran the command checks" --do-evidence "command output" \
-  --validate-result success --validate-evidence "all checks passed"
-```
-
-Repeat `--criteria`, `--do-evidence`, and `--validate-evidence` for each item.
+Return the candidate packet without STEP state access. The orchestrator owns role-packet normalization.

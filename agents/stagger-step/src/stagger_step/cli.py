@@ -13,6 +13,7 @@ import yaml
 from .diagnostics import write_diagnostics
 from .harness import PiRpcHarness
 from .loop import StepLoop, TransitionError
+from .normalizer import ROLES, normalize_packet
 from .state import StateError, create_state, load_state, write_atomic
 
 
@@ -46,6 +47,10 @@ def parser() -> argparse.ArgumentParser:
         help="persist and reuse role-specific Pi sessions (default: on)",
     )
     sub = p.add_subparsers(dest="command", required=True)
+    normalize = sub.add_parser(
+        "normalize", help="normalize one role YAML response from standard input"
+    )
+    normalize.add_argument("--role", choices=ROLES, required=True)
     init = sub.add_parser("init", help="create a new STEP state")
     init.add_argument("--goal", required=True)
     init.add_argument("--lesson", action="append", default=[])
@@ -115,6 +120,13 @@ def main(argv: list[str] | None = None) -> int:
 
     previous_sigint = signal.signal(signal.SIGINT, on_sigint)
     try:
+        if args.command == "normalize":
+            try:
+                candidate = yaml.safe_load(sys.stdin.read())
+            except yaml.YAMLError as exc:
+                raise StateError(f"invalid role YAML: {exc}") from exc
+            emit(normalize_packet(args.role, candidate))
+            return 0
         if args.command == "init":
             path = path_from(args, create=True)
             if path.exists():

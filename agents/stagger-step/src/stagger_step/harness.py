@@ -6,13 +6,25 @@ import os
 import re
 import select
 import subprocess
+import sys
 import time
 import uuid
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Protocol
+
+from .state import StateError
 
 
 class HarnessError(RuntimeError):
+    pass
+
+
+class PacketNormalizationError(StateError):
+    pass
+
+
+class FinalizerProtocolError(HarnessError):
     pass
 
 
@@ -35,6 +47,7 @@ class PiRpcHarness:
     retries: int = 2
     session_enabled: bool = True
     session_scope: str = "STEP-default.yaml"
+    normalizer_command: tuple[str, ...] = (sys.executable, "-m", "stagger_step.cli")
 
     def __post_init__(self) -> None:
         self._session_name("coordinator")
@@ -65,9 +78,19 @@ class PiRpcHarness:
         # Processes remain role-isolated; with persistent sessions, a follow-up
         # reconnects to the same role context in a fresh child process.
         del follow_up
+        repair_prompt: str | None = None
         for attempt in range(self.retries + 1):
             try:
-                return self._invoke_once(role, prompt)
+                return self._invoke_once(role, repair_prompt or prompt)
+            except (PacketNormalizationError, FinalizerProtocolError) as exc:
+                if repair_prompt is not None:
+                    raise
+                repair_prompt = (
+                    f"{prompt}\n\nYour previous {role} response was invalid: {exc}. "
+                    f"Do not return YAML directly. Call "
+                    f"stagger_step_finalize_{role} exactly once with one complete "
+                    "conforming YAML packet."
+                )
             except (OSError, HarnessError) as exc:
                 if attempt == self.retries:
                     raise HarnessError(f"{role} harness failure: {exc}") from exc
@@ -80,9 +103,34 @@ class PiRpcHarness:
                 time.sleep(0.1 * (2**attempt))
         raise AssertionError("unreachable")
 
+    @staticmethod
+    def _extension_path() -> Path:
+        return Path(__file__).resolve().parents[1] / "pi-extension" / "index.ts"
+
+    def _normalize(self, role: str, text: str) -> dict[str, Any]:
+        result = subprocess.run(
+            [*self.normalizer_command, "normalize", "--role", role],
+            input=text,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            error = result.stderr.strip() or "normalization failed"
+            raise PacketNormalizationError(
+                f"{role} finalizer rejected packet: {error}"
+            )
+        return _yaml_mapping(result.stdout)
+
     def _invoke_once(self, role: str, prompt: str) -> dict[str, Any]:
         session_name = self._session_name(role)
-        command = list(self.command)
+        command = [
+            *self.command,
+            "--extension",
+            str(self._extension_path()),
+            "--step-role",
+            role,
+        ]
         if self.session_enabled:
             command = [part for part in command if part != "--no-session"]
             session_id = self._session_id(role)
@@ -117,8 +165,9 @@ class PiRpcHarness:
             assert proc.stdin and proc.stdout
             proc.stdin.write(json.dumps(request) + "\n")
             proc.stdin.flush()
-            deadline, text, settled = (
+            deadline, finalizer_text, finalizer_error, settled = (
                 time.monotonic() + self.timeout_seconds,
+                None,
                 None,
                 False,
             )
@@ -141,19 +190,41 @@ class PiRpcHarness:
                     break
                 if event.get("type") == "response" and event.get("success") is False:
                     raise HarnessError(event.get("error", "RPC rejected request"))
-                if event.get("type") == "agent_end":
-                    for message in event.get("messages", []):
-                        if message.get("role") == "assistant":
-                            chunks = [
-                                c.get("text", "")
-                                for c in message.get("content", [])
-                                if c.get("type") == "text"
-                            ]
-                            if chunks:
-                                text = "".join(chunks)
-            if not settled or text is None:
-                raise HarnessError("RPC settled without assistant text")
-            payload = _yaml_mapping(text)
+                if (
+                    event.get("type") == "tool_execution_end"
+                    and event.get("toolName") == f"stagger_step_finalize_{role}"
+                ):
+                    result = event.get("result")
+                    if not isinstance(result, dict):
+                        finalizer_error = "finalizer returned no result"
+                        continue
+                    chunks = [
+                        content.get("text", "")
+                        for content in result.get("content", [])
+                        if isinstance(content, dict) and content.get("type") == "text"
+                    ]
+                    if result.get("isError"):
+                        detail = "".join(chunks).strip()
+                        finalizer_error = (
+                            f"finalizer reported an error: {detail}"
+                            if detail
+                            else "finalizer reported an error"
+                        )
+                        continue
+                    if not chunks:
+                        finalizer_error = "finalizer returned no text"
+                        continue
+                    finalizer_text = "".join(chunks)
+                    finalizer_error = None
+            if not settled:
+                raise HarnessError("RPC did not settle")
+            if finalizer_error is not None:
+                raise FinalizerProtocolError(finalizer_error)
+            if finalizer_text is None:
+                raise FinalizerProtocolError(
+                    f"RPC settled without stagger_step_finalize_{role}"
+                )
+            payload = self._normalize(role, finalizer_text)
             logger.info("pi settled role=%s session_id=%s", role, session_id)
             return payload
         finally:

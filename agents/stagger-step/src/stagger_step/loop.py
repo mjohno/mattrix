@@ -296,8 +296,9 @@ class StepLoop:
         instructions = (
             f"You are the STEP {role}. Read your role contract at "
             f"{_ROLE_REFERENCES[role]} and the shared packet contract at "
-            f"{_PACKET_CONTRACT} before responding. Return only a YAML packet "
-            "conforming to those contracts. You have no STEP-file access and "
-            "cannot contact another role.\n\ncontext:\n"
+            f"{_PACKET_CONTRACT} before responding. Call "
+            f"stagger_step_finalize_{role} exactly once with the complete YAML "
+            "packet; do not return a role packet directly in assistant text. You "
+            "have no STEP-file access and cannot contact another role.\n\ncontext:\n"
         )
         return instructions + yaml.safe_dump(context, sort_keys=False)

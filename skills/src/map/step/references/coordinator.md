@@ -15,14 +15,4 @@ proposed_next_packets:
 recommendation: validate-cli
 ```
 
-Example CLI (for an orchestrator):
-
-```sh
-python scripts/normalize_packet.py coordinator \
-  --lessons "Keep validation evidence" \
-  --slug validate-cli --intent "Verify the role CLI" \
-  --criteria "All role commands pass" \
-  --recommendation validate-cli
-```
-
-Repeat `--lessons` for each lesson. Repeat `--slug`, `--intent`, and `--criteria` together for each proposed task.
+Return the candidate packet without STEP state access. The orchestrator owns role-packet normalization.

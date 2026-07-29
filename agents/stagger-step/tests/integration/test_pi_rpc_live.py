@@ -1,4 +1,8 @@
-"""Opt-in compatibility check against an installed real Pi RPC server."""
+"""Opt-in Pi-facing live black-box smoke check against installed Pi RPC.
+
+Run after focused units and deterministic local integration coverage; it requires
+PI_RPC_INTEGRATION=1 and must not be needed for ordinary local test runs.
+"""
 
 from __future__ import annotations
 
