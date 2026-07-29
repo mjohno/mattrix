@@ -6,7 +6,7 @@ Create or update one MKF concept safely, enforce the shared contract programmati
 
 ## Write Flow
 
-1. Resolve exactly one target bundle or explicit bundle path.
+1. Resolve exactly one target bundle root from an explicit filesystem path or an unambiguous configured `MKF_PATH` root basename.
 2. Determine the target concept path and concept ID.
 3. Check for likely duplicates by:
    - exact path / concept ID
@@ -48,8 +48,9 @@ Record owns producer templates:
 
 ## Safety Rules
 
-- Require an unambiguous target bundle.
+- Require an unambiguous target bundle root; never infer one from a multi-root `MKF_PATH`.
 - Do not add or maintain `timestamp`.
 - Do not treat `log.md` specially.
 - Do not overwrite non-generated `index.md` without explicit confirmation or a force workflow.
 - Preserve source citations when updating.
+- Stop and ask when `MKF_PATH` is unset, a selector is absent, or a root basename is ambiguous.

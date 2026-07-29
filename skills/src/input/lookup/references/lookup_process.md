@@ -8,17 +8,18 @@ Find the best MKF metadata matches for a query, then let the agent or user load 
 
 Use `scripts/search_mkf.py`.
 
-Recommended invocation shape:
+Recommended invocation shapes:
 
 ```sh
-python scripts/search_mkf.py --query "search terms" --bundle NAME=/path/to/bundle --limit 10
+MKF_PATH=/knowledge/general:/knowledge/phoenix python scripts/search_mkf.py --query "search terms" --limit 10
+python scripts/search_mkf.py --query "search terms" --bundle /knowledge/general --limit 10
 ```
 
-The script may also resolve bundles from the environment when no explicit `--bundle` is supplied.
+Without `--bundle`, the script resolves roots from `MKF_PATH`. Each `--bundle` is an explicit bundle-root path and may be repeated.
 
 ## Search Order
 
-1. Bundle roots in resolved MKF bundle path order.
+1. Bundle roots in resolved `MKF_PATH` or explicit argument order.
 2. Directory names, filenames, and concept IDs.
 3. Frontmatter metadata: `type`, `title`, `tags`, then `description`.
 4. Markdown body content.
@@ -34,7 +35,7 @@ Return JSON records grouped by bundle:
   "query": "checklist",
   "results": [
     {
-      "bundle": "GENERAL",
+      "bundle": "general",
       "bundle_root": "/knowledge/general",
       "concept_id": "quality/skill-checklist",
       "path": "/knowledge/general/quality/skill-checklist.md",
@@ -55,6 +56,6 @@ Return JSON records grouped by bundle:
 
 - Return metadata matches, not full synthesized answers.
 - Load full files only after match selection.
-- Group or label results by bundle.
+- Group or label results by bundle root basename.
 - Do not write or repair concepts.
 - If no matches are found, report the searched bundles and query.

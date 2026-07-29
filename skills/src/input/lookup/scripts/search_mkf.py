@@ -4,7 +4,7 @@ Search MKF bundles and return best metadata matches as JSON.
 
 Examples:
     python search_mkf.py --query checklist
-    python search_mkf.py --query template --bundle GENERAL=/knowledge/general --limit 5
+    python search_mkf.py --query template --bundle /knowledge/general --limit 5
     python search_mkf.py --log-level DEBUG --query "skill quality"
     python search_mkf.py --test
 
@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -28,40 +29,28 @@ from typing import Any
 log = logging.getLogger(__name__)
 
 
-def normalize_bundle_name(name: str) -> str:
-    """Normalize a bundle token for MKF environment variable lookup."""
-    return name.strip().upper().replace("-", "_")
+def bundle_label(path: Path) -> str:
+    """Return the display label derived from a bundle root path."""
+    return path.name or "BUNDLE"
 
 
 def env_bundles() -> list[tuple[str, Path]]:
-    """Resolve MKF bundles from MKF_BUNDLES and MKF_<NAME>_BUNDLE variables."""
+    """Resolve ordered MKF bundle roots from colon-delimited MKF_PATH."""
     bundles: list[tuple[str, Path]] = []
-    raw = os.environ.get("MKF_BUNDLES", "")
-    for token in raw.split(";"):
-        token = token.strip()
-        if not token:
+    raw = os.environ.get("MKF_PATH", "")
+    for path_text in raw.split(":"):
+        path_text = path_text.strip()
+        if not path_text:
             continue
-        name = normalize_bundle_name(token)
-        value = os.environ.get(f"MKF_{name}_BUNDLE")
-        if value:
-            bundles.append((name, Path(value).expanduser().resolve()))
-        else:
-            log.warning(
-                "Ignoring bundle %s because MKF_%s_BUNDLE is not set; "
-                "set it to a bundle root path.",
-                token,
-                name,
-            )
+        path = Path(path_text).expanduser().resolve()
+        bundles.append((bundle_label(path), path))
     return bundles
 
 
 def parse_bundle_arg(value: str) -> tuple[str, Path]:
-    """Parse a --bundle value as NAME=PATH or PATH."""
-    if "=" in value:
-        name, path_text = value.split("=", 1)
-        return normalize_bundle_name(name), Path(path_text).expanduser().resolve()
+    """Parse a --bundle value as an explicit bundle root path."""
     path = Path(value).expanduser().resolve()
-    return normalize_bundle_name(path.name or "BUNDLE"), path
+    return bundle_label(path), path
 
 
 def parse_simple_yaml(raw: str) -> dict[str, Any]:
@@ -112,7 +101,9 @@ def split_frontmatter(text: str) -> tuple[dict[str, Any], str]:
 
 def terms(query: str) -> list[str]:
     """Split a query into searchable lowercase terms."""
-    return [term for term in re.split(r"[^A-Za-z0-9_/-]+", query.lower()) if term]
+    return [
+        term for term in re.split(r"[^A-Za-z0-9_/-]+", query.lower()) if term
+    ]
 
 
 def count_matches(haystack: str, query_terms: Iterable[str]) -> int:
@@ -121,7 +112,9 @@ def count_matches(haystack: str, query_terms: Iterable[str]) -> int:
     return sum(text.count(term.lower()) for term in query_terms)
 
 
-def first_excerpt(text: str, query_terms: Iterable[str], width: int = 180) -> str:
+def first_excerpt(
+    text: str, query_terms: Iterable[str], width: int = 180
+) -> str:
     """Return a compact excerpt around the first matching query term."""
     lower = text.lower()
     positions = [
@@ -149,7 +142,7 @@ def search_file(
     path: Path,
     query_terms: list[str],
 ) -> dict[str, Any] | None:
-    """Search one Markdown concept and return a metadata match record when matched."""
+    """Search one Markdown concept and return a match record when matched."""
     text = path.read_text(encoding="utf-8", errors="replace")
     frontmatter, body = split_frontmatter(text)
     cid = concept_id(bundle_root, path)
@@ -231,7 +224,7 @@ def search_bundles(
     bundles: list[tuple[str, Path]],
     limit: int,
 ) -> dict[str, Any]:
-    """Search resolved bundles and return the JSON-serializable result object."""
+    """Search resolved bundles and return a JSON-serializable result object."""
     query_terms = terms(query)
     results: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
@@ -243,8 +236,8 @@ def search_bundles(
                     "bundle": name,
                     "root": str(root),
                     "error": (
-                        "bundle root not found; provide an existing path or set "
-                        "the matching MKF_<NAME>_BUNDLE variable"
+                        "bundle root not found; provide an existing path "
+                        "or add it to MKF_PATH"
                     ),
                 }
             )
@@ -265,11 +258,17 @@ def search_bundles(
                 match["bundle_order"] = order
                 results.append(match)
 
-    results.sort(key=lambda r: (r["bundle_order"], -int(r["score"]), r["concept_id"]))
+    results.sort(
+        key=lambda r: (r["bundle_order"], -int(r["score"]), r["concept_id"])
+    )
     for result in results:
         result.pop("bundle_order", None)
 
-    return {"query": query, "results": results[: max(limit, 0)], "errors": errors}
+    return {
+        "query": query,
+        "results": results[: max(limit, 0)],
+        "errors": errors,
+    }
 
 
 def configure_logging(log_level: str) -> None:
@@ -293,7 +292,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--bundle",
         action="append",
         default=[],
-        help="Bundle as NAME=PATH or PATH; repeatable",
+        help="Explicit bundle root path; repeatable",
     )
     parser.add_argument("--limit", type=int, default=10, help="Maximum results")
     parser.add_argument(
@@ -325,39 +324,110 @@ def run_tests() -> int:
     """Run inline tests using unittest. Return 0 if all pass, 1 if any fail."""
 
     class TestSearchMkf(unittest.TestCase):
-        def test_parse_args(self) -> None:
-            parsed = parse_args(["--query", "checklist", "--log-level", "DEBUG"])
-            self.assertEqual(parsed.query, "checklist")
-            self.assertEqual(parsed.log_level, "DEBUG")
-            self.assertTrue(parse_args(["--test"]).test)
-            with self.assertRaises(SystemExit):
-                parse_args([])
+        def run_cli(
+            self, args: list[str], environment: dict[str, str]
+        ) -> subprocess.CompletedProcess[str]:
+            """Run the script as a CLI with an isolated MKF_PATH."""
+            env = os.environ.copy()
+            env.pop("MKF_PATH", None)
+            env.update(environment)
+            return subprocess.run(
+                [sys.executable, str(Path(__file__).resolve()), *args],
+                capture_output=True,
+                check=False,
+                encoding="utf-8",
+                env=env,
+            )
 
-        def test_normalize_bundle_name(self) -> None:
-            self.assertEqual(normalize_bundle_name(" my-bundle "), "MY_BUNDLE")
+        def write_concept(self, root: Path, relative_path: str) -> None:
+            """Create a minimal searchable MKF concept."""
+            concept = root / relative_path
+            concept.parent.mkdir(parents=True, exist_ok=True)
+            concept.write_text(
+                "---\n"
+                "type: undefined\n"
+                "title: Example\n"
+                "description: Example concept.\n"
+                "tags: []\n"
+                "---\n\nBody\n",
+                encoding="utf-8",
+            )
 
-        def test_search_happy_path(self) -> None:
+        def test_cli_searches_mkf_path_in_order(self) -> None:
             with tempfile.TemporaryDirectory() as temp_dir:
                 root = Path(temp_dir)
-                concept = root / "checks" / "quality.md"
-                concept.parent.mkdir()
-                concept.write_text(
-                    "---\n"
-                    "type: checklist\n"
-                    "title: Skill Quality\n"
-                    "description: Quality checklist.\n"
-                    "tags: [skills]\n"
-                    "---\n\nBody\n",
+                first = root / "first"
+                second = root / "second"
+                self.write_concept(first, "needle-first.md")
+                self.write_concept(second, "needle-second.md")
+                result = self.run_cli(
+                    ["--query", "needle", "--limit", "10"],
+                    {"MKF_PATH": f"{first}::{second}"},
+                )
+                output = json.loads(result.stdout)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(
+                    [match["bundle"] for match in output["results"]],
+                    ["first", "second"],
+                )
+
+        def test_cli_explicit_bundle_bypasses_mkf_path(self) -> None:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                root = Path(temp_dir)
+                configured = root / "configured"
+                explicit = root / "explicit"
+                self.write_concept(configured, "needle-configured.md")
+                self.write_concept(explicit, "needle-explicit.md")
+                result = self.run_cli(
+                    ["--query", "needle", "--bundle", str(explicit)],
+                    {"MKF_PATH": str(configured)},
+                )
+                output = json.loads(result.stdout)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(
+                    [match["bundle"] for match in output["results"]],
+                    ["explicit"],
+                )
+
+        def test_cli_missing_configured_root_returns_error(self) -> None:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                missing = Path(temp_dir) / "missing"
+                result = self.run_cli(
+                    ["--query", "needle"], {"MKF_PATH": str(missing)}
+                )
+                output = json.loads(result.stdout)
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(output["results"], [])
+                self.assertIn(
+                    "bundle root not found", output["errors"][0]["error"]
+                )
+
+        def test_parse_bundle_arg_derives_basename(self) -> None:
+            name, path = parse_bundle_arg("/knowledge/general")
+            self.assertEqual(name, "general")
+            self.assertEqual(path, Path("/knowledge/general").resolve())
+
+        def test_parse_simple_yaml_preserves_list_values(self) -> None:
+            output = parse_simple_yaml("tags: [one, two]\ntitle: Example\n")
+            self.assertEqual(
+                output, {"tags": ["one", "two"], "title": "Example"}
+            )
+
+        def test_search_prefers_path_matches_and_applies_limit(self) -> None:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                root = Path(temp_dir)
+                self.write_concept(root, "needle.md")
+                self.write_concept(root, "metadata.md")
+                metadata = root / "metadata.md"
+                metadata.write_text(
+                    metadata.read_text(encoding="utf-8").replace(
+                        "title: Example", "title: Needle"
+                    ),
                     encoding="utf-8",
                 )
-                output = search_bundles("checklist", [("GENERAL", root)], 10)
+                output = search_bundles("needle", [("root", root)], 1)
                 self.assertEqual(output["errors"], [])
-                self.assertEqual(output["results"][0]["concept_id"], "checks/quality")
-
-        def test_missing_bundle_reports_error(self) -> None:
-            output = search_bundles("x", [("MISSING", Path("/definitely/missing"))], 10)
-            self.assertEqual(output["results"], [])
-            self.assertIn("bundle root not found", output["errors"][0]["error"])
+                self.assertEqual(output["results"][0]["concept_id"], "needle")
 
     suite = unittest.TestLoader().loadTestsFromTestCase(TestSearchMkf)
     result = unittest.TextTestRunner(verbosity=2, stream=sys.stderr).run(suite)

@@ -24,7 +24,7 @@ Use-When: The user explicitly asks to look up durable knowledge or retrieve MKF 
 
 ## 1. Inputs
 - Query text
-- Optional bundle names or filesystem bundle paths
+- Optional unambiguous configured bundle-root basenames or filesystem bundle paths
 - Optional type/tag filters
 - Optional result limit
 
@@ -49,5 +49,5 @@ Use-When: The user explicitly asks to look up durable knowledge or retrieve MKF 
 
 ### Example 1
 
-**Prompt:** Look up checklist concepts in general.
-**Outcome:** Runs `scripts/search_mkf.py`, resolves bundles via lookup-owned discovery rules, returns matching concept metadata, and does not synthesize advice.
+**Prompt:** Look up checklist concepts in the `general` root on `MKF_PATH`.
+**Outcome:** Runs `scripts/search_mkf.py`, resolves the uniquely named root via lookup-owned discovery rules, returns matching concept metadata, and does not synthesize advice.

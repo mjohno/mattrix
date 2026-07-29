@@ -15,7 +15,7 @@ Non-Goals: Do not opportunistically record, perform broad lookup, synthesize fin
 Use-When: The user explicitly asks to record durable knowledge or a workflow explicitly triggers MKF recording.
 
 ## 0. Prerequisites
-- One unambiguous target bundle name or explicit bundle path
+- One unambiguous `MKF_PATH` root basename or explicit bundle path
 - Shared contract: `../../interface/knowledge-base/SKILL.md`
 - Knowledge contract: `../../interface/knowledge-base/references/knowledge_contract.md`
 - Record process: `references/record_process.md`
@@ -28,7 +28,7 @@ Use-When: The user explicitly asks to record durable knowledge or a workflow exp
 
 ## 2. Processes
 1. Read the shared `knowledge-base` references only as needed.
-2. Resolve exactly one target bundle or explicit bundle path; ask when missing or ambiguous.
+2. Resolve exactly one target bundle root from an explicit path or an unambiguous `MKF_PATH` basename; ask when missing or ambiguous.
 3. Determine concept path/ID, check collisions by path/title/resource, and ask before overwrite or substantial replacement.
 4. Draft or update the concept using local templates when useful, preserving unknown frontmatter keys and citations.
 5. Run `scripts/validate_frontmatter.py` before finalizing written concepts.
@@ -48,5 +48,5 @@ Use-When: The user explicitly asks to record durable knowledge or a workflow exp
 
 ### Example 1
 
-**Prompt:** Record this as a checklist in the general bundle.
-**Outcome:** Writes one MKF concept with valid frontmatter, validates it, rebuilds generated indexes for the bundle, and reports the changed files.
+**Prompt:** Record this as a checklist in the uniquely named `general` root on `MKF_PATH`.
+**Outcome:** Resolves one bundle root, writes one MKF concept with valid frontmatter, validates it, rebuilds generated indexes for the bundle, and reports the changed files.

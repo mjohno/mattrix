@@ -47,31 +47,27 @@ Rules:
 
 Unknown types are allowed; consumers should tolerate them.
 
-## Manual Bundle Discovery Information
+## Bundle Discovery Information
 
-MKF bundle selectors may be explicit filesystem paths or configured bundle names.
-
-Environment convention:
+Configured bundles are supplied through `MKF_PATH`, a colon-delimited list of bundle-root paths:
 
 ```sh
-MKF_BUNDLES=GENERAL;PHOENIX;MY-BUNDLE;
-MKF_GENERAL_BUNDLE=/knowledge/general
-MKF_PHOENIX_BUNDLE=/knowledge/phoenix
-MKF_MY_BUNDLE_BUNDLE=/knowledge/my-bundle
+MKF_PATH=/knowledge/general:/knowledge/phoenix:/knowledge/my-bundle
 ```
 
 Manual interpretation:
-- `MKF_BUNDLES` is semicolon-delimited.
-- Trim whitespace and ignore empty entries.
-- Normalize selector names to uppercase.
-- Treat `-` and `_` as equivalent for environment variable lookup.
-- Resolve normalized names through `MKF_<NAME>_BUNDLE`.
-- Explicit filesystem paths can be used directly as bundle roots when valid.
+- Split `MKF_PATH` on `:`.
+- Trim whitespace and ignore empty entries, including repeated or trailing separators.
+- Expand `~` and resolve each remaining entry as a filesystem bundle root.
+- Preserve root order; consumers search earlier roots before later roots.
+- Derive a bundle's display label from its root directory basename.
+- Explicit filesystem paths may be used directly as one-off bundle roots when valid; they do not require membership in `MKF_PATH`.
+- A basename selector is valid only when it identifies exactly one configured root. Consumers must report duplicate basenames as ambiguous rather than choosing one.
 
 Resolved bundle record shape:
 
 ```yaml
-name: GENERAL
+name: general
 root: /knowledge/general
 source: env | prompt-path
 ```

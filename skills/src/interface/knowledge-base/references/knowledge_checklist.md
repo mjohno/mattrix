@@ -16,7 +16,7 @@ Use this for MKF conformance checks. A concept or bundle passes when every appli
 - [ ] Bundle root is a filesystem directory tree.
 - [ ] `index.md` concepts use `type: index` when generated.
 - [ ] `log.md` is not used as an MKF concept.
-- [ ] Bundle selector can be resolved manually from explicit path or `MKF_BUNDLES`/`MKF_<NAME>_BUNDLE` information.
+- [ ] Bundle selector can be resolved manually from an explicit path or an unambiguous `MKF_PATH` root basename.
 
 ## Boundary Critical
 
