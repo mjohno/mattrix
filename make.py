@@ -10,20 +10,29 @@ Quality commands target ``agents/``, root Python scripts, and Python files in
 
 import argparse
 import logging
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 log = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parent
+BUILD_ROOT = ROOT / "build"
+STAGGER_STEP_ROOT = ROOT / "agents" / "stagger-step"
+STAGGER_STEP_BUILD = BUILD_ROOT / "stagger-step"
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description="Mattrix build and quality commands")
+    parser = argparse.ArgumentParser(
+        description="Mattrix build and quality commands"
+    )
     parser.add_argument(
         "command",
         choices=[
+            "build-stagger-step",
+            "clean",
             "docker-build",
             "quality-install",
             "format",
@@ -77,6 +86,49 @@ def quality_command(command: str) -> list[str]:
     return tool_commands[command]
 
 
+def build_stagger_step(quiet: bool) -> int:
+    """Build the Stagger Step wheel under the shared build directory."""
+    STAGGER_STEP_BUILD.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+        prefix=".stagger-step-", dir=STAGGER_STEP_BUILD
+    ) as temp:
+        source = Path(temp) / "source"
+        shutil.copytree(
+            STAGGER_STEP_ROOT,
+            source,
+            ignore=shutil.ignore_patterns(
+                "build", "*.egg-info", "__pycache__", ".pytest_cache"
+            ),
+        )
+        command = [
+            sys.executable,
+            "-m",
+            "pip",
+            "wheel",
+            ".",
+            "--no-deps",
+            "--wheel-dir",
+            str(STAGGER_STEP_BUILD),
+        ]
+        if not quiet:
+            return subprocess.run(command, cwd=source).returncode
+        result = subprocess.run(
+            command, cwd=source, capture_output=True, text=True
+        )
+        if result.returncode:
+            sys.stderr.write(result.stdout)
+            sys.stderr.write(result.stderr)
+        return result.returncode
+
+
+def clean(quiet: bool) -> int:
+    """Remove all repository build output."""
+    shutil.rmtree(BUILD_ROOT, ignore_errors=True)
+    if not quiet:
+        print(f"Removed {BUILD_ROOT.relative_to(ROOT)}/")
+    return 0
+
+
 def docker_build(quiet: bool) -> int:
     """Build the Mattrix image as mattrix:latest."""
     command = [
@@ -100,12 +152,19 @@ def main(argv: list[str] | None = None) -> int:
     """Run the selected build command."""
     args = parse_args(argv)
 
+    if args.command == "build-stagger-step":
+        return build_stagger_step(args.quiet)
+
+    if args.command == "clean":
+        return clean(args.quiet)
+
     if args.command == "docker-build":
         return docker_build(args.quiet)
 
     if args.command == "quality-install":
         return run_command(
-            [sys.executable, "-m", "pip", "install", "-e", ".[quality]"], args.quiet
+            [sys.executable, "-m", "pip", "install", "-e", ".[quality]"],
+            args.quiet,
         )
 
     if args.command == "quality":

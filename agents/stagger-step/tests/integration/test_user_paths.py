@@ -23,7 +23,7 @@ def test_init_persists_ranked_next_and_recommendation(cli):
     assert saved["next"][0]["slug"] == "first" and saved["recommended"] == "first"
 
 
-def test_default_harness_sessions_name_roles_log_ids_and_keep_state_clean(cli):
+def test_default_harness_sessions_are_named_logged_and_keep_state_clean(cli):
     run, step, log = cli
     result = run("--log-level", "INFO", "init", "--goal", "Goal", replies=scenario("fresh"))
     assert result.returncode == 0, result.stderr
@@ -31,15 +31,16 @@ def test_default_harness_sessions_name_roles_log_ids_and_keep_state_clean(cli):
     assert "--no-session" not in argv
     assert "--session-id" in argv
     assert len(argv[argv.index("--session-id") + 1]) == 36
-    assert argv[argv.index("--name") + 1] == "STEP-qual-coordinator"
+    assert argv[argv.index("--name") + 1] == "STEP-qual-bootstrap-coordinator"
     assert "--extension" in argv
-    assert argv[argv.index("--extension") + 1].endswith("pi-extension/index.ts")
+    assert argv[argv.index("--extension") + 1].endswith("pi_extension/index.ts")
     assert argv[argv.index("--step-role") + 1] == "coordinator"
-    assert "stagger_step_finalize_coordinator exactly once" in json.loads(
+    assert "Call `stagger_step_finalize_coordinator` exactly once" in json.loads(
         log.read_text().splitlines()[0]
     )["prompt"]
-    assert "pi role sessions" in result.stderr
-    assert all(f"{role}=" in result.stderr for role in ("coordinator", "worker", "assessor"))
+    assert "pi role session started" in result.stderr
+    assert "session_name=STEP-qual-bootstrap-coordinator" in result.stderr
+    assert "session_id=" in result.stderr
     assert "session" not in step.read_text()
 
 

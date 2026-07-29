@@ -1,6 +1,10 @@
 # stagger-step
 
-`stagger-step` owns the STEP YAML schema, validation, legal transitions, atomic approval writes, and YAML user gates. `skills/src/map/step` supplies only role prompt and packet contracts.
+`stagger-step` owns the STEP YAML schema, validation, legal transitions, atomic approval writes, YAML user gates, and self-contained role prompts under `src/stagger_step/prompts/`.
+
+## Build output
+
+All generated Stagger Step build artifacts belong in the repository-root `build/stagger-step/` directory. Run `python make.py build-stagger-step` to create its wheel there and `python make.py clean` to remove the entire repository-root `build/` directory. Build output is intentionally ignored by Git.
 
 ## CLI
 
@@ -24,7 +28,7 @@ The coordinator selects durable gate lessons from existing lessons, completed hi
 
 ## Pi RPC adapter discovery
 
-By default, the adapter uses persistent role sessions: it invokes Pi with `--name STEP-<slug>-<role>`, a stable role- and STEP-file-specific UUID `--session-id`, the project-owned `pi-stagger-step` extension, and a harness-selected `--step-role`. It sends a JSONL `prompt`, waits for `agent_settled`, and accepts only the matching `stagger_step_finalize_<role>` tool result. That YAML is independently normalized through `stagger-step normalize --role <role>` before STEP processing. It logs the coordinator, worker, and assessor UUIDs at INFO but never writes them to STEP state. `--harness-session off` instead uses `--no-session`. A fresh subprocess is still started for each role invocation, role sessions remain distinct, and the adapter terminates the child before a user gate.
+By default, the adapter starts an ephemeral Pi role session for each role in a STEP transition. It invokes Pi with a debuggable `--name STEP-<step-slug>-<task-slug>-<role>` and a random `--session-id`; the ID is reused only for retry, correction, or clarification calls in that transition. It logs each session name and ID at INFO and never writes either to STEP state. The adapter loads the project-owned `pi-stagger-step` extension and selects one role through `--step-role`. It sends a JSONL `prompt`, waits for `agent_settled`, and accepts only the matching `stagger_step_finalize_<role>` tool result. That YAML is independently normalized through `stagger-step normalize --role <role>` before STEP processing. `--harness-session off` instead uses `--no-session`. A fresh subprocess is still started for each role invocation, role sessions remain distinct, and the adapter terminates the child before a user gate.
 
 Supported discovery evidence: Pi RPC documents `prompt`, `tool_execution_end`, `agent_settled`, `abort`, `new_session`, and `get_state`; command rejection has `success: false`; missing, failed, or malformed finalizer output is a diagnosed harness error. Adapter retries connection/process failures twice with bounded exponential backoff and never infers a transition from a harness failure. Pi version/capabilities are not persisted in STEP state; callers may inspect RPC `get_state` diagnostics separately.
 
@@ -32,7 +36,7 @@ Stagger-step is execution-environment agnostic: its CLI and harness invoke the c
 
 ## pi-stagger-step extension
 
-The extension source is `src/pi-extension/index.ts`. The harness loads it explicitly for role processes and selects one role through `--step-role`; without that flag, the extension exposes no STEP-specific tool. Its LLM-visible tools are `stagger_step_finalize_coordinator`, `stagger_step_finalize_worker`, and `stagger_step_finalize_assessor`; one role process receives only its matching tool.
+The extension source is the packaged asset `src/stagger_step/pi_extension/index.ts`. The harness loads it explicitly for role processes and selects one role through `--step-role`; without that flag, the extension exposes no STEP-specific tool. Its LLM-visible tools are `stagger_step_finalize_coordinator`, `stagger_step_finalize_worker`, and `stagger_step_finalize_assessor`; one role process receives only its matching tool. The wheel includes this asset, so a non-editable installation can invoke Pi-backed roles.
 
 For interactive extension development, symlink its directory to `~/.pi/agent/extensions/pi-stagger-step`. The symlinked extension remains inert unless `--step-role` is supplied.
 

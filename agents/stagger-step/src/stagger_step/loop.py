@@ -2,26 +2,11 @@ from __future__ import annotations
 
 import re
 from copy import deepcopy
-from pathlib import Path
 from typing import Any
 
-import yaml
-
 from .harness import Harness
+from .prompts import build_prompt
 from .state import StateError, is_completed, validate_state, validate_task
-
-_REFERENCES = (
-    Path(__file__).resolve().parents[4]
-    / "skills"
-    / "src"
-    / "map"
-    / "step"
-    / "references"
-)
-_ROLE_REFERENCES = {
-    role: _REFERENCES / f"{role}.md" for role in ("coordinator", "worker", "assessor")
-}
-_PACKET_CONTRACT = _REFERENCES / "packet_contract.md"
 
 
 class TransitionError(StateError):
@@ -80,12 +65,14 @@ class StepLoop:
         self.harness = harness
 
     def bootstrap(self, state: dict[str, Any]) -> dict[str, Any]:
+        self.harness.begin_transition()
         if state["current"] is not None or state["next"]:
             raise TransitionError("state is already bootstrapped")
         return self._propose(state, actions=[], revision=None)
 
     def prepare(self, state: dict[str, Any]) -> dict[str, Any]:
         """Execute current work once, then propose follow-up work for a gate."""
+        self.harness.begin_transition()
         validate_state(state)
         if state["completed"]:
             raise TransitionError("workflow is already complete")
@@ -93,7 +80,9 @@ class StepLoop:
             return state
         active = deepcopy(state["current"])
         worker = self.harness.invoke(
-            "worker", self._prompt("worker", {"task": active, "goal": state["goal"]})
+            "worker",
+            self._prompt("worker", {"task": active, "goal": state["goal"]}),
+            task_slug=active["slug"],
         )
         try:
             packet = self._validated_worker_packet(worker)
@@ -111,6 +100,7 @@ class StepLoop:
                         ),
                     },
                 ),
+                task_slug=active["slug"],
                 follow_up=True,
             )
             packet = self._validated_worker_packet(worker)
@@ -128,6 +118,7 @@ class StepLoop:
                         "clarification": "Provide the missing evidence only.",
                     },
                 ),
+                task_slug=active["slug"],
                 follow_up=True,
             )
             packet = (
@@ -231,6 +222,7 @@ class StepLoop:
                     "prior_gate": prior_gate,
                 },
             ),
+            task_slug=(state["current"] or {}).get("slug", "bootstrap"),
         )
         if not isinstance(response, dict):
             raise TransitionError("coordinator returned no packet")
@@ -275,6 +267,7 @@ class StepLoop:
                     "clarification_already_used": clarification_used,
                 },
             ),
+            task_slug=active["slug"],
         )
         required = ("current_packet", "retro", "clarification_needed")
         if not isinstance(assessor, dict) or any(
@@ -293,12 +286,4 @@ class StepLoop:
 
     @staticmethod
     def _prompt(role: str, context: dict[str, Any]) -> str:
-        instructions = (
-            f"You are the STEP {role}. Read your role contract at "
-            f"{_ROLE_REFERENCES[role]} and the shared packet contract at "
-            f"{_PACKET_CONTRACT} before responding. Call "
-            f"stagger_step_finalize_{role} exactly once with the complete YAML "
-            "packet; do not return a role packet directly in assistant text. You "
-            "have no STEP-file access and cannot contact another role.\n\ncontext:\n"
-        )
-        return instructions + yaml.safe_dump(context, sort_keys=False)
+        return build_prompt(role, context)

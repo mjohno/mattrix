@@ -12,6 +12,9 @@ dependencies = ["PyYAML>=6.0"]
 [project.scripts]
 stagger-step = "stagger_step.cli:main"
 
+[tool.setuptools.package-data]
+stagger_step = ["prompts/*.md", "pi_extension/*.ts"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
