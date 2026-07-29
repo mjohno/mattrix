@@ -28,7 +28,7 @@ def cli(tmp_path):
     scenario, log, step = (
         tmp_path / "scenario.json",
         tmp_path / "pi.log",
-        tmp_path / "STEP.yaml",
+        tmp_path / "STEP-qual.yaml",
     )
 
     def run(
@@ -45,6 +45,7 @@ def cli(tmp_path):
             "FAKE_PI_SCENARIO": str(scenario),
             "FAKE_PI_LOG": str(log),
         }
+        env.pop("STAGGER_STEP_HARNESS_SESSION", None)
         return subprocess.run(
             [sys.executable, "-m", "stagger_step.cli", *args],
             cwd=ROOT,

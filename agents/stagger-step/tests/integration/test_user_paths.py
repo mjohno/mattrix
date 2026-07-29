@@ -22,16 +22,29 @@ def test_init_persists_ranked_next_and_recommendation(cli):
     assert saved["next"][0]["slug"] == "first" and saved["recommended"] == "first"
 
 
-def test_harness_session_on_uses_stable_pi_session_id(cli):
-    run, _, log = cli
-    result = run(
-        "--harness-session", "on", "init", "--goal", "Goal", replies=scenario("fresh")
-    )
+def test_default_harness_sessions_name_roles_log_ids_and_keep_state_clean(cli):
+    run, step, log = cli
+    result = run("--log-level", "INFO", "init", "--goal", "Goal", replies=scenario("fresh"))
     assert result.returncode == 0, result.stderr
     argv = json.loads(log.read_text().splitlines()[0])["argv"]
     assert "--no-session" not in argv
     assert "--session-id" in argv
     assert len(argv[argv.index("--session-id") + 1]) == 36
+    assert argv[argv.index("--name") + 1] == "STEP-qual-coordinator"
+    assert "pi role sessions" in result.stderr
+    assert all(f"{role}=" in result.stderr for role in ("coordinator", "worker", "assessor"))
+    assert "session" not in step.read_text()
+
+
+def test_harness_session_off_uses_no_session(cli):
+    run, _, log = cli
+    result = run(
+        "--harness-session", "off", "init", "--goal", "Goal", replies=scenario("fresh")
+    )
+    assert result.returncode == 0, result.stderr
+    argv = json.loads(log.read_text().splitlines()[0])["argv"]
+    assert "--no-session" in argv
+    assert "--session-id" not in argv
 
 
 def test_gate_approval_promotes_recommended_step(cli):
@@ -45,8 +58,45 @@ def test_gate_approval_promotes_recommended_step(cli):
     assert saved["next"][0]["slug"] == "second" and saved["recommended"] == "second"
 
 
+def test_invalid_worker_packet_is_corrected_in_its_persistent_session(cli):
+    run, step, log = cli
+    init(run)
+    invalid = {"packet": {"slug": "first", "intent": "first", "criteria": ["done"]}}
+    result = run(
+        "gate",
+        "approved",
+        replies={
+            "worker": [invalid, {"packet": complete("first")}],
+            "assessor": [assessor("first")],
+            "coordinator": [coordinator("second")],
+        },
+    )
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["current"]["slug"] == "first"
+    worker_calls = [
+        json.loads(line) for line in log.read_text().splitlines() if '"role": "worker"' in line
+    ]
+    assert len(worker_calls) == 2
+    assert "worker.packet.do.summary" in worker_calls[1]["prompt"]
+    assert "required" in worker_calls[1]["prompt"]
+    assert worker_calls[0]["argv"][worker_calls[0]["argv"].index("--session-id") + 1] == worker_calls[1]["argv"][worker_calls[1]["argv"].index("--session-id") + 1]
+
+
+def test_second_invalid_worker_packet_keeps_step_state_unchanged(cli):
+    run, step, _ = cli
+    init(run)
+    before = step.read_bytes()
+    invalid = {"packet": {"slug": "first", "intent": "first", "criteria": ["done"]}}
+    result = run("gate", "approved", replies={"worker": [invalid, {"packet": "invalid"}]})
+    assert result.returncode == 2
+    assert "worker.packet must be a mapping" in result.stderr
+    assert step.read_bytes() == before
+
+
 def test_duplicate_next_slug_is_renamed_after_approval(cli):
-    run, step, _ = cli; init(run)
+    run, step, _ = cli
+    init(run)
     replies = {
         "worker": [{"packet": complete("first")}],
         "assessor": [assessor("first")],
@@ -58,6 +108,7 @@ def test_duplicate_next_slug_is_renamed_after_approval(cli):
     assert saved["current"]["slug"] == "first"
     assert saved["next"][0]["slug"] == "first-1"
     assert saved["recommended"] == "first-1"
+
 
 def test_gate_approval_prepares_the_promoted_step_before_exit(cli):
     run, step, _ = cli

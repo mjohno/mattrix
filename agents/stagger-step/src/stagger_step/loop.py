@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import re
 from copy import deepcopy
 from pathlib import Path
-import re
 from typing import Any
 
 import yaml
@@ -95,8 +95,25 @@ class StepLoop:
         worker = self.harness.invoke(
             "worker", self._prompt("worker", {"task": active, "goal": state["goal"]})
         )
-        packet = worker.get("packet") if isinstance(worker, dict) else None
-        validate_task(packet, "worker.packet", True)
+        try:
+            packet = self._validated_worker_packet(worker)
+        except StateError as exc:
+            worker = self.harness.invoke(
+                "worker",
+                self._prompt(
+                    "worker",
+                    {
+                        "task": active,
+                        "goal": state["goal"],
+                        "correction": (
+                            f"Your previous worker packet was invalid: {exc}. "
+                            "Return one complete conforming YAML worker packet only."
+                        ),
+                    },
+                ),
+                follow_up=True,
+            )
+            packet = self._validated_worker_packet(worker)
         if packet["slug"] != active["slug"]:
             raise TransitionError("worker packet does not match current step")
         assessor = self._assess(state, active, worker)
@@ -233,6 +250,11 @@ class StepLoop:
         candidate["next"] = proposals
         candidate["recommended"] = recommendation
         return validate_state(candidate)
+
+    @staticmethod
+    def _validated_worker_packet(worker: Any) -> dict[str, Any]:
+        packet = worker.get("packet") if isinstance(worker, dict) else None
+        return validate_task(packet, "worker.packet", True)
 
     def _assess(
         self,

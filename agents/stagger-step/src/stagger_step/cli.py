@@ -42,8 +42,8 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--harness-session",
         choices=("on", "off"),
-        default=os.getenv("STAGGER_STEP_HARNESS_SESSION", "off").lower(),
-        help="persist and reuse role-specific Pi sessions (default: off)",
+        default=os.getenv("STAGGER_STEP_HARNESS_SESSION", "on").lower(),
+        help="persist and reuse role-specific Pi sessions (default: on)",
     )
     sub = p.add_subparsers(dest="command", required=True)
     init = sub.add_parser("init", help="create a new STEP state")

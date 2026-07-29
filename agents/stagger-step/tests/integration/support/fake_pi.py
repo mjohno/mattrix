@@ -12,11 +12,7 @@ from pathlib import Path
 
 def main() -> int:
     name = next(
-        (
-            arg.removeprefix("stagger-step-")
-            for arg in sys.argv
-            if arg.startswith("stagger-step-")
-        ),
+        (sys.argv[index + 1] for index, arg in enumerate(sys.argv) if arg == "--name"),
         "unknown",
     )
     role = name.rsplit("-", 1)[-1]

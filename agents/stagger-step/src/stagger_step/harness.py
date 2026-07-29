@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import select
 import subprocess
 import time
@@ -32,14 +33,37 @@ class PiRpcHarness:
     command: tuple[str, ...] = ("pi", "--mode", "rpc", "--no-session")
     timeout_seconds: float = 120.0
     retries: int = 2
-    session_enabled: bool = False
-    session_scope: str = ""
+    session_enabled: bool = True
+    session_scope: str = "STEP-default.yaml"
+
+    def __post_init__(self) -> None:
+        self._session_name("coordinator")
+        if self.session_enabled:
+            logger.info(
+                "pi role sessions scope=%s coordinator=%s worker=%s assessor=%s",
+                self.session_scope,
+                *(self._session_id(role) for role in ("coordinator", "worker", "assessor")),
+            )
+
+    def _session_id(self, role: str) -> str:
+        return str(
+            uuid.uuid5(uuid.NAMESPACE_URL, f"stagger-step:{self.session_scope}:{role}")
+        )
+
+    def _session_name(self, role: str) -> str:
+        stem = os.path.splitext(os.path.basename(self.session_scope))[0]
+        slug = stem.removeprefix("STEP-")
+        if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug):
+            raise HarnessError(
+                "STEP file basename must be lowercase kebab-case for Pi naming"
+            )
+        return f"STEP-{slug}-{role}"
 
     def invoke(
         self, role: str, prompt: str, *, follow_up: bool = False
     ) -> dict[str, Any]:
-        # A process is intentionally not shared across roles. `follow_up` is retained
-        # solely for a same-role clarification in a future persistent-session adapter.
+        # Processes remain role-isolated; with persistent sessions, a follow-up
+        # reconnects to the same role context in a fresh child process.
         del follow_up
         for attempt in range(self.retries + 1):
             try:
@@ -57,15 +81,11 @@ class PiRpcHarness:
         raise AssertionError("unreachable")
 
     def _invoke_once(self, role: str, prompt: str) -> dict[str, Any]:
-        session_name = f"stagger-step-{role}"
+        session_name = self._session_name(role)
         command = list(self.command)
         if self.session_enabled:
             command = [part for part in command if part != "--no-session"]
-            session_id = str(
-                uuid.uuid5(
-                    uuid.NAMESPACE_URL, f"stagger-step:{self.session_scope}:{role}"
-                )
-            )
+            session_id = self._session_id(role)
             command.extend(("--session-id", session_id))
         else:
             session_id = session_name

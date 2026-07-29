@@ -23,7 +23,7 @@ The coordinator selects durable gate lessons from existing lessons, completed hi
 
 ## Pi RPC adapter discovery
 
-By default, the adapter uses `pi --mode rpc --no-session --name stagger-step-<role>`, sends a JSONL `prompt`, waits for `agent_end`/`agent_settled`, extracts assistant text, and parses YAML. `--harness-session on` instead supplies a stable role- and STEP-file-specific Pi `--session-id`, allowing Pi to retain that role's session across CLI invocations. A fresh subprocess is still started for each role invocation, and role sessions remain distinct. The adapter terminates it before a user gate.
+By default, the adapter uses persistent role sessions: it invokes Pi with `--name STEP-<slug>-<role>` and a stable role- and STEP-file-specific UUID `--session-id`, sends a JSONL `prompt`, waits for `agent_end`/`agent_settled`, extracts assistant text, and parses YAML. It logs the coordinator, worker, and assessor UUIDs at INFO but never writes them to STEP state. `--harness-session off` instead uses `--no-session`. A fresh subprocess is still started for each role invocation, role sessions remain distinct, and the adapter terminates the child before a user gate.
 
 Supported discovery evidence: Pi RPC documents `prompt`, `abort`, `new_session`, `get_state`, and `agent_settled`; command rejection has `success: false`; malformed YAML is a diagnosed harness error. Adapter retries connection/process failures twice with bounded exponential backoff and never infers a transition from a harness failure. Pi version/capabilities are not persisted in STEP state; callers may inspect RPC `get_state` diagnostics separately.
 
