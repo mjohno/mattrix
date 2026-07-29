@@ -24,6 +24,10 @@ $WORK_ROOT/
 
 `<organization-directory>` represents zero or more optional directories used to organize or group projects. Its names, meaning, and depth are unconstrained.
 
+## Scope
+
+This contract governs only paths beneath `$WORK_ROOT/remotes/` and `$WORK_ROOT/projects/`. Any other file or directory directly or indirectly within `$WORK_ROOT` is out of scope and ignored.
+
 Example:
 
 ```text
