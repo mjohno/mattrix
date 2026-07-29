@@ -7,7 +7,7 @@ import argparse
 import re
 import sys
 import unittest
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -22,7 +22,7 @@ class PacketError(ValueError):
 def mapping(value: Any, label: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise PacketError(f"{label} must be a mapping")
-    return value
+    return cast(dict[str, Any], value)
 
 
 def strings(value: Any, label: str, nonempty: bool = False) -> list[str]:
@@ -71,22 +71,22 @@ def proposals(obj: dict[str, Any]) -> None:
 
 
 def validate(role: str, obj: Any) -> dict[str, Any]:
-    obj = mapping(obj, role)
+    packet = mapping(obj, role)
     if role == "coordinator":
-        strings(obj.get("lessons"), "lessons")
-        proposals(obj)
+        strings(packet.get("lessons"), "lessons")
+        proposals(packet)
     elif role == "worker":
-        task(obj.get("packet"), "packet", True)
+        task(packet.get("packet"), "packet", True)
     elif role == "assessor":
-        task(obj.get("current_packet"), "current_packet", True)
-        retro = mapping(obj.get("retro"), "retro")
+        task(packet.get("current_packet"), "current_packet", True)
+        retro = mapping(packet.get("retro"), "retro")
         for key in ("wins", "issues", "actions"):
             strings(retro.get(key), f"retro.{key}")
-        if not isinstance(obj.get("clarification_needed"), bool):
+        if not isinstance(packet.get("clarification_needed"), bool):
             raise PacketError("clarification_needed must be boolean")
     else:
         raise PacketError(f"unknown role: {role}")
-    return obj
+    return packet
 
 
 def repeated(

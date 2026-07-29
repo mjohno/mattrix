@@ -225,7 +225,7 @@ def workspace_root() -> Path | None:
     return root if root.is_dir() else None
 
 
-def main(args: argparse.Namespace) -> int:
+def main(_args: argparse.Namespace) -> int:
     """Validate WORK_ROOT and return a stable process exit code."""
     root = workspace_root()
     if root is None:

@@ -12,8 +12,11 @@ requires-python = ">=3.11"
 quality = [
   "black>=25.1.0",
   "mypy>=1.14.0",
+  "PyYAML>=6.0",
   "pylint>=3.3.0",
+  "pytest>=8.0.0",
   "ruff>=0.9.0",
+  "types-PyYAML>=6.0.12",
   "PyYAML>=6.0",
   "types-PyYAML>=6.0",
 ]
@@ -22,14 +25,14 @@ quality = [
 packages = []
 
 [tool.black]
-line-length = 88
+line-length = 80
 target-version = ["py311"]
 exclude = '''
 /(\.git|\.mypy_cache|\.pytest_cache|\.ruff_cache|\.venv|build|dist|tmp)/
 '''
 
 [tool.ruff]
-line-length = 88
+line-length = 80
 target-version = "py311"
 exclude = [".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".venv", "build", "dist", "tmp"]
 
@@ -48,7 +51,7 @@ recursive = true
 ignore-paths = ['^\.venv/', '^tmp/', '^agents/stagger-step/tests/', '/build/', '/dist/']
 
 [tool.pylint.format]
-max-line-length = 88
+max-line-length = 80
 
 [tool.pylint.messages_control]
 # Keep Pylint focused on correctness. Existing command handlers and bundled scripts
