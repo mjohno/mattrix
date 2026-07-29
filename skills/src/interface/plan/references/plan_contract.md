@@ -26,7 +26,7 @@ Closes: GAP-1
 Source refs: <refs/topics or none>
 Status: todo
 Depends on: none
-Outcome: <artifact, decision, or state>
+Task: <one bounded INVEST paragraph; use the `task` skill to draft it>
 
 Deliverables:
 - <deliverable>
@@ -44,7 +44,8 @@ Done when:
 - Preserve stable gap and item IDs across revisions unless explicitly renamed.
 - Items may close multiple gaps when the coupling is real.
 - Dependencies, deliverables, and done criteria are included when they reduce ambiguity.
-- A plan work item may include a task statement when it improves implementation readiness; keep the statement to one paragraph and preserve the item's plan metadata.
+- Every work item includes one bounded `Task` paragraph that states the intended outcome without duplicating `Deliverables` or `Done when`.
+- Use the `task` skill (or `/skill:task`, if available) to draft or refine each `Task` against its INVEST quality criteria, then retain the item's plan metadata.
 
 ## Status Values
 
@@ -82,7 +83,7 @@ Closes: GAP-1
 Source refs: Auth review
 Status: todo
 Depends on: none
-Outcome: Consistent login error copy and recovery guidance.
+Task: Normalize login failure messages so users receive clear, consistent recovery guidance and the product avoids conflicting error copy. Preserve existing error-code behavior. Completion is observable when each login failure mode maps to one approved user-facing message.
 
 Deliverables:
 - Updated login error message table.
