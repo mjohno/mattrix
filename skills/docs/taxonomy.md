@@ -36,7 +36,7 @@ Passive noun/domain contract packages that supply conventions, quality checks, t
 - Declares `metadata.category: interface` with either `metadata.type: interface` or `metadata.type: vocabulary`
 - Selected and loaded when another skill needs artifact shape, schema, protocol, conventions, quality criteria, or storage rules; vocabulary packages are human-loaded instead
 - Lives as direct packages under `../src/interface/<name>/SKILL.md`
-- Examples: `interface/spec`, `interface/rfc`, `interface/plan`, `interface/task`, `interface/code`, `interface/prose`, `interface/script`, `interface/prototype`, `interface/memory`, `interface/knowledge-base`, `interface/vocab`
+- Examples: `interface/spec`, `interface/rfc`, `interface/plan`, `interface/code`, `interface/prose`, `interface/script`, `interface/prototype`, `interface/memory`, `interface/knowledge-base`, `interface/vocab`
 - Defines the desired state of a noun-like artifact, protocol, domain, or context vocabulary
 - May select an applicable domain from context, such as a script language or storage backend
 - Loads the minimal selected reference/asset contents into context without emitting them in chat; when invoked alone, acknowledges only selected relative paths. Vocabulary packages remain human-loaded context.
@@ -67,7 +67,7 @@ Verb-shaped production skills that turn working context into a communicated, der
 - Produces reports, validation results, rankings, decisions, revisions, records, logs, or artifacts
 - May return its result in chat or write it to a requested destination
 - Consumes interface-defined artifact nouns and storage contracts when structure matters
-- Examples: `output/check`, `output/rank`, `output/review`, `output/record`, `output/memorize`, `output/annotate`
+- Examples: `output/task`, `output/goal`, `output/check`, `output/rank`, `output/review`, `output/record`, `output/memorize`, `output/annotate`
 - **Do NOT use if** the package only defines an artifact schema or canonical form — use an interface skill for nouns; if it primarily coordinates multiple skills or approvals, use map
 
 ### map
@@ -114,6 +114,8 @@ Interfaces define contract data that invocable skills consume:
 - **interface/vocab** — Human-load project terms such as `study`, `outline`, `draft`, `modify`, `simplify`, or `lean` before the first prompt; reserve dedicated skills for verbs that need a specialized contract or workflow.
 - **interface/spec + outline** — Outline a traceable future-state spec using the spec template.
 - **interface/spec + draft** — Draft a generic future-state spec using the spec contract.
+- **task** — Turn context into a concise, testable INVEST task statement.
+- **goal** — Turn context into a concise, assessable SMART goal statement.
 - **interface/code + modify** — Modify code while preserving code-brief boundaries and verification hints.
 - **interface/knowledge-base + output/record** — Record durable knowledge using the KB root and entry contract.
 - **interface/memory + output/memorize** — Append memory using the memory file and entry contract.

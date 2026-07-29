@@ -26,7 +26,7 @@ Use this for conformance checks. A change interface/workspace passes when every 
 - [ ] Does not put task breakdowns or detailed decisions in `CHANGE.md`.
 - [ ] Routes desired end state to `spec`.
 - [ ] Routes ordered gap-closing work to `plan`.
-- [ ] Routes task packets to `task`.
+- [ ] Routes task statements to `task`.
 - [ ] Routes validation to `check`.
 - [ ] Routes evaluation findings to `review`.
 - [ ] Routes orchestration state to `coordinate` / `COORDS.md` only when `coordinate` is invoked with a change ID.

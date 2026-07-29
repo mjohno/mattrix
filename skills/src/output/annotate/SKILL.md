@@ -8,7 +8,7 @@ metadata:
 # annotate
 
 Goal: Add, update, remove, or normalize structured inline annotations in existing files.
-Non-Goals: Executing the work described by annotations, managing external task packets, or modifying unrelated file content.
+Non-Goals: Executing the work described by annotations, managing external task statements, or modifying unrelated file content.
 Use-When: You need to add TODOs, NOTEs, CHECKs, REVIEWs, or DONE marks directly into source files.
 
 ## 0. Prerequisites
@@ -22,7 +22,7 @@ Use-When: You need to add TODOs, NOTEs, CHECKs, REVIEWs, or DONE marks directly 
 ## 2. Processes
 1. **Add Annotation**: Identify the target file type and local context. Choose the annotation kind. Generate a stable ID. Choose the native comment syntax for the file type. Add the annotation as close as possible to the relevant line or section. Include `refs:` when the annotation links to source material. Preserve indentation, formatting, and surrounding content.
 2. **Update or Remove Annotation**: Locate the exact annotation by ID, text, or nearby context. Change only the targeted annotation block. Preserve unrelated code and prose.
-3. **Extract Annotation**: Read the annotation and its message. For TODO/CHECK/REVIEW kinds, the annotation itself is the actionable artifact — it can be used directly as input to a task packet. For NOTE/DONE kinds, the annotation is informational or completion-marked.
+3. **Extract Annotation**: Read the annotation and its message. For TODO/CHECK/REVIEW kinds, the annotation itself is actionable context that can be used as input to a task statement. For NOTE/DONE kinds, the annotation is informational or completion-marked.
 4. **Normalize Annotation**: Keep the message concise and implementation-oriented. Use a stable ID that can be referenced later. Preserve the kind when the purpose stays the same; change the kind when the purpose changes, but keep the ID stable. Include refs when the annotation links to source material.
 
 ## 3. Outputs
@@ -32,7 +32,7 @@ Use-When: You need to add TODOs, NOTEs, CHECKs, REVIEWs, or DONE marks directly 
 ## 4. Next Steps
 - `step` — execute the work indicated by a TODO/CHECK/REVIEW annotation
 - `modify` — make the code or prose change described by an annotation
-- `draft` with `interface/task` — convert a pending annotation into a task packet
+- `task` — turn a pending annotation into a concise INVEST task statement
 - `annotate` — update, remove, or mark an existing annotation as DONE
 
 ## 5. Examples

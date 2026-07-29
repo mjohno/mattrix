@@ -12,7 +12,7 @@ Use this for review. Quality is about usefulness, not only structural conformanc
 6. Are IDs stable, traceable, and easy to reference in follow-up work?
 7. Are dependencies, deliverables, and done criteria included only where they reduce ambiguity?
 8. Does the plan avoid pretending that status is execution evidence?
-9. Does the plan avoid embedding full task packets or implementation details better handled elsewhere?
+9. When a work item includes a task statement, is it a concise, bounded paragraph that improves implementation readiness?
 10. Is the plan concise enough to maintain, review, and update?
 
 ## Quality Signals
@@ -27,6 +27,6 @@ Use this for review. Quality is about usefulness, not only structural conformanc
 
 - Missing target states, causing the plan to read like a complaint list.
 - Checklist-style items that do not close a named gap.
-- Embedded task packets that make the plan hard to scan.
+- Overlong task statements that make the plan hard to scan.
 - Overloaded items that close unrelated gaps.
 - `done` statuses with no linked verification evidence.

@@ -44,7 +44,7 @@ Done when:
 - Preserve stable gap and item IDs across revisions unless explicitly renamed.
 - Items may close multiple gaps when the coupling is real.
 - Dependencies, deliverables, and done criteria are included when they reduce ambiguity.
-- Plan items are not task packets; full task packets stay external.
+- A plan work item may include a task statement when it improves implementation readiness; keep the statement to one paragraph and preserve the item's plan metadata.
 
 ## Status Values
 

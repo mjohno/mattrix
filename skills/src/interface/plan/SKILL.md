@@ -9,7 +9,7 @@ metadata:
 # plan
 
 Goal: Define the minimal plan artifact contract for closing gaps between current and target states.
-Non-Goals: Do not draft, update, execute, verify, persist, or embed full task packets.
+Non-Goals: Do not draft, update, execute, verify, or persist a plan.
 Use-When: Another skill needs the `plan` interface contract before drafting, modifying, checking, reviewing, or stepping through a plan artifact.
 
 ## Selection
@@ -42,7 +42,7 @@ Optional paths:
 - `modify` — revise an existing plan while preserving stable IDs.
 - `output/check` — check plan conformance with `plan_checklist.md`.
 - `output/review` — review plan quality with `plan_quality.md`.
-- `map/step` — execute one plan item or task packet.
+- `map/step` — execute one plan item or approved task statement.
 
 ## Minimal Example
 
