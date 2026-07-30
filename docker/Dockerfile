@@ -13,6 +13,7 @@ RUN apt-get update \
         git \
         python3 \
         python3-pip \
+        python3-venv \
         xz-utils \
     && case "${TARGETARCH}" in \
         amd64) node_arch=x64 ;; \
@@ -34,5 +35,9 @@ RUN groupadd --gid 1000 mattrix \
 WORKDIR /opt/mattrix
 COPY --chown=mattrix:mattrix . /opt/mattrix
 
+RUN python3 -m venv /opt/stagger-step-venv \
+    && /opt/stagger-step-venv/bin/pip install --no-cache-dir /opt/mattrix/agents/stagger-step
+
+ENV PATH="/opt/stagger-step-venv/bin:${PATH}"
 USER mattrix
 ENTRYPOINT ["/bin/bash"]
