@@ -17,6 +17,8 @@ from .loop import StepLoop, TransitionError
 from .normalizer import ROLES, normalize_packet
 from .state import StateError, create_state, load_state, write_atomic
 
+logger = logging.getLogger("stagger_step.cli")
+
 
 def path_from(args: argparse.Namespace, create: bool = False) -> Path:
     raw = args.file or os.getenv("STEP_FILE")
@@ -112,6 +114,17 @@ def approve(
     return changed
 
 
+def _afk_failure(prepared: dict[str, Any], outcomes: list[str]) -> bool:
+    current = prepared.get("current")
+    validation = current.get("validate") if isinstance(current, dict) else None
+    result = validation.get("result") if isinstance(validation, dict) else None
+    if not isinstance(result, str):
+        return False
+    outcomes.append(result)
+    del outcomes[:-10]
+    return result in {"failure", "blocked"}
+
+
 def run_session(
     path: Path,
     state: dict[str, Any],
@@ -119,20 +132,41 @@ def run_session(
     commit: CommitMode | None = None,
 ) -> int:
     """Continuously apply the one-shot gate's prepare, revise, and approve flow."""
+    afk = False
+    outcomes: list[str] = []
     while True:
         state = load_state(path)
-        prepared = prepare(state, loop, commit)
+        try:
+            prepared = prepare(state, loop, commit)
+        except KeyboardInterrupt:
+            if not afk:
+                raise
+            afk = False
+            logger.info("AFK disabled by Ctrl+C; returning to manual mode")
+            continue
         if prepared != state:
             write_atomic(path, prepared)
         emit(loop.gate(prepared))
-        print("STEP response: ", end="", file=sys.stderr, flush=True)
-        try:
-            user_input = input()
-        except EOFError:
-            return 0
+        if afk and _afk_failure(prepared, outcomes):
+            afk = False
+            logger.info("AFK disabled by failure threshold; returning to manual mode")
+        if afk:
+            logger.info("AFK automatically approved the current gate")
+            user_input = "approved"
+        else:
+            print("STEP response: ", end="", file=sys.stderr, flush=True)
+            try:
+                user_input = input()
+            except EOFError:
+                return 0
         if user_input == "break":
             emit({"changed": False})
             return 0
+        if user_input == "afk":
+            afk = True
+            outcomes.clear()
+            logger.info("AFK enabled")
+            user_input = "approved"
         changed = (
             approve(prepared, loop, commit)
             if user_input == "approved"
@@ -151,7 +185,6 @@ def main(argv: list[str] | None = None) -> int:
         level=getattr(logging, args.log_level),
         format="%(levelname)s %(name)s: %(message)s",
     )
-    logger = logging.getLogger("stagger_step.cli")
     raw_path = args.file or os.getenv("STEP_FILE")
     diagnostic_path = Path(raw_path) if raw_path else None
     interrupted = False

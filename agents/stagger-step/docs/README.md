@@ -36,6 +36,10 @@ Result: <success|partial|failure|blocked>
 
 No-op packets advance without an empty commit. A commit failure leaves the packet awaiting approval; Stagger Step does not push, switch branches, rebase, merge, reset, or stash.
 
+## AFK session mode
+
+In `session`, enter `afk` at a manual gate to approve that gate and automatically approve later gates in the same process. AFK is never written to STEP state. It returns to manual mode when a completed task is `failure` or `blocked`; `partial` does not stop it. Ctrl+C while AFK also returns to manual mode. From manual mode, `break` exits the session and Ctrl+C keeps the normal crash/debug behavior.
+
 ## State and gates
 
 Persisted state contains `version`, `goal`, `lessons`, completed `history`, an approved `active_packet`, and `completed`. Pending coordinator/assessor outputs are intentionally never persisted. A gate contains `goal`, `lessons`, `current_packet`, ranked `proposed_next_packets`, and `recommendation`.
