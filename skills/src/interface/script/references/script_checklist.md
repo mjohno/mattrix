@@ -12,6 +12,8 @@ Use this for conformance checks. A script passes when every applicable critical 
 - [ ] Failure behavior and exit/status semantics are predictable.
 - [ ] Dependencies are minimal, justified, and documented.
 - [ ] Verification is runnable or clearly described.
+- [ ] Local integration tests cover the script's primary behavior across its local components when those interactions exist.
+- [ ] Unit tests target meaningful risks not adequately covered by integration tests, such as edge cases, invariants, isolated complexity, or critical regressions.
 
 ## Python Critical
 
