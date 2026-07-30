@@ -20,6 +20,22 @@ STEP_FILE=STEP-example.yaml python -m stagger_step.cli session
 
 `init` creates bootstrap state. Thereafter, only the exact input `approved` writes state. `break` and revisions are read-only. `session` keeps the pending role output in process memory, so an arbitrary edited YAML gate can never be submitted as an approval. A manually edited state is accepted only through `validate_state`.
 
+## Commit mode
+
+Pass `--commit` to `init`, `gate`, or `session` to create a local Git commit after an approved completed packet and before the approved STEP state is written. Commit mode requires the invoking directory to be a clean, non-bare Git worktree with no index lock and configured author and committer identity. The STEP file is excluded from packet staging.
+
+A changed packet commits as:
+
+```text
+step(<slug>): <intent>
+
+<do.summary>
+
+Result: <success|partial|failure|blocked>
+```
+
+No-op packets advance without an empty commit. A commit failure leaves the packet awaiting approval; Stagger Step does not push, switch branches, rebase, merge, reset, or stash.
+
 ## State and gates
 
 Persisted state contains `version`, `goal`, `lessons`, completed `history`, an approved `active_packet`, and `completed`. Pending coordinator/assessor outputs are intentionally never persisted. A gate contains `goal`, `lessons`, `current_packet`, ranked `proposed_next_packets`, and `recommendation`.

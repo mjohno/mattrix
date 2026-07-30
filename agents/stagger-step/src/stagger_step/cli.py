@@ -11,6 +11,7 @@ from typing import Any
 import yaml
 
 from .diagnostics import write_diagnostics
+from .git import CommitMode
 from .harness import PiRpcHarness
 from .loop import StepLoop, TransitionError
 from .normalizer import ROLES, normalize_packet
@@ -34,6 +35,11 @@ def emit(value: Any) -> None:
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Deterministic, approval-gated STEP loop")
     p.add_argument("--file", help="STEP file path; defaults to STEP_FILE")
+    p.add_argument(
+        "--commit",
+        action="store_true",
+        help="create a local Git commit after each approved completed packet",
+    )
     p.add_argument(
         "--log-level",
         choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
@@ -70,11 +76,52 @@ def parser() -> argparse.ArgumentParser:
     return p
 
 
-def run_session(path: Path, state: dict[str, Any], loop: StepLoop) -> int:
+def prepare(
+    state: dict[str, Any],
+    loop: StepLoop,
+    commit: CommitMode | None,
+) -> dict[str, Any]:
+    base = None
+    has_base = False
+    active = state.get("current")
+    if commit is not None and active is not None and not active.get("do"):
+        base = commit.clean_baseline()
+        has_base = True
+    prepared = loop.prepare(state)
+    if has_base and prepared.get("current") is not None:
+        prepared["current"]["commit_base"] = base
+    return prepared
+
+
+def approve(
+    prepared: dict[str, Any], loop: StepLoop, commit: CommitMode | None
+) -> dict[str, Any]:
+    changed = loop.approve(prepared)
+    current = prepared.get("current")
+    if commit is None or current is None:
+        return changed
+    if "commit_base" not in current:
+        raise StateError("commit mode requires a clean baseline for the current packet")
+    sha = commit.commit(current, current["commit_base"])
+    history_packet = changed["history"][-1]
+    history_packet.pop("commit_base", None)
+    if sha is not None:
+        history_packet["commit"] = sha
+    # DECISION: a crash after commit and before write_atomic may lose this SHA.
+    # Restart intentionally continues from persisted STEP state without reconciliation.
+    return changed
+
+
+def run_session(
+    path: Path,
+    state: dict[str, Any],
+    loop: StepLoop,
+    commit: CommitMode | None = None,
+) -> int:
     """Continuously apply the one-shot gate's prepare, revise, and approve flow."""
     while True:
         state = load_state(path)
-        prepared = loop.prepare(state)
+        prepared = prepare(state, loop, commit)
         if prepared != state:
             write_atomic(path, prepared)
         emit(loop.gate(prepared))
@@ -87,7 +134,7 @@ def run_session(path: Path, state: dict[str, Any], loop: StepLoop) -> int:
             emit({"changed": False})
             return 0
         changed = (
-            loop.approve(prepared)
+            approve(prepared, loop, commit)
             if user_input == "approved"
             else loop.revise(prepared, user_input)
         )
@@ -131,6 +178,9 @@ def main(argv: list[str] | None = None) -> int:
             path = path_from(args, create=True)
             if path.exists():
                 raise StateError("refusing to replace an existing STEP file")
+            commit = CommitMode(path, Path.cwd()) if args.commit else None
+            if commit is not None:
+                commit.begin()
             loop = StepLoop(
                 PiRpcHarness(
                     session_enabled=args.harness_session == "on",
@@ -140,7 +190,7 @@ def main(argv: list[str] | None = None) -> int:
             state = loop.bootstrap(create_state(args.goal, args.lesson))
             write_atomic(path, state)
             if args.session:
-                return run_session(path, state, loop)
+                return run_session(path, state, loop, commit)
             emit({"ok": True, "created": str(path), "gate": loop.gate(state)})
             return 0
         path = path_from(args)
@@ -148,6 +198,16 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "validate":
             emit({"ok": True, "state": state})
             return 0
+        commit = CommitMode(path, Path.cwd()) if args.commit else None
+        if commit is not None:
+            pending = state.get("current")
+            commit.begin(
+                require_clean=not (
+                    isinstance(pending, dict)
+                    and pending.get("do")
+                    and "commit_base" in pending
+                )
+            )
         loop = StepLoop(
             PiRpcHarness(
                 session_enabled=args.harness_session == "on",
@@ -158,22 +218,22 @@ def main(argv: list[str] | None = None) -> int:
             if args.response == "break":
                 emit({"changed": False})
                 return 0
-            prepared = loop.prepare(state)
+            prepared = prepare(state, loop, commit)
             if prepared != state:
                 write_atomic(path, prepared)
             if args.response is None:
                 emit(loop.gate(prepared))
                 return 0
             if args.response == "approved":
-                changed = loop.approve(prepared)
+                changed = approve(prepared, loop, commit)
                 if not changed["completed"]:
-                    changed = loop.prepare(changed)
+                    changed = prepare(changed, loop, commit)
             else:
                 changed = loop.revise(prepared, args.response)
             write_atomic(path, changed)
             emit({"ok": True, "changed": True, "gate": loop.gate(changed)})
             return 0
-        return run_session(path, state, loop)
+        return run_session(path, state, loop, commit)
     except (StateError, TransitionError) as exc:
         logger.error("STEP error: %s", exc)
         return 2

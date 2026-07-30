@@ -36,6 +36,16 @@ def validate_task(
     if not isinstance(value.get("intent"), str) or not value["intent"].strip():
         raise StateError(f"{label}.intent is required")
     _strings(value.get("criteria"), f"{label}.criteria", True)
+    if "commit_base" in value and value["commit_base"] is not None:
+        if not isinstance(value["commit_base"], str) or not re.fullmatch(
+            r"[0-9a-f]{40,64}", value["commit_base"]
+        ):
+            raise StateError(f"{label}.commit_base must be a Git SHA or null")
+    if "commit" in value:
+        if not isinstance(value["commit"], str) or not re.fullmatch(
+            r"[0-9a-f]{40,64}", value["commit"]
+        ):
+            raise StateError(f"{label}.commit must be a Git SHA")
     if completed:
         do, validation = value.get("do"), value.get("validate")
         if (
