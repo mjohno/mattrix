@@ -6,7 +6,7 @@ Mattrix is a single-owner monorepo for reusable skills, MKF knowledge-base imple
 
 - `skills/` owns reusable skill packages and their documentation. Read `skills/AGENTS.md` before modifying this domain.
 - `kb/` implements the passive MKF contract owned by `skills/src/interface/knowledge-base/`.
-- `agents/` owns agent products. `agents/stagger-step/` is the initial product; `agents/rfc/` is intentionally absent.
+- `agents/` owns agent products.
 
 ## Boundaries
 

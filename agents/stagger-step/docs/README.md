@@ -65,3 +65,19 @@ For interactive extension development, symlink its directory to `~/.pi/agent/ext
 `tests/unit/` contains isolated validation, normalization, diagnostics, and harness invariants. `tests/integration/` contains local white-box component boundaries: `test_loop_transitions.py` composes `StepLoop` with state validation, while `test_user_paths.py` drives the CLI through a deterministic fake Pi JSONL executable. Run these deterministic local integration tests before adding focused units for uncovered risks.
 
 `tests/integration/test_pi_rpc_live.py` is distinct Pi-facing, opt-in live black-box smoke coverage, not local integration coverage. It verifies one minimum real-Pi RPC finalizer capability and runs only when `PI_RPC_INTEGRATION=1`; schedule it after focused units and deterministic local integration. No live Pi service is required for the normal suite.
+
+From the repository root, run the following order before considering a change verified:
+
+```bash
+python make.py format-check  # Black formatting check
+python make.py ruff
+python make.py pylint
+python make.py mypy
+pytest agents/stagger-step/tests/unit
+pytest agents/stagger-step/tests/integration
+PI_RPC_INTEGRATION=1 pytest agents/stagger-step/tests/integration/test_pi_rpc_live.py
+python make.py build-stagger-step
+python make.py docker-build
+```
+
+`python make.py quality` runs the Black, Ruff, Pylint, and mypy checks together. The live Pi test is opt-in and follows deterministic unit and local integration coverage; no live Pi service is required for the normal suite. The Python wheel and Docker builds verify their respective packaging paths.
