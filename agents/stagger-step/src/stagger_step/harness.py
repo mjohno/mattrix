@@ -32,6 +32,11 @@ class FinalizerProtocolError(HarnessError):
 logger = logging.getLogger("stagger_step.harness")
 
 
+def _default_pi_command() -> tuple[str, ...]:
+    executable = "pi.cmd" if os.name == "nt" else "pi"
+    return (executable, "--mode", "rpc", "--no-session")
+
+
 class Harness(Protocol):
     def begin_transition(self) -> None: ...
     def invoke(
@@ -55,7 +60,7 @@ class RoleSession:
 class PiRpcHarness:
     """Run one short-lived Pi RPC process per role without exposing STEP files."""
 
-    command: tuple[str, ...] = ("pi", "--mode", "rpc", "--no-session")
+    command: tuple[str, ...] = field(default_factory=_default_pi_command)
     timeout_seconds: float = 120.0
     retries: int = 2
     session_enabled: bool = True
