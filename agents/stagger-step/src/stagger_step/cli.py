@@ -192,6 +192,7 @@ def main(argv: list[str] | None = None) -> int:
     def on_sigint(signum: int, frame: Any) -> None:
         nonlocal interrupted
         del signum, frame
+        logger.debug("SIGINT received; cancelling active STEP harness process")
         if interrupted:
             os._exit(130)
         interrupted = True

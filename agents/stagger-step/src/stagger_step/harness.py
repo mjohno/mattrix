@@ -5,6 +5,7 @@ import logging
 import os
 import queue
 import re
+import signal
 import subprocess
 import sys
 import threading
@@ -166,7 +167,7 @@ class PiRpcHarness:
         )
 
     @staticmethod
-    def _start_stdout_reader(stream: Any) -> queue.Queue[str | None]:
+    def _start_pipe_reader(stream: Any) -> queue.Queue[str | None]:
         lines: queue.Queue[str | None] = queue.Queue()
 
         def read_lines() -> None:
@@ -190,6 +191,103 @@ class PiRpcHarness:
         if line is None:
             raise HarnessError("RPC closed before settlement")
         return line
+
+    @staticmethod
+    def _drain_pipe(lines: queue.Queue[str | None]) -> str:
+        chunks: list[str] = []
+        while True:
+            try:
+                line = lines.get_nowait()
+            except queue.Empty:
+                return "".join(chunks)
+            if line is not None:
+                chunks.append(line)
+
+    @staticmethod
+    def _close_pipe(stream: Any) -> None:
+        if stream is None:
+            return
+        try:
+            stream.close()
+        except OSError:
+            pass
+
+    def _kill_process_tree(self, proc: subprocess.Popen[str]) -> None:
+        if os.name == "nt":
+            # TODO: start Pi in a new Windows process group and send
+            # CTRL_BREAK_EVENT before escalating to taskkill.
+            try:
+                result = subprocess.run(
+                    ["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+                    capture_output=True,
+                    text=True,
+                    timeout=2,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired:
+                logger.error("pi process-tree kill timed out pid=%s", proc.pid)
+            except OSError as exc:
+                logger.error("pi process-tree kill failed pid=%s error=%s", proc.pid, exc)
+            else:
+                logger.debug(
+                    "pi process-tree kill pid=%s returncode=%s stdout=%s stderr=%s",
+                    proc.pid,
+                    result.returncode,
+                    result.stdout.rstrip(),
+                    result.stderr.rstrip(),
+                )
+            return
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        except OSError as exc:
+            logger.error("pi process-group kill failed pid=%s error=%s", proc.pid, exc)
+
+    def _terminate_process(
+        self,
+        proc: subprocess.Popen[str],
+        session: RoleSession,
+        stderr_lines: queue.Queue[str | None],
+    ) -> None:
+        logger.debug(
+            "pi cleanup begin session_name=%s session_id=%s pid=%s",
+            session.name,
+            session.session_id,
+            proc.pid,
+        )
+        self._close_pipe(proc.stdin)
+        try:
+            if proc.poll() is None:
+                proc.terminate()
+                proc.wait(timeout=2)
+                logger.debug("pi cleanup terminated pid=%s", proc.pid)
+        except subprocess.TimeoutExpired:
+            logger.warning("pi cleanup terminate timed out pid=%s", proc.pid)
+            self._kill_process_tree(proc)
+            try:
+                proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                logger.error("pi cleanup kill timed out pid=%s", proc.pid)
+        except ProcessLookupError:
+            pass
+        finally:
+            self._close_pipe(proc.stdout)
+            self._close_pipe(proc.stderr)
+        stderr = self._drain_pipe(stderr_lines)
+        if stderr:
+            logger.debug(
+                "pi stderr session_name=%s session_id=%s payload=%s",
+                session.name,
+                session.session_id,
+                stderr.rstrip(),
+            )
+        logger.debug(
+            "pi cleanup complete session_name=%s session_id=%s pid=%s",
+            session.name,
+            session.session_id,
+            proc.pid,
+        )
 
     def _normalize(self, role: str, text: str) -> dict[str, Any]:
         result = subprocess.run(
@@ -225,6 +323,9 @@ class PiRpcHarness:
             for key, value in os.environ.items()
             if key != "STEP_FILE" and not key.startswith("STAGGER_STEP_")
         }
+        popen_options: dict[str, Any] = {}
+        if os.name != "nt":
+            popen_options["start_new_session"] = True
         proc = subprocess.Popen(
             [*command, "--name", session.name],
             stdin=subprocess.PIPE,
@@ -232,6 +333,7 @@ class PiRpcHarness:
             stderr=subprocess.PIPE,
             text=True,
             env=env,
+            **popen_options,
         )
         logger.info(
             "pi spawn role=%s session_name=%s session_id=%s persistent=%s pid=%s",
@@ -248,9 +350,11 @@ class PiRpcHarness:
             session_id,
             json.dumps(request),
         )
+        stderr_lines: queue.Queue[str | None] = queue.Queue()
         try:
-            assert proc.stdin and proc.stdout
-            stdout_lines = self._start_stdout_reader(proc.stdout)
+            assert proc.stdin and proc.stdout and proc.stderr
+            stdout_lines = self._start_pipe_reader(proc.stdout)
+            stderr_lines = self._start_pipe_reader(proc.stderr)
             proc.stdin.write(json.dumps(request) + "\n")
             proc.stdin.flush()
             deadline, finalizer_text, finalizer_error, settled = (
@@ -325,20 +429,7 @@ class PiRpcHarness:
             )
             return payload
         finally:
-            proc.terminate()
-            try:
-                proc.wait(timeout=2)
-            except subprocess.TimeoutExpired:
-                proc.kill()
-            if proc.stderr:
-                stderr = proc.stderr.read()
-                if stderr:
-                    logger.debug(
-                        "pi stderr session_name=%s session_id=%s payload=%s",
-                        session.name,
-                        session_id,
-                        stderr.rstrip(),
-                    )
+            self._terminate_process(proc, session, stderr_lines)
 
     def close(self) -> None:
         pass
