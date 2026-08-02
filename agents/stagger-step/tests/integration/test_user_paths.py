@@ -102,7 +102,8 @@ def test_missing_coordinator_finalizer_is_repaired_in_the_same_role_session(cli)
     assert result.returncode == 0, result.stderr
     coordinator_calls = [call for call in calls(log) if call["role"] == "coordinator"]
     assert len(coordinator_calls) == 2
-    assert "Do not return YAML directly" in coordinator_calls[1]["prompt"]
+    assert "Finalize the current STEP role result" in coordinator_calls[1]["prompt"]
+    assert "## Invocation context" not in coordinator_calls[1]["prompt"]
     assert (
         coordinator_calls[0]["argv"][coordinator_calls[0]["argv"].index("--session-id") + 1]
         == coordinator_calls[1]["argv"][coordinator_calls[1]["argv"].index("--session-id") + 1]
@@ -127,7 +128,8 @@ def test_missing_finalizer_is_repaired_in_the_same_role_session(cli):
         json.loads(line) for line in log.read_text().splitlines() if '"role": "worker"' in line
     ]
     assert len(worker_calls) == 2
-    assert "Do not return YAML directly" in worker_calls[1]["prompt"]
+    assert "Finalize the current STEP role result" in worker_calls[1]["prompt"]
+    assert "## Invocation context" not in worker_calls[1]["prompt"]
     saved = state(step)
     assert saved["current"]["slug"] == "first"
 
@@ -147,7 +149,8 @@ def test_missing_assessor_finalizer_is_repaired_in_the_same_role_session(cli):
     assert result.returncode == 0, result.stderr
     assessor_calls = [call for call in calls(log) if call["role"] == "assessor"]
     assert len(assessor_calls) == 2
-    assert "Do not return YAML directly" in assessor_calls[1]["prompt"]
+    assert "Finalize the current STEP role result" in assessor_calls[1]["prompt"]
+    assert "## Invocation context" not in assessor_calls[1]["prompt"]
     assert (
         assessor_calls[0]["argv"][assessor_calls[0]["argv"].index("--session-id") + 1]
         == assessor_calls[1]["argv"][assessor_calls[1]["argv"].index("--session-id") + 1]
@@ -192,7 +195,10 @@ def test_timeout_retries_against_fake_pi(tmp_path, monkeypatch):
     with pytest.raises(HarnessError, match="RPC idle timed out before settlement"):
         harness.invoke("worker", "test timeout")
 
-    assert len(calls(log_path)) == 2
+    retry = calls(log_path)[1]["prompt"]
+    assert "Continue the current STEP role session" in retry
+    assert "idle period passed" in retry
+    assert "test timeout" not in retry
 
 
 def test_activity_resets_the_rpc_idle_timeout(tmp_path, monkeypatch):

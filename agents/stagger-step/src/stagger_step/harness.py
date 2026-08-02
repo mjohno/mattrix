@@ -16,6 +16,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any, Protocol
 
+from .prompts import build_continuation_prompt, build_finalization_prompt
 from .state import StateError
 
 
@@ -134,24 +135,25 @@ class PiRpcHarness:
         # correction, or clarification follow-ups.
         del follow_up
         session = self._role_session(role, task_slug)
-        repair_prompt: str | None = None
+        retry_prompt = prompt
+        finalization_retried = False
         for attempt in range(self.retries + 1):
             try:
-                return self._invoke_once(role, repair_prompt or prompt, session)
+                return self._invoke_once(role, retry_prompt, session)
             except (PacketNormalizationError, FinalizerProtocolError) as exc:
-                if repair_prompt is not None:
+                if finalization_retried:
                     raise
-                repair_prompt = (
-                    f"{prompt}\n\nYour previous {role} response was invalid: {exc}. "
-                    f"Do not return YAML directly. Call "
-                    f"stagger_step_finalize_{role} exactly once with one complete "
-                    "conforming YAML packet."
-                )
+                # The role has completed its work but its result was not accepted.
+                # Preserve the session and ask only for finalizer formatting.
+                retry_prompt = build_finalization_prompt(role, exc)
+                finalization_retried = True
             except (OSError, HarnessError) as exc:
                 if attempt == self.retries:
                     raise HarnessError(
                         f"{role} harness failure: {exc}"
                     ) from exc
+                if str(exc) == "RPC idle timed out before settlement":
+                    retry_prompt = build_continuation_prompt(role)
                 logger.error(
                     "pi invocation retry role=%s attempt=%s error=%s",
                     role,
