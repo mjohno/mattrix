@@ -33,14 +33,15 @@ class FinalizerProtocolError(HarnessError):
 
 
 logger = logging.getLogger("stagger_step.harness")
-_DEBUG_VALUE_LIMIT = 1000
+# Set a positive character limit here to truncate individual DEBUG values; None is unlimited.
+_DEBUG_VALUE_LIMIT: int | None = None
 _SENSITIVE_FIELD = re.compile(r"(?:api[-_]?key|authorization|cookie|password|secret|token)", re.I)
 
 
 def _inline_debug_text(value: object) -> str:
     """Keep one debug record readable and bounded."""
     text = " ".join(str(value).split())
-    if len(text) > _DEBUG_VALUE_LIMIT:
+    if _DEBUG_VALUE_LIMIT is not None and len(text) > _DEBUG_VALUE_LIMIT:
         return text[:_DEBUG_VALUE_LIMIT] + "…"
     return text
 
