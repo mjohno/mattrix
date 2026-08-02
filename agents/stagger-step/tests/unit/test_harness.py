@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import queue
+
 import pytest
 
 from stagger_step import harness
@@ -12,21 +14,18 @@ def test_default_harness_command_uses_windows_pi_shim(monkeypatch):
     assert PiRpcHarness().command == ("pi.cmd", "--mode", "rpc", "--no-session")
 
 
-def test_windows_pipe_read_does_not_use_select(monkeypatch):
-    class Stream:
-        def readline(self):
-            return '{"type": "agent_settled"}\n'
+def test_stdout_queue_read_returns_a_line():
+    lines: queue.Queue[str | None] = queue.Queue()
+    lines.put('{"type": "agent_settled"}\n')
 
-    def unexpected_select(*args):
-        raise AssertionError("Windows pipe reads must not use select")
+    assert PiRpcHarness._read_stdout_line(lines, 1) == '{"type": "agent_settled"}\n'
 
-    monkeypatch.setattr(harness.os, "name", "nt")
-    monkeypatch.setattr(harness.select, "select", unexpected_select)
 
-    assert (
-        PiRpcHarness._read_stdout_line(Stream(), 1)
-        == '{"type": "agent_settled"}\n'
-    )
+def test_stdout_queue_read_times_out():
+    lines: queue.Queue[str | None] = queue.Queue()
+
+    with pytest.raises(HarnessError, match="RPC timed out before settlement"):
+        PiRpcHarness._read_stdout_line(lines, 0.01)
 
 
 def test_harness_rejects_an_invalid_step_slug_for_pi_naming():

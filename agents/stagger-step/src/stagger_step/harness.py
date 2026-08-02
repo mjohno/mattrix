@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 import logging
 import os
+import queue
 import re
-import select
 import subprocess
 import sys
+import threading
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -165,16 +166,30 @@ class PiRpcHarness:
         )
 
     @staticmethod
-    def _read_stdout_line(stream: Any, timeout: float) -> str:
-        if os.name == "nt":
-            # Windows select() supports sockets only, not subprocess pipes. This
-            # blocking read intentionally has no per-read timeout; Ctrl+C remains
-            # available while a nonresponsive Pi/Llama process is awaited.
-            return stream.readline()
-        readable, _, _ = select.select([stream], [], [], timeout)
-        if not readable:
-            raise HarnessError("RPC timed out before settlement")
-        return stream.readline()
+    def _start_stdout_reader(stream: Any) -> queue.Queue[str | None]:
+        lines: queue.Queue[str | None] = queue.Queue()
+
+        def read_lines() -> None:
+            try:
+                for line in stream:
+                    lines.put(line)
+            finally:
+                lines.put(None)
+
+        threading.Thread(target=read_lines, daemon=True).start()
+        return lines
+
+    @staticmethod
+    def _read_stdout_line(
+        lines: queue.Queue[str | None], timeout: float
+    ) -> str:
+        try:
+            line = lines.get(timeout=timeout)
+        except queue.Empty as exc:
+            raise HarnessError("RPC timed out before settlement") from exc
+        if line is None:
+            raise HarnessError("RPC closed before settlement")
+        return line
 
     def _normalize(self, role: str, text: str) -> dict[str, Any]:
         result = subprocess.run(
@@ -219,20 +234,23 @@ class PiRpcHarness:
             env=env,
         )
         logger.info(
-            "pi spawn role=%s session_id=%s persistent=%s pid=%s",
+            "pi spawn role=%s session_name=%s session_id=%s persistent=%s pid=%s",
             role,
+            session.name,
             session_id,
             self.session_enabled,
             proc.pid,
         )
         request = {"id": str(uuid.uuid4()), "type": "prompt", "message": prompt}
         logger.debug(
-            "pi rpc request session_id=%s payload=%s",
+            "pi rpc request session_name=%s session_id=%s payload=%s",
+            session.name,
             session_id,
             json.dumps(request),
         )
         try:
             assert proc.stdin and proc.stdout
+            stdout_lines = self._start_stdout_reader(proc.stdout)
             proc.stdin.write(json.dumps(request) + "\n")
             proc.stdin.flush()
             deadline, finalizer_text, finalizer_error, settled = (
@@ -245,11 +263,10 @@ class PiRpcHarness:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise HarnessError("RPC timed out before settlement")
-                line = self._read_stdout_line(proc.stdout, remaining)
-                if not line:
-                    raise HarnessError("RPC closed before settlement")
+                line = self._read_stdout_line(stdout_lines, remaining)
                 logger.debug(
-                    "pi rpc stdout session_id=%s payload=%s",
+                    "pi rpc stdout session_name=%s session_id=%s payload=%s",
+                    session.name,
                     session_id,
                     line.rstrip(),
                 )
@@ -300,7 +317,12 @@ class PiRpcHarness:
                     f"RPC settled without stagger_step_finalize_{role}"
                 )
             payload = self._normalize(role, finalizer_text)
-            logger.info("pi settled role=%s session_id=%s", role, session_id)
+            logger.info(
+                "pi settled role=%s session_name=%s session_id=%s",
+                role,
+                session.name,
+                session_id,
+            )
             return payload
         finally:
             proc.terminate()
@@ -312,7 +334,8 @@ class PiRpcHarness:
                 stderr = proc.stderr.read()
                 if stderr:
                     logger.debug(
-                        "pi stderr session_id=%s payload=%s",
+                        "pi stderr session_name=%s session_id=%s payload=%s",
+                        session.name,
                         session_id,
                         stderr.rstrip(),
                     )
