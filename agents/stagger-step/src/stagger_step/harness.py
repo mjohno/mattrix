@@ -164,6 +164,18 @@ class PiRpcHarness:
             str(files("stagger_step").joinpath("pi_extension", "index.ts"))
         )
 
+    @staticmethod
+    def _read_stdout_line(stream: Any, timeout: float) -> str:
+        if os.name == "nt":
+            # Windows select() supports sockets only, not subprocess pipes. This
+            # blocking read intentionally has no per-read timeout; Ctrl+C remains
+            # available while a nonresponsive Pi/Llama process is awaited.
+            return stream.readline()
+        readable, _, _ = select.select([stream], [], [], timeout)
+        if not readable:
+            raise HarnessError("RPC timed out before settlement")
+        return stream.readline()
+
     def _normalize(self, role: str, text: str) -> dict[str, Any]:
         result = subprocess.run(
             [*self.normalizer_command, "normalize", "--role", role],
@@ -233,10 +245,7 @@ class PiRpcHarness:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise HarnessError("RPC timed out before settlement")
-                readable, _, _ = select.select([proc.stdout], [], [], remaining)
-                if not readable:
-                    raise HarnessError("RPC timed out before settlement")
-                line = proc.stdout.readline()
+                line = self._read_stdout_line(proc.stdout, remaining)
                 if not line:
                     raise HarnessError("RPC closed before settlement")
                 logger.debug(
