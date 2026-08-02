@@ -5,6 +5,7 @@ import logging
 import os
 import signal
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -181,9 +182,11 @@ def run_session(
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
+    logging.Formatter.converter = time.gmtime
     logging.basicConfig(
         level=getattr(logging, args.log_level),
-        format="%(levelname)s %(name)s: %(message)s",
+        format="%(levelname)s [%(asctime)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%SZ",
     )
     raw_path = args.file or os.getenv("STEP_FILE")
     diagnostic_path = Path(raw_path) if raw_path else None

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 from stagger_step.harness import HarnessError, PiRpcHarness
@@ -38,7 +39,12 @@ def test_default_harness_sessions_are_named_logged_and_keep_state_clean(cli):
     assert "Call `stagger_step_finalize_coordinator` exactly once" in json.loads(
         log.read_text().splitlines()[0]
     )["prompt"]
-    assert "pi role session started" in result.stderr
+    assert re.search(
+        r"^INFO \[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\] "
+        r"stagger_step\.harness: pi role session started",
+        result.stderr,
+        re.MULTILINE,
+    )
     assert "session_name=STEP-qual-bootstrap-coordinator" in result.stderr
     assert "session_id=" in result.stderr
     assert "session" not in step.read_text()
