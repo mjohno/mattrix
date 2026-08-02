@@ -55,6 +55,11 @@ def main() -> int:
         ),
         flush=True,
     )
+    if reply == "heartbeat":
+        for _ in range(3):
+            print(json.dumps({"type": "extension_ui_request"}), flush=True)
+            time.sleep(0.1)
+        return 0
     text = reply if isinstance(reply, str) else json.dumps(reply)
     if reply != "no_finalizer":
         tool_name = (

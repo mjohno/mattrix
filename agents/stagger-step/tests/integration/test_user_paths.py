@@ -189,10 +189,28 @@ def test_timeout_retries_against_fake_pi(tmp_path, monkeypatch):
         command=(str(FAKE),), timeout_seconds=0.2, retries=1, session_enabled=False
     )
 
-    with pytest.raises(HarnessError, match="RPC timed out before settlement"):
+    with pytest.raises(HarnessError, match="RPC idle timed out before settlement"):
         harness.invoke("worker", "test timeout")
 
     assert len(calls(log_path)) == 2
+
+
+def test_activity_resets_the_rpc_idle_timeout(tmp_path, monkeypatch):
+    scenario_path = tmp_path / "scenario.json"
+    log_path = tmp_path / "pi.log"
+    scenario_path.write_text(json.dumps({"worker": ["heartbeat"]}))
+    monkeypatch.setenv("FAKE_PI_SCENARIO", str(scenario_path))
+    monkeypatch.setenv("FAKE_PI_LOG", str(log_path))
+    harness = PiRpcHarness(
+        command=(str(FAKE),),
+        timeout_seconds=0.15,
+        max_invocation_seconds=1,
+        retries=0,
+        session_enabled=False,
+    )
+
+    with pytest.raises(HarnessError, match="RPC closed before settlement"):
+        harness.invoke("worker", "test activity")
 
 
 def test_second_missing_finalizer_keeps_step_state_unchanged(cli):

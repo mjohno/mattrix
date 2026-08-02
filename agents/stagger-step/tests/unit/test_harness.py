@@ -18,14 +18,19 @@ def test_stdout_queue_read_returns_a_line():
     lines: queue.Queue[str | None] = queue.Queue()
     lines.put('{"type": "agent_settled"}\n')
 
-    assert PiRpcHarness._read_stdout_line(lines, 1) == '{"type": "agent_settled"}\n'
+    assert (
+        PiRpcHarness._read_stdout_line(lines, 1, "timed out")
+        == '{"type": "agent_settled"}\n'
+    )
 
 
 def test_stdout_queue_read_times_out():
     lines: queue.Queue[str | None] = queue.Queue()
 
-    with pytest.raises(HarnessError, match="RPC timed out before settlement"):
-        PiRpcHarness._read_stdout_line(lines, 0.01)
+    with pytest.raises(HarnessError, match="RPC idle timed out before settlement"):
+        PiRpcHarness._read_stdout_line(
+            lines, 0.01, "RPC idle timed out before settlement"
+        )
 
 
 def test_cleanup_escalates_after_bounded_termination(monkeypatch):

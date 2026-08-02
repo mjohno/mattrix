@@ -64,6 +64,7 @@ class PiRpcHarness:
 
     command: tuple[str, ...] = field(default_factory=_default_pi_command)
     timeout_seconds: float = 120.0
+    max_invocation_seconds: float | None = 1800.0
     retries: int = 2
     session_enabled: bool = True
     session_scope: str = "STEP-default.yaml"
@@ -182,12 +183,12 @@ class PiRpcHarness:
 
     @staticmethod
     def _read_stdout_line(
-        lines: queue.Queue[str | None], timeout: float
+        lines: queue.Queue[str | None], timeout: float, timeout_error: str
     ) -> str:
         try:
             line = lines.get(timeout=timeout)
         except queue.Empty as exc:
-            raise HarnessError("RPC timed out before settlement") from exc
+            raise HarnessError(timeout_error) from exc
         if line is None:
             raise HarnessError("RPC closed before settlement")
         return line
@@ -357,17 +358,36 @@ class PiRpcHarness:
             stderr_lines = self._start_pipe_reader(proc.stderr)
             proc.stdin.write(json.dumps(request) + "\n")
             proc.stdin.flush()
-            deadline, finalizer_text, finalizer_error, settled = (
-                time.monotonic() + self.timeout_seconds,
-                None,
-                None,
-                False,
+            started = last_activity = time.monotonic()
+            maximum_deadline = (
+                started + self.max_invocation_seconds
+                if self.max_invocation_seconds is not None
+                else None
             )
+            finalizer_text, finalizer_error, settled = None, None, False
             while True:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise HarnessError("RPC timed out before settlement")
-                line = self._read_stdout_line(stdout_lines, remaining)
+                idle_remaining = self.timeout_seconds - (
+                    time.monotonic() - last_activity
+                )
+                if idle_remaining <= 0:
+                    raise HarnessError("RPC idle timed out before settlement")
+                remaining = idle_remaining
+                timeout_error = "RPC idle timed out before settlement"
+                if maximum_deadline is not None:
+                    maximum_remaining = maximum_deadline - time.monotonic()
+                    if maximum_remaining <= 0:
+                        raise HarnessError(
+                            "RPC exceeded maximum duration before settlement"
+                        )
+                    if maximum_remaining < remaining:
+                        remaining = maximum_remaining
+                        timeout_error = (
+                            "RPC exceeded maximum duration before settlement"
+                        )
+                line = self._read_stdout_line(
+                    stdout_lines, remaining, timeout_error
+                )
+                last_activity = time.monotonic()
                 logger.debug(
                     "pi rpc stdout session_name=%s session_id=%s payload=%s",
                     session.name,
