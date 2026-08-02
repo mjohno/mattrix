@@ -50,6 +50,28 @@ def test_default_harness_sessions_are_named_logged_and_keep_state_clean(cli):
     assert "session" not in step.read_text()
 
 
+def test_debug_logs_buffer_thinking_without_raw_rpc_events(cli):
+    run, _, _ = cli
+    replies = {
+        "coordinator": [
+            {**coordinator("first"), "_thinking": "Inspecting\nthe current state."}
+        ]
+    }
+
+    result = run("--log-level", "DEBUG", "init", "--goal", "Goal", replies=replies)
+
+    assert result.returncode == 0, result.stderr
+    assert re.search(
+        r"^DEBUG \[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\] "
+        r"stagger_step\.harness: pi thinking end role=coordinator "
+        r"task=bootstrap content_index=0 output=Inspecting the current state\.$",
+        result.stderr,
+        re.MULTILINE,
+    )
+    assert "pi rpc stdout" not in result.stderr
+    assert '"type": "thinking_delta"' not in result.stderr
+
+
 def test_harness_session_off_uses_no_session(cli):
     run, _, log = cli
     result = run(

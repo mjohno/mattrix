@@ -39,6 +39,10 @@ def main() -> int:
             + "\n"
         )
     reply = scenario[role][index]
+    thinking = None
+    if isinstance(reply, dict):
+        reply = dict(reply)
+        thinking = reply.pop("_thinking", None)
     if reply == "close":
         return 0
     if reply == "sleep":
@@ -61,6 +65,44 @@ def main() -> int:
             time.sleep(0.1)
         return 0
     text = reply if isinstance(reply, str) else json.dumps(reply)
+    if isinstance(thinking, str):
+        print(
+            json.dumps(
+                {
+                    "type": "message_update",
+                    "assistantMessageEvent": {
+                        "type": "thinking_start",
+                        "contentIndex": 0,
+                    },
+                }
+            ),
+            flush=True,
+        )
+        print(
+            json.dumps(
+                {
+                    "type": "message_update",
+                    "assistantMessageEvent": {
+                        "type": "thinking_delta",
+                        "contentIndex": 0,
+                        "delta": thinking,
+                    },
+                }
+            ),
+            flush=True,
+        )
+        print(
+            json.dumps(
+                {
+                    "type": "message_update",
+                    "assistantMessageEvent": {
+                        "type": "thinking_end",
+                        "contentIndex": 0,
+                    },
+                }
+            ),
+            flush=True,
+        )
     if reply != "no_finalizer":
         tool_name = (
             "stagger_step_finalize_wrong"

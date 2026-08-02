@@ -33,6 +33,32 @@ class FinalizerProtocolError(HarnessError):
 
 
 logger = logging.getLogger("stagger_step.harness")
+_DEBUG_VALUE_LIMIT = 1000
+_SENSITIVE_FIELD = re.compile(r"(?:api[-_]?key|authorization|cookie|password|secret|token)", re.I)
+
+
+def _inline_debug_text(value: object) -> str:
+    """Keep one debug record readable and bounded."""
+    text = " ".join(str(value).split())
+    if len(text) > _DEBUG_VALUE_LIMIT:
+        return text[:_DEBUG_VALUE_LIMIT] + "…"
+    return text
+
+
+def _safe_debug_value(value: object) -> str:
+    """Serialize tool data without leaking common credential fields."""
+    def redact(item: object) -> object:
+        if isinstance(item, dict):
+            return {
+                str(key): "[redacted]" if _SENSITIVE_FIELD.search(str(key)) else redact(child)
+                for key, child in item.items()
+            }
+        if isinstance(item, list):
+            return [redact(child) for child in item]
+        return item
+
+    rendered = json.dumps(redact(value), default=str, ensure_ascii=False, separators=(",", ":"))
+    return _inline_debug_text(rendered)
 
 
 def _default_pi_command() -> tuple[str, ...]:
@@ -139,7 +165,7 @@ class PiRpcHarness:
         finalization_retried = False
         for attempt in range(self.retries + 1):
             try:
-                return self._invoke_once(role, retry_prompt, session)
+                return self._invoke_once(role, retry_prompt, session, task_slug)
             except (PacketNormalizationError, FinalizerProtocolError) as exc:
                 if finalization_retried:
                     raise
@@ -220,7 +246,7 @@ class PiRpcHarness:
             # TODO: start Pi in a new Windows process group and send
             # CTRL_BREAK_EVENT before escalating to taskkill.
             try:
-                result = subprocess.run(
+                subprocess.run(
                     ["taskkill", "/PID", str(proc.pid), "/T", "/F"],
                     capture_output=True,
                     text=True,
@@ -231,14 +257,6 @@ class PiRpcHarness:
                 logger.error("pi process-tree kill timed out pid=%s", proc.pid)
             except OSError as exc:
                 logger.error("pi process-tree kill failed pid=%s error=%s", proc.pid, exc)
-            else:
-                logger.debug(
-                    "pi process-tree kill pid=%s returncode=%s stdout=%s stderr=%s",
-                    proc.pid,
-                    result.returncode,
-                    result.stdout.rstrip(),
-                    result.stderr.rstrip(),
-                )
             return
         try:
             os.killpg(proc.pid, signal.SIGKILL)
@@ -253,20 +271,13 @@ class PiRpcHarness:
         session: RoleSession,
         stderr_lines: queue.Queue[str | None],
     ) -> None:
-        logger.debug(
-            "pi cleanup begin session_name=%s session_id=%s pid=%s",
-            session.name,
-            session.session_id,
-            proc.pid,
-        )
         self._close_pipe(proc.stdin)
         try:
             if proc.poll() is None:
                 proc.terminate()
                 proc.wait(timeout=2)
-                logger.debug("pi cleanup terminated pid=%s", proc.pid)
         except subprocess.TimeoutExpired:
-            logger.warning("pi cleanup terminate timed out pid=%s", proc.pid)
+            logger.error("pi cleanup terminate timed out pid=%s", proc.pid)
             self._kill_process_tree(proc)
             try:
                 proc.wait(timeout=2)
@@ -277,20 +288,7 @@ class PiRpcHarness:
         finally:
             self._close_pipe(proc.stdout)
             self._close_pipe(proc.stderr)
-        stderr = self._drain_pipe(stderr_lines)
-        if stderr:
-            logger.debug(
-                "pi stderr session_name=%s session_id=%s payload=%s",
-                session.name,
-                session.session_id,
-                stderr.rstrip(),
-            )
-        logger.debug(
-            "pi cleanup complete session_name=%s session_id=%s pid=%s",
-            session.name,
-            session.session_id,
-            proc.pid,
-        )
+        self._drain_pipe(stderr_lines)
 
     def _normalize(self, role: str, text: str) -> dict[str, Any]:
         result = subprocess.run(
@@ -308,7 +306,7 @@ class PiRpcHarness:
         return _yaml_mapping(result.stdout)
 
     def _invoke_once(
-        self, role: str, prompt: str, session: RoleSession
+        self, role: str, prompt: str, session: RoleSession, task_slug: str
     ) -> dict[str, Any]:
         command = [
             *self.command,
@@ -347,12 +345,6 @@ class PiRpcHarness:
             proc.pid,
         )
         request = {"id": str(uuid.uuid4()), "type": "prompt", "message": prompt}
-        logger.debug(
-            "pi rpc request session_name=%s session_id=%s payload=%s",
-            session.name,
-            session_id,
-            json.dumps(request),
-        )
         stderr_lines: queue.Queue[str | None] = queue.Queue()
         try:
             assert proc.stdin and proc.stdout and proc.stderr
@@ -367,6 +359,8 @@ class PiRpcHarness:
                 else None
             )
             finalizer_text, finalizer_error, settled = None, None, False
+            streamed_blocks: dict[tuple[str, int], list[str]] = {}
+            saw_streamed_content = False
             while True:
                 idle_remaining = self.timeout_seconds - (
                     time.monotonic() - last_activity
@@ -390,27 +384,112 @@ class PiRpcHarness:
                     stdout_lines, remaining, timeout_error
                 )
                 last_activity = time.monotonic()
-                logger.debug(
-                    "pi rpc stdout session_name=%s session_id=%s payload=%s",
-                    session.name,
-                    session_id,
-                    line.rstrip(),
-                )
                 event = json.loads(line)
-                if event.get("type") == "agent_settled":
+                event_type = event.get("type")
+                if event_type == "agent_start":
+                    logger.info("pi agent started role=%s task=%s", role, task_slug)
+                elif event_type == "agent_end":
+                    logger.info(
+                        "pi agent ended role=%s task=%s will_retry=%s",
+                        role,
+                        task_slug,
+                        event.get("willRetry", False),
+                    )
+                    if not saw_streamed_content:
+                        for message in event.get("messages", []):
+                            if not isinstance(message, dict) or message.get("role") != "assistant":
+                                continue
+                            for content in message.get("content", []):
+                                if not isinstance(content, dict):
+                                    continue
+                                kind = content.get("type")
+                                output = content.get("thinking") if kind == "thinking" else content.get("text")
+                                if kind in {"thinking", "text"} and isinstance(output, str):
+                                    logger.debug(
+                                        "pi %s end role=%s task=%s output=%s",
+                                        kind,
+                                        role,
+                                        task_slug,
+                                        _inline_debug_text(output),
+                                    )
+                elif event_type == "message_update":
+                    update = event.get("assistantMessageEvent")
+                    if isinstance(update, dict):
+                        update_type = update.get("type")
+                        match = re.fullmatch(r"(thinking|text|toolcall)_(start|delta|end)", str(update_type))
+                        if match:
+                            kind, phase = match.groups()
+                            index = update.get("contentIndex")
+                            content_index = index if isinstance(index, int) else 0
+                            key = (kind, content_index)
+                            if phase == "start":
+                                streamed_blocks[key] = []
+                                logger.debug(
+                                    "pi %s start role=%s task=%s content_index=%s",
+                                    kind,
+                                    role,
+                                    task_slug,
+                                    content_index,
+                                )
+                            elif phase == "delta":
+                                delta = update.get("delta")
+                                if isinstance(delta, str):
+                                    streamed_blocks.setdefault(key, []).append(delta)
+                            else:
+                                saw_streamed_content = True
+                                output = update.get("content")
+                                if not isinstance(output, str):
+                                    output = "".join(streamed_blocks.get(key, []))
+                                streamed_blocks.pop(key, None)
+                                if kind == "toolcall":
+                                    output = _safe_debug_value(update.get("toolCall", output))
+                                else:
+                                    output = _inline_debug_text(output)
+                                logger.debug(
+                                    "pi %s end role=%s task=%s content_index=%s output=%s",
+                                    kind,
+                                    role,
+                                    task_slug,
+                                    content_index,
+                                    output,
+                                )
+                elif event_type == "tool_execution_start":
+                    logger.debug(
+                        "pi tool start role=%s task=%s name=%s args=%s",
+                        role,
+                        task_slug,
+                        event.get("toolName", "unknown"),
+                        _safe_debug_value(event.get("args", {})),
+                    )
+                elif event_type == "tool_execution_end":
+                    if event.get("toolName") != f"stagger_step_finalize_{role}":
+                        logger.debug(
+                            "pi tool end role=%s task=%s name=%s is_error=%s result=%s",
+                            role,
+                            task_slug,
+                            event.get("toolName", "unknown"),
+                            event.get("isError", False),
+                            _safe_debug_value(event.get("result")),
+                        )
+                elif event_type == "extension_error":
+                    logger.error("pi extension error role=%s task=%s error=%s", role, task_slug, event.get("error", "unknown"))
+                elif event_type == "auto_retry_start":
+                    logger.error("pi automatic retry role=%s task=%s attempt=%s error=%s", role, task_slug, event.get("attempt", "unknown"), event.get("errorMessage", "unknown"))
+                if event_type == "agent_settled":
                     settled = True
                     break
+                if event_type == "response" and event.get("success") is False:
+                    raise HarnessError(event.get("error", "RPC rejected request"))
                 if (
-                    event.get("type") == "response"
-                    and event.get("success") is False
-                ):
-                    raise HarnessError(
-                        event.get("error", "RPC rejected request")
-                    )
-                if (
-                    event.get("type") == "tool_execution_end"
+                    event_type == "tool_execution_end"
                     and event.get("toolName") == f"stagger_step_finalize_{role}"
                 ):
+                    logger.debug(
+                        "pi finalizer end role=%s task=%s is_error=%s",
+                        role,
+                        task_slug,
+                        event.get("isError", False),
+                    )
                     result = event.get("result")
                     if not isinstance(result, dict):
                         finalizer_error = "finalizer returned no result"
