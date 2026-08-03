@@ -24,7 +24,7 @@ Use-When: The user explicitly asks to record durable knowledge or a workflow exp
 - MKF concept content or raw source material
 - Target bundle and optional folder/concept path
 - Optional provenance/source references
-- Optional concept type: `undefined`, `index`, `checklist`, `template`, or another type
+- Optional concept type: `undefined`, `index`, `checklist`, `template`, `adr`, `adr-index`, or another type
 
 ## 2. Processes
 1. Read the shared `knowledge-base` references only as needed.

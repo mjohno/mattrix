@@ -45,6 +45,8 @@ Record owns producer templates:
 - `assets/index_concept_template.md`
 - `assets/checklist_concept_template.md`
 - `assets/llm_template_concept_template.md`
+- `assets/adr_concept_template.md`
+- `assets/adr_register_concept_template.md`
 
 ## Safety Rules
 

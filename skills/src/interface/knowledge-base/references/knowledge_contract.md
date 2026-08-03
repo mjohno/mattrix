@@ -44,6 +44,8 @@ Rules:
 - `index`: generated directory listing for progressive disclosure.
 - `checklist`: quality checklist for reviews.
 - `template`: reusable LLM/agent processing template.
+- `adr`: supporting detail for an architecture decision registered in an `adr-index` concept.
+- `adr-index`: source-of-truth registry of architecture decisions.
 
 Unknown types are allowed; consumers should tolerate them.
 
