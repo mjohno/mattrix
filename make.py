@@ -10,6 +10,7 @@ Quality commands target ``agents/``, root Python scripts, and Python files in
 
 import argparse
 import logging
+import os
 import shutil
 import subprocess
 import sys
@@ -122,10 +123,44 @@ def build_stagger_step(quiet: bool) -> int:
 
 
 def clean(quiet: bool) -> int:
-    """Remove all repository build output."""
-    shutil.rmtree(BUILD_ROOT, ignore_errors=True)
-    if not quiet:
-        print(f"Removed {BUILD_ROOT.relative_to(ROOT)}/")
+    """Remove generated build, package, cache, and coverage artifacts."""
+    directory_names = {
+        "build",
+        "dist",
+        "__pycache__",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "htmlcov",
+    }
+    excluded_names = {".git", ".venv", "env", "venv"}
+    artifacts: list[Path] = []
+
+    for parent, directories, files in os.walk(ROOT, topdown=True):
+        directories[:] = [
+            name for name in directories if name not in excluded_names
+        ]
+        parent_path = Path(parent)
+        artifacts.extend(
+            parent_path / name
+            for name in directories
+            if name in directory_names or name.endswith(".egg-info")
+        )
+        artifacts.extend(
+            parent_path / name
+            for name in files
+            if name == ".coverage" or name.startswith(".coverage.")
+        )
+
+    for artifact in sorted(
+        artifacts, key=lambda path: len(path.parts), reverse=True
+    ):
+        if artifact.is_symlink() or artifact.is_file():
+            artifact.unlink(missing_ok=True)
+        else:
+            shutil.rmtree(artifact, ignore_errors=True)
+        if not quiet:
+            print(f"Removed {artifact.relative_to(ROOT)}")
     return 0
 
 

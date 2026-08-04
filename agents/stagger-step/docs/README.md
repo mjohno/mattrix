@@ -4,7 +4,7 @@
 
 ## Build output
 
-All generated Stagger Step build artifacts belong in the repository-root `build/stagger-step/` directory. Run `python make.py build-stagger-step` to create its wheel there and `python make.py clean` to remove the entire repository-root `build/` directory. Build output is intentionally ignored by Git.
+All generated Stagger Step build artifacts belong in the repository-root `build/stagger-step/` directory. Run `python make.py build-stagger-step` to create its wheel there and `python make.py clean` to remove generated build, package, cache, and coverage artifacts. Build output is intentionally ignored by Git.
 
 ## CLI
 
