@@ -76,14 +76,22 @@ def calls(log: Path) -> list[dict]:
 
 
 def task(slug: str) -> dict:
-    return {"slug": slug, "intent": slug.replace("-", " "), "criteria": ["done"]}
+    return {
+        "slug": slug,
+        "intent": slug.replace("-", " "),
+        "criteria": ["done"],
+    }
 
 
 def complete(slug: str) -> dict:
     return {
         **task(slug),
         "do": {"summary": "worked", "evidence": ["file"]},
-        "validate": {"result": "success", "evidence": ["test"]},
+        "validate": {
+            "result": "success",
+            "summary": "Ran the test suite successfully",
+            "evidence": ["test"],
+        },
     }
 
 

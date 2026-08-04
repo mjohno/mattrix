@@ -123,7 +123,8 @@ def _afk_failure(prepared: dict[str, Any], outcomes: list[str]) -> bool:
         return False
     outcomes.append(result)
     del outcomes[:-10]
-    return result in {"failure", "blocked"}
+    failures = sum(outcome in {"failure", "blocked"} for outcome in outcomes)
+    return failures > max(1, len(outcomes) / 10)
 
 
 def run_session(

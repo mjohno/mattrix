@@ -11,7 +11,11 @@ COMPLETE = {
     "intent": "Validate the CLI",
     "criteria": ["all checks pass"],
     "do": {"summary": "Ran checks", "evidence": ["pytest"]},
-    "validate": {"result": "success", "evidence": ["all passed"]},
+    "validate": {
+        "result": "success",
+        "summary": "All checks passed",
+        "evidence": ["all passed"],
+    },
 }
 
 

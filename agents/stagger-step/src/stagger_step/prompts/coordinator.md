@@ -21,7 +21,7 @@ Do not execute tasks. Do not assess completed work; the Delivery Manager owns th
 ```yaml
 lessons: [durable lesson]
 proposed_next_packets:
-  - slug: lowercase-kebab-case
+    slug: lowercase-kebab-case
     intent: concise bounded outcome
     criteria: [observable acceptance criterion]
 recommendation: lowercase-kebab-case # or null

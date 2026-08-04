@@ -11,7 +11,7 @@ All generated Stagger Step build artifacts belong in the repository-root `build/
 ```bash
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli init --goal "Ship the change"
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli validate
-printf '%s\n' 'packet: {slug: validate-cli, intent: Validate CLI, criteria: [checks], do: {summary: Ran checks, evidence: []}, validate: {result: success, evidence: []}}' | stagger-step normalize --role worker
+printf '%s\n' 'packet: {slug: validate-cli, intent: Validate CLI, criteria: [checks], do: {summary: Ran checks, evidence: []}, validate: {result: success, summary: Checks passed, evidence: []}}' | stagger-step normalize --role worker
 # One-shot approval promotes work, runs its cycle, and prints the next gate.
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli gate approved
 # `session` keeps accepting responses in the same process until break or completion.
@@ -24,21 +24,27 @@ STEP_FILE=STEP-example.yaml python -m stagger_step.cli session
 
 Pass `--commit` to `init`, `gate`, or `session` to create a local Git commit after an approved completed packet and before the approved STEP state is written. Commit mode requires the invoking directory to be a clean, non-bare Git worktree with no index lock and configured author and committer identity. The STEP file is excluded from packet staging.
 
-A changed packet commits as:
+A changed packet commits with Stagger Step's fixed Conventional Commit type:
 
 ```text
 step(<slug>): <intent>
 
+Done:
 <do.summary>
+
+Verified:
+<validate.summary>
 
 Result: <success|partial|failure|blocked>
 ```
+
+The normalized subject is deterministically truncated to 50 characters; body content is wrapped to 72 characters. Intent appears only in the subject; empty `Done` or `Verified` sections are omitted.
 
 No-op packets advance without an empty commit. A commit failure leaves the packet awaiting approval; Stagger Step does not push, switch branches, rebase, merge, reset, or stash.
 
 ## AFK session mode
 
-In `session`, enter `afk` at a manual gate to approve that gate and automatically approve later gates in the same process. AFK is never written to STEP state. It returns to manual mode when a completed task is `failure` or `blocked`; `partial` does not stop it. Ctrl+C while AFK also returns to manual mode. From manual mode, `break` exits the session and Ctrl+C keeps the normal crash/debug behavior.
+In `session`, enter `afk` at a manual gate to approve that gate and automatically approve later gates in the same process. AFK is never written to STEP state. It returns to manual mode when more than one of the last ten completed tasks is `failure` or `blocked`; before ten tasks complete, one such result is allowed. `partial` does not stop it. Ctrl+C while AFK also returns to manual mode. From manual mode, `break` exits the session and Ctrl+C keeps the normal crash/debug behavior.
 
 ## State and gates
 

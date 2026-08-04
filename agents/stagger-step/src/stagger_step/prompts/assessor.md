@@ -28,6 +28,7 @@ current_packet:
     evidence: [evidence]
   validate:
     result: success # success | partial | failure | blocked
+    summary: checks performed and their outcomes
     evidence: [evidence]
 retro:
   wins: [effective progress]

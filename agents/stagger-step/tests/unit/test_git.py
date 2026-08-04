@@ -38,7 +38,11 @@ def packet() -> dict[str, object]:
         "intent": "Update the tracked file\nwith a wrapped intent",
         "criteria": ["tracked file is updated"],
         "do": {"summary": "Changed tracked.txt", "evidence": []},
-        "validate": {"result": "partial", "evidence": []},
+        "validate": {
+            "result": "partial",
+            "summary": "Checked the updated file; coverage remains incomplete",
+            "evidence": [],
+        },
     }
 
 
@@ -52,10 +56,42 @@ def test_commit_mode_commits_packet_changes_and_ignores_step_file(tmp_path):
 
     assert sha == git(root, "rev-parse", "HEAD")
     assert git(root, "log", "-1", "--pretty=%B") == (
-        "step(update-file): Update the tracked file with a wrapped intent\n\n"
-        "Changed tracked.txt\n\nResult: partial"
+        "step(update-file): Update the tracked file with a\n\n"
+        "Done:\nChanged tracked.txt\n\n"
+        "Verified:\nChecked the updated file; coverage remains incomplete\n\n"
+        "Result: partial"
     )
     assert git(root, "status", "--porcelain") == "?? STEP-test.yaml"
+
+
+def test_commit_mode_truncates_normalized_conventional_subject_at_50_characters(tmp_path):
+    root, step = repository(tmp_path)
+    mode = CommitMode(step, root)
+    long_packet = packet()
+    long_packet["intent"] = "  " + "very long intent " * 10
+    base = mode.begin()
+    (root / "tracked.txt").write_text("changed\n")
+
+    mode.commit(long_packet, base)
+
+    assert git(root, "log", "-1", "--pretty=%s") == (
+        f"step(update-file): {' '.join(str(long_packet['intent']).split())}"[:50].rstrip()
+    )
+
+
+def test_commit_mode_wraps_body_content_at_72_characters(tmp_path):
+    root, step = repository(tmp_path)
+    mode = CommitMode(step, root)
+    wrapped_packet = packet()
+    wrapped_packet["do"]["summary"] = "work " * 20
+    wrapped_packet["validate"]["summary"] = "checked " * 20
+    base = mode.begin()
+    (root / "tracked.txt").write_text("changed\n")
+
+    mode.commit(wrapped_packet, base)
+
+    body = git(root, "log", "-1", "--pretty=%B").split("\n\n", 1)[1]
+    assert all(len(line) <= 72 for line in body.splitlines())
 
 
 def test_commit_mode_skips_empty_packet_change_set(tmp_path):

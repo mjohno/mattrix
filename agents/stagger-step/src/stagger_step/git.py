@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import subprocess
+import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -11,6 +12,14 @@ from .state import StateError
 
 logger = logging.getLogger("stagger_step.git")
 SHA = re.compile(r"^[0-9a-f]{40,64}$")
+
+
+def _wrap_body(text: str) -> str:
+    """Wrap every paragraph deterministically for a Git commit body."""
+    return "\n".join(
+        "\n".join(textwrap.wrap(line, width=72)) if line else ""
+        for line in text.splitlines()
+    )
 
 
 @dataclass
@@ -117,10 +126,19 @@ class CommitMode:
             logger.info("commit mode packet=%s has no staged Git changes", packet["slug"])
             return None
         intent = " ".join(str(packet["intent"]).split())
-        subject = f"step({packet['slug']}): {intent}"[:72].rstrip()
-        summary = str((packet.get("do") or {}).get("summary", "")).strip()
+        subject = f"step({packet['slug']}): {intent}"[:50].rstrip()
+        done = str((packet.get("do") or {}).get("summary", "")).strip()
+        verified = str(
+            (packet.get("validate") or {}).get("summary", "")
+        ).strip()
         result = str((packet.get("validate") or {}).get("result", ""))
-        body = (f"{summary}\n\n" if summary else "") + f"Result: {result}"
+        sections = []
+        if done:
+            sections.append(f"Done:\n{_wrap_body(done)}")
+        if verified:
+            sections.append(f"Verified:\n{_wrap_body(verified)}")
+        sections.append(f"Result: {result}")
+        body = "\n\n".join(sections)
         self._run("commit", "-m", subject, "-m", body)
         sha = self.head()
         if sha is None:

@@ -37,7 +37,8 @@
             "result": "success",
             "evidence": [
               "test"
-            ]
+            ],
+            "summary": "Ran the stated validation checks"
           }
         }
       }
@@ -60,7 +61,8 @@
             "result": "success",
             "evidence": [
               "test"
-            ]
+            ],
+            "summary": "Ran the stated validation checks"
           }
         },
         "retro": {
@@ -112,7 +114,8 @@
             "result": "success",
             "evidence": [
               "test"
-            ]
+            ],
+            "summary": "Ran the stated validation checks"
           }
         }
       }
@@ -135,7 +138,8 @@
             "result": "success",
             "evidence": [
               "test"
-            ]
+            ],
+            "summary": "Ran the stated validation checks"
           }
         },
         "retro": {

@@ -11,7 +11,6 @@ import yaml
 SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 RESULTS = {"success", "partial", "failure", "blocked"}
 
-
 class StateError(ValueError):
     pass
 
@@ -57,6 +56,11 @@ def validate_task(
         _strings(do.get("evidence"), f"{label}.do.evidence")
         if not isinstance(validation, dict) or validation.get("result") not in RESULTS:
             raise StateError(f"{label}.validate.result is invalid")
+        if (
+            not isinstance(validation.get("summary"), str)
+            or not validation["summary"].strip()
+        ):
+            raise StateError(f"{label}.validate.summary is required")
         _strings(validation.get("evidence"), f"{label}.validate.evidence")
     return value
 

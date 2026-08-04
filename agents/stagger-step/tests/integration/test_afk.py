@@ -38,16 +38,24 @@ def test_afk_approves_subsequent_gate_and_never_persists_mode(cli):
     assert "afk" not in step.read_text().lower()
 
 
-def test_afk_failure_returns_to_manual_break_gate(cli):
+def test_afk_allows_one_failure_then_returns_to_manual_break_gate(cli):
     run, step, _ = cli
-    failed = complete("first")
-    failed["validate"]["result"] = "failure"
-    assessed = assessor("first")
-    assessed["current_packet"] = failed
+    first = complete("first")
+    first["validate"]["result"] = "failure"
+    second = complete("second")
+    second["validate"]["result"] = "blocked"
+    first_assessed = assessor("first")
+    first_assessed["current_packet"] = first
+    second_assessed = assessor("second")
+    second_assessed["current_packet"] = second
     replies = {
-        "coordinator": [coordinator("first"), coordinator("second")],
-        "worker": [{"packet": failed}],
-        "assessor": [assessed],
+        "coordinator": [
+            coordinator("first"),
+            coordinator("second"),
+            coordinator(None),
+        ],
+        "worker": [{"packet": first}, {"packet": second}],
+        "assessor": [first_assessed, second_assessed],
     }
 
     result = run(
@@ -64,6 +72,8 @@ def test_afk_failure_returns_to_manual_break_gate(cli):
     assert result.returncode == 0, result.stderr
     saved = state(step)
     assert saved["completed"] is False
-    assert saved["history"] == []
-    assert saved["current"]["validate"]["result"] == "failure"
+    assert [entry["slug"] for entry in saved["history"]] == ["first"]
+    assert saved["current"]["slug"] == "second"
+    assert saved["current"]["validate"]["result"] == "blocked"
+    assert result.stderr.count("AFK automatically approved the current gate") == 1
     assert "AFK disabled by failure threshold" in result.stderr

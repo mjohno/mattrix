@@ -13,7 +13,11 @@ def test_approval_consumes_the_promoted_step_and_clears_recommendation():
     class NoHarness:
         pass
 
-    task = {"slug": "task", "intent": "Task", "criteria": ["done"]}
+    task = {
+        "slug": "task",
+        "intent": "Task",
+        "criteria": ["done"],
+    }
     first, second = {**task, "slug": "first"}, {**task, "slug": "second"}
     state = {
         "version": 1,

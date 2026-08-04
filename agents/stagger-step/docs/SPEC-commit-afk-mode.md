@@ -40,24 +40,30 @@
 - REQ-004: For an approved packet in commit mode, Stagger Step must determine the changes made since that packet's clean baseline, reject pre-existing unrelated changes, and commit only packet-attributable changes. Git-ignored files remain governed by the repository's `.gitignore` policy.
 - REQ-005: An approved packet with no attributable Git changes must advance without creating an empty commit.
 - REQ-006: `success`, `partial`, `failure`, and `blocked` packets may have their attributable changes committed after approval.
-- REQ-007: For a non-no-op commit, the commit message must use the assessed current packet in this format:
+- REQ-007: For a non-no-op commit, the commit message must use Stagger Step's fixed Conventional Commit type in this format:
 
   ```text
   step(<slug>): <intent>
 
+  Done:
   <do.summary>
+
+  Verified:
+  <validate.summary>
 
   Result: <success|partial|failure|blocked>
   ```
 
-- REQ-008: The subject in REQ-007 must normalize embedded whitespace and be deterministically limited to 72 characters; the body omits the summary paragraph when `do.summary` is empty.
+  Intent appears only in the subject.
+
+- REQ-008: The subject in REQ-007 must normalize embedded whitespace and be deterministically truncated to 50 characters. Body content must be wrapped to 72 characters. The body omits an empty `Done` or `Verified` section.
 - REQ-009: In commit mode, the completed packet history must record the resulting local commit SHA after normal completion. Commit SHA recording is not required when commit mode is inactive, or when a restart follows interruption before state persistence.
 - REQ-010: If Git validation, staging, or commit creation fails, Stagger Step must not persist approval and must return to an ordinary approval gate with the failure available to the owner.
 - REQ-011: At a session gate, the `afk` response must approve that gate and enable AFK for later gates in the same running session only.
 - REQ-012: While AFK is active, each later gate must receive an implicit `approved` response and follow the normal commit-mode behavior when `--commit` is active.
 - REQ-013: While AFK is active, Ctrl+C must disable AFK and return to a manual gate without approving that gate. In manual mode, Ctrl+C retains the existing crash/debug behavior; `break` exits the session gracefully without approval.
 - REQ-014: Revision feedback is available only after AFK has been stopped with `break` or Ctrl+C.
-- REQ-015: AFK must disable itself and return to manual approval when at least one of the last ten completed tasks has an assessed result of `failure` or `blocked`. Before ten tasks are completed, one such result disables AFK. `partial` does not contribute to this failure tracking. The owner must explicitly enter `afk` to enable it again.
+- REQ-015: AFK must disable itself and return to manual approval when the `failure`/`blocked` rate among the last ten completed tasks exceeds one in ten. Before ten tasks are completed, one such result is allowed; equivalently, disable when failures exceed `max(1, samples / 10)`. `partial` does not contribute to this failure tracking. The owner must explicitly enter `afk` to enable it again.
 - REQ-016: Stagger Step must not itself perform Git operations other than deterministic local staging and committing for an approved packet.
 
 ## 6. Acceptance

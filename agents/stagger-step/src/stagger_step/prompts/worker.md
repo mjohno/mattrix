@@ -22,5 +22,6 @@ packet:
     evidence: [path, command output, or other evidence]
   validate:
     result: success # success | partial | failure | blocked
+    summary: checks performed and their outcomes
     evidence: [validation evidence]
 ```

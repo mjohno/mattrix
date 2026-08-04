@@ -7,7 +7,7 @@ TASK = {"slug": "task", "intent": "Task", "criteria": ["done"]}
 DONE = {
     **TASK,
     "do": {"summary": "done", "evidence": []},
-    "validate": {"result": "success", "evidence": []},
+    "validate": {"result": "success", "summary": "Ran tests", "evidence": []},
 }
 
 

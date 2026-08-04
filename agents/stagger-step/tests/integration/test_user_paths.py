@@ -379,7 +379,7 @@ def test_session_continues_through_work_cycle_to_final_signoff(cli):
                     "intent": "first",
                     "criteria": ["done"],
                     "do": {"summary": "worked", "evidence": ["file"]},
-                    "validate": {"result": "success", "evidence": ["test"]},
+                    "validate": {"result": "success", "summary": "Ran tests", "evidence": ["test"]},
                 }
             }
         ],
@@ -390,7 +390,7 @@ def test_session_continues_through_work_cycle_to_final_signoff(cli):
                     "intent": "first",
                     "criteria": ["done"],
                     "do": {"summary": "worked", "evidence": ["file"]},
-                    "validate": {"result": "success", "evidence": ["test"]},
+                    "validate": {"result": "success", "summary": "Ran tests", "evidence": ["test"]},
                 },
                 "retro": {"wins": ["progress"], "issues": [], "actions": ["continue"]},
                 "clarification_needed": False,
@@ -430,7 +430,7 @@ def test_session_revision_keeps_running_then_breaks_without_promotion(cli):
                     "intent": "first",
                     "criteria": ["done"],
                     "do": {"summary": "worked", "evidence": ["file"]},
-                    "validate": {"result": "success", "evidence": ["test"]},
+                    "validate": {"result": "success", "summary": "Ran tests", "evidence": ["test"]},
                 }
             }
         ],
@@ -441,7 +441,7 @@ def test_session_revision_keeps_running_then_breaks_without_promotion(cli):
                     "intent": "first",
                     "criteria": ["done"],
                     "do": {"summary": "worked", "evidence": ["file"]},
-                    "validate": {"result": "success", "evidence": ["test"]},
+                    "validate": {"result": "success", "summary": "Ran tests", "evidence": ["test"]},
                 },
                 "retro": {"wins": ["progress"], "issues": [], "actions": ["continue"]},
                 "clarification_needed": False,
