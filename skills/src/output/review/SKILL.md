@@ -17,7 +17,7 @@ Use-When: You need to review any artifact against its criteria using one or more
 Discovery of criteria and personas is **not** the responsibility of this skill — it is assumed done by the calling agent/orchestrator (e.g. via `investigate`, `lookup`, or `remember`).
 
 Before executing, confirm:
-- **Criteria source(s)**: At least one set of evaluation criteria defining correctness for the artifact type (a canonical skill's SKILL.md, a questionnaire contract, a plan, quality rules, or other agreed-upon criterion). If none exist, **ask the user for them**.
+- **Criteria source(s)**: At least one set of evaluation criteria defining correctness for the artifact type (a canonical skill's SKILL.md, an assessment contract, a plan, quality rules, or other agreed-upon criterion). If none exist, **ask the user for them**.
 - **Persona skill(s)**: At least one persona skill encoding an evaluation perspective. If none exist, **ask the user which persona to use**. The default is the base criteria below (equivalent to a generic reviewer).
 
 You may accept both from the same prompt or request them separately if missing.
@@ -26,7 +26,7 @@ You may accept both from the same prompt or request them separately if missing.
 | Input | Required | Example |
 |---|---|---|
 | Target artifact | Yes | `SPEC-001.md` or pasted content |
-| Criteria source(s) | Yes | RFC skill's SKILL.md, questionnaire contract, plan, quality rules, or file path |
+| Criteria source(s) | Yes | RFC skill's SKILL.md, assessment contract, plan, quality rules, or file path |
 | Persona skill(s) | No | `security`, `adversarial`, `system_architect` (discovered and resolved by orchestrator) |
 | Diff refs | No | "main to HEAD" for diff review |
 
@@ -76,7 +76,7 @@ Structured review report using `assets/template_report.md` with findings categor
 → No criteria provided, no persona provided → SKILL.md asks user to supply them before proceeding.
 
 ### Example 4: Report structure
-**Prompt:** "Review the questionnaire contract against RFC-005 with `security` lens."
+**Prompt:** "Review the assessment contract against RFC-005 with `security` lens."
 → Orchestrator provides criteria (RFC-005) + persona (`security`) → review produces:
    - Findings numbered 1–3 under P1, restart at 1 for P2, restart at 1 for P3
    - Sections skip severity tiers with zero findings (e.g., no P4/P5 heading if none exist)
