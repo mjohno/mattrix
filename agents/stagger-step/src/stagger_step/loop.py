@@ -90,7 +90,7 @@ class StepLoop:
             task_slug=active["slug"],
         )
         try:
-            packet = self._validated_worker_packet(worker)
+            packet = self._completed_worker_packet(active, worker)
         except StateError as exc:
             worker = self.harness.invoke(
                 "worker",
@@ -100,17 +100,16 @@ class StepLoop:
                         "task": active,
                         "goal": state["goal"],
                         "correction": (
-                            f"Your previous worker packet was invalid: {exc}. "
-                            "Return one complete conforming YAML worker packet only."
+                            f"Your previous worker response was invalid: {exc}. "
+                            "Call the worker finalizer with complete valid fields only."
                         ),
                     },
                 ),
                 task_slug=active["slug"],
                 follow_up=True,
             )
-            packet = self._validated_worker_packet(worker)
-        self._require_task_identity(active, packet, "worker packet")
-        assessor = self._assess(state, active, worker)
+            packet = self._completed_worker_packet(active, worker)
+        assessor = self._assess(state, active, packet)
         if assessor["clarification_needed"]:
             clarification = self.harness.invoke(
                 "worker",
@@ -125,18 +124,15 @@ class StepLoop:
                 task_slug=active["slug"],
                 follow_up=True,
             )
-            packet = self._validated_worker_packet(clarification)
-            self._require_task_identity(active, packet, "clarification packet")
+            packet = self._completed_worker_packet(active, clarification)
             assessor = self._assess(
-                state, active, clarification, clarification_used=True
+                state, active, packet, clarification_used=True
             )
             if assessor["clarification_needed"]:
                 raise TransitionError(
                     "assessor requested more than one clarification"
                 )
         current = deepcopy(assessor["current_packet"])
-        self._require_task_identity(active, current, "assessor packet")
-        self._require_worker_result(packet, current)
         current["retro"] = assessor["retro"]
         prepared = deepcopy(state)
         prepared["current"] = current
@@ -258,30 +254,17 @@ class StepLoop:
         return validate_state(candidate)
 
     @staticmethod
-    def _validated_worker_packet(worker: Any) -> dict[str, Any]:
-        packet = worker.get("packet") if isinstance(worker, dict) else None
-        return validate_task(packet, "worker.packet", True)
-
-    @staticmethod
-    def _require_task_identity(
-        active: dict[str, Any], packet: dict[str, Any], label: str
-    ) -> None:
-        if any(
-            packet[field] != active[field]
-            for field in ("slug", "intent", "criteria")
-        ):
-            raise TransitionError(f"{label} does not match the approved step")
-
-    @staticmethod
-    def _require_worker_result(
-        worker: dict[str, Any], assessor: dict[str, Any]
-    ) -> None:
-        if any(
-            worker[field] != assessor[field] for field in ("do", "validate")
-        ):
-            raise TransitionError(
-                "assessor packet does not preserve the worker result"
-            )
+    def _completed_worker_packet(
+        active: dict[str, Any], worker: Any
+    ) -> dict[str, Any]:
+        if not isinstance(worker, dict):
+            raise StateError("worker response must be a mapping")
+        packet = {
+            **deepcopy(active),
+            "do": worker.get("do"),
+            "validate": worker.get("validate"),
+        }
+        return validate_task(packet, "worker response", True)
 
     def _assess(
         self,
@@ -298,20 +281,17 @@ class StepLoop:
                     "goal": state["goal"],
                     "lessons": state["lessons"],
                     "task": active,
-                    "worker_packet": worker,
+                    "worker_packet": {"packet": worker},
                     "clarification_already_used": clarification_used,
                 },
             ),
             task_slug=active["slug"],
         )
-        required = ("current_packet", "retro", "clarification_needed")
+        required = ("retro", "clarification_needed")
         if not isinstance(assessor, dict) or any(
             key not in assessor for key in required
         ):
-            raise TransitionError("assessor returned an incomplete packet")
-        validate_task(
-            assessor["current_packet"], "assessor.current_packet", True
-        )
+            raise TransitionError("assessor returned an incomplete response")
         if not isinstance(assessor["retro"], dict) or any(
             not isinstance(assessor["retro"].get(k), list)
             for k in ("wins", "issues", "actions")
@@ -319,7 +299,11 @@ class StepLoop:
             raise TransitionError("assessor retro is invalid")
         if not isinstance(assessor["clarification_needed"], bool):
             raise TransitionError("assessor clarification flag is invalid")
-        return assessor
+        return {
+            "current_packet": deepcopy(worker),
+            "retro": deepcopy(assessor["retro"]),
+            "clarification_needed": assessor["clarification_needed"],
+        }
 
     def _prompt(self, role: str, context: dict[str, Any]) -> str:
         return build_prompt(role, context, self.change_path)

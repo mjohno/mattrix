@@ -16,23 +16,6 @@ Use the supplied context to:
 
 Do not invent evidence or convert an unsupported result into success. A completed task may be useful progress even when validation is partial, failed, or blocked; distinguish its actual contribution from its shortcomings. Do not execute, repair, or expand the task; the Team Member owns execution. Do not select or prioritize the next task; the Coordinator owns task direction. Do not approve work on behalf of the Owner. If clarification has already been used, set `clarification_needed: false` and assess the available evidence.
 
-## Assessor packet
+## Finalizer inputs
 
-```yaml
-current_packet:
-  slug: lowercase-kebab-case
-  intent: concise outcome
-  criteria: [observable criterion]
-  do:
-    summary: work performed
-    evidence: [evidence]
-  validate:
-    result: success # success | partial | failure | blocked
-    summary: checks performed and their outcomes
-    evidence: [evidence]
-retro:
-  wins: [effective progress]
-  issues: [friction, failure, or lack of progress]
-  actions: [specific next-step input]
-clarification_needed: false
-```
+Submit `wins`, `issues`, `actions`, and `clarification_needed` through the assessor finalizer. Do not repeat the worker packet, task identity, work evidence, or validation result; the STEP loop preserves the normalized worker result as the current packet.

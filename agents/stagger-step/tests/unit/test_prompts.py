@@ -21,6 +21,8 @@ def test_retry_prompts_target_continuation_or_finalization():
     assert "missing packet" in finalization
     assert "stagger_step_finalize_worker" in continuation
     assert "stagger_step_finalize_worker" in finalization
+    assert "with its required typed arguments" in continuation
+    assert "with its required typed arguments" in finalization
     assert "## Invocation context" not in continuation
     assert "## Invocation context" not in finalization
 
@@ -46,6 +48,8 @@ def test_role_prompt_is_self_contained_and_role_specific(
     assert "skills/" not in prompt
     assert "/skill:" not in prompt
     assert "## Invocation context" in prompt
+    assert "with its required typed arguments" in prompt
+    assert "For example:" in prompt
 
 
 def test_role_prompt_includes_active_change_path_only_when_supplied():

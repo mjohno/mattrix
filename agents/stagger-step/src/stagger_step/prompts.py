@@ -25,11 +25,29 @@ def _finalizer(role: str) -> str:
     return f"stagger_step_finalize_{role}"
 
 
+def _finalizer_example(role: str) -> str:
+    if role == "coordinator":
+        return '{"lessons":["durable lesson"],"proposals":[{"slug":"next-task","intent":"bounded outcome","criteria":["observable criterion"]}],"recommendation":"next-task"}'
+    if role == "worker":
+        return '{"work_summary":"work performed","work_evidence":["evidence"],"result":"success","validation_summary":"checks performed","validation_evidence":["validation evidence"]}'
+    return '{"wins":["effective progress"],"issues":["remaining issue"],"actions":["next-step input"],"clarification_needed":false}'
+
+
+def _response_protocol(role: str) -> str:
+    finalizer = _finalizer(role)
+    return (
+        "## Response protocol\n\n"
+        f"Call `{finalizer}` exactly once with its required typed arguments. "
+        "Do not return a role packet in assistant text. For example:\n\n"
+        f"`{finalizer}({_finalizer_example(role)})`"
+    )
+
+
 def build_prompt(
     role: str, context: dict[str, Any], change_path: str | None = None
 ) -> str:
     """Build the complete self-contained prompt for one STEP role invocation."""
-    finalizer = _finalizer(role)
+    _finalizer(role)
     sections = [_source("common.md"), _source(f"{role}.md")]
     if change_path is not None:
         sections.append(
@@ -53,10 +71,7 @@ def build_prompt(
             "## Invocation context\n\n```yaml\n"
             + yaml.safe_dump(context, sort_keys=False).strip()
             + "\n```",
-            "## Response protocol\n\n"
-            f"Call `{finalizer}` exactly once with one complete "
-            f"conforming {role} YAML packet. Do not return the role packet in "
-            "assistant text.",
+            _response_protocol(role),
         )
     )
     return "\n\n".join(sections)
@@ -64,25 +79,23 @@ def build_prompt(
 
 def build_continuation_prompt(role: str) -> str:
     """Nudge an idle role session to finish its outstanding work."""
-    finalizer = _finalizer(role)
     return (
         "Continue the current STEP role session from its existing context. "
         "An idle period passed before the session settled. Resume the next "
         "unfinished action. Do not restart, repeat completed work, or expand "
-        "scope. When the role work is complete, call "
-        f"`{finalizer}` exactly once with the complete conforming {role} YAML "
-        "packet. Do not return the packet in assistant text."
+        "scope. "
+        + _response_protocol(role)
     )
 
 
 def build_finalization_prompt(role: str, error: Exception) -> str:
     """Ask a role to format already-complete work through its finalizer."""
-    finalizer = _finalizer(role)
+    _finalizer(role)
     return (
         "Finalize the current STEP role result from the work already completed "
         "in this session. Do not resume implementation, research, or scope "
-        "expansion. Format the complete conforming "
-        f"{role} YAML packet and call `{finalizer}` exactly once. Do not return "
-        "the packet in assistant text. The prior finalization was not accepted: "
-        f"{error}"
+        "expansion. "
+        + _response_protocol(role)
+        + "\n\nThe prior finalization was not accepted: "
+        + str(error)
     )

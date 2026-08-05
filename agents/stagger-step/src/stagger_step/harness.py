@@ -112,6 +112,14 @@ class PiRpcHarness:
     _role_sessions: dict[str, RoleSession] = field(
         default_factory=dict, init=False
     )
+    _last_finalizer_details: dict[str, Any] | None = field(
+        default=None, init=False
+    )
+
+    @property
+    def last_finalizer_details(self) -> dict[str, Any] | None:
+        """Diagnostic details from the most recently accepted finalizer."""
+        return self._last_finalizer_details
 
     def __post_init__(self) -> None:
         self._step_slug()
@@ -315,7 +323,7 @@ class PiRpcHarness:
             raise PacketNormalizationError(
                 f"{role} finalizer rejected packet: {error}"
             )
-        return _yaml_mapping(result.stdout)
+        return _json_mapping(result.stdout)
 
     def _invoke_once(
         self, role: str, prompt: str, session: RoleSession, task_slug: str
@@ -370,7 +378,12 @@ class PiRpcHarness:
                 if self.max_invocation_seconds is not None
                 else None
             )
-            finalizer_text, finalizer_error, settled = None, None, False
+            finalizer_text, finalizer_details, finalizer_error, settled = (
+                None,
+                None,
+                None,
+                False,
+            )
             streamed_blocks: dict[tuple[str, int], list[str]] = {}
             saw_streamed_content = False
             while True:
@@ -559,6 +572,10 @@ class PiRpcHarness:
                         finalizer_error = "finalizer returned no text"
                         continue
                     finalizer_text = "".join(chunks)
+                    details = result.get("details")
+                    finalizer_details = (
+                        details if isinstance(details, dict) else None
+                    )
                     finalizer_error = None
             if not settled:
                 raise HarnessError("RPC did not settle")
@@ -569,6 +586,7 @@ class PiRpcHarness:
                     f"RPC settled without stagger_step_finalize_{role}"
                 )
             payload = self._normalize(role, finalizer_text)
+            self._last_finalizer_details = finalizer_details
             logger.info(
                 "pi settled role=%s session_name=%s session_id=%s",
                 role,
@@ -580,13 +598,11 @@ class PiRpcHarness:
             self._terminate_process(proc, stderr_lines)
 
 
-def _yaml_mapping(text: str) -> dict[str, Any]:
+def _json_mapping(text: str) -> dict[str, Any]:
     try:
-        import yaml
-
-        value = yaml.safe_load(text)
-    except Exception as exc:
-        raise HarnessError(f"malformed role YAML: {exc}") from exc
+        value = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise HarnessError(f"malformed role JSON: {exc}") from exc
     if not isinstance(value, dict):
-        raise HarnessError("role output must be a YAML mapping")
+        raise HarnessError("role output must be a JSON object")
     return value

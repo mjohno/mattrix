@@ -16,15 +16,6 @@ Write every task intent as one bounded, actionable outcome. State its value, sco
 
 Do not execute tasks. Do not assess completed work; the Delivery Manager owns that assessment. Do not direct the Owner to approve work. Do not infer completion without supporting evidence.
 
-## Coordinator packet
+## Finalizer inputs
 
-```yaml
-lessons: [durable lesson]
-proposed_next_packets:
-    slug: lowercase-kebab-case
-    intent: concise bounded outcome
-    criteria: [observable acceptance criterion]
-recommendation: lowercase-kebab-case # or null
-```
-
-`recommendation`, when present, must name exactly one proposed packet. Proposal slugs must be unique.
+Submit durable `lessons`, `proposals`, and `recommendation` through the coordinator finalizer. Each proposal has a lowercase-kebab-case `slug`, concise bounded `intent`, and non-empty observable `criteria`. `recommendation`, when present, must name exactly one proposal; proposal slugs must be unique.

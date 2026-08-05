@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
 import queue
+import sys
+from pathlib import Path
 
 import pytest
 from stagger_step import harness
@@ -74,6 +77,40 @@ def test_cleanup_escalates_after_bounded_termination(monkeypatch):
     assert proc.terminated
     assert killed == [proc]
     assert proc.stdin.closed and proc.stdout.closed and proc.stderr.closed
+
+
+def test_harness_retains_finalizer_details_but_parses_text(monkeypatch, tmp_path):
+    scenario_path = tmp_path / "scenario.json"
+    log_path = tmp_path / "pi.log"
+    scenario_path.write_text(
+        json.dumps(
+            {
+                "coordinator": [
+                    {"lessons": [], "proposals": [], "recommendation": None}
+                ]
+            }
+        )
+    )
+    monkeypatch.setenv("FAKE_PI_SCENARIO", str(scenario_path))
+    monkeypatch.setenv("FAKE_PI_LOG", str(log_path))
+    monkeypatch.setenv("PYTHONPATH", str(Path(__file__).parents[2] / "src"))
+    fake = Path(__file__).parents[1] / "integration" / "support" / "fake_pi.py"
+    adapter = PiRpcHarness(command=(sys.executable, str(fake)), retries=0)
+
+    payload = adapter.invoke("coordinator", "finalize")
+
+    assert payload == {
+        "lessons": [],
+        "proposed_next_packets": [],
+        "recommendation": None,
+    }
+    assert adapter.last_finalizer_details == {
+        "canonical": {
+            "lessons": [],
+            "proposals": [],
+            "recommendation": None,
+        }
+    }
 
 
 def test_harness_rejects_an_invalid_step_slug_for_pi_naming():

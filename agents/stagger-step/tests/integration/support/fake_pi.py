@@ -11,6 +11,27 @@ import time
 from pathlib import Path
 
 
+def _finalizer_response(role: str, reply: object) -> object:
+    """Adapt legacy fixture packets to the current role-owned finalizer output."""
+    if not isinstance(reply, dict):
+        return reply
+    if role == "coordinator" and "proposed_next_packets" in reply:
+        return {
+            "lessons": reply["lessons"],
+            "proposals": reply["proposed_next_packets"],
+            "recommendation": reply["recommendation"],
+        }
+    if role == "worker" and isinstance(reply.get("packet"), dict):
+        packet = reply["packet"]
+        return {"do": packet.get("do"), "validate": packet.get("validate")}
+    if role == "assessor" and "current_packet" in reply:
+        return {
+            "retro": reply.get("retro"),
+            "clarification_needed": reply.get("clarification_needed"),
+        }
+    return reply
+
+
 def main() -> int:
     name = next(
         (
@@ -80,6 +101,7 @@ def main() -> int:
             print(json.dumps({"type": "extension_ui_request"}), flush=True)
             time.sleep(0.1)
         return 0
+    reply = _finalizer_response(role, reply)
     text = reply if isinstance(reply, str) else json.dumps(reply)
     if isinstance(thinking, str):
         print(
@@ -132,6 +154,7 @@ def main() -> int:
                     "toolName": tool_name,
                     "result": {
                         "content": [{"type": "text", "text": text}],
+                        "details": {"canonical": reply},
                         "isError": False,
                     },
                 }

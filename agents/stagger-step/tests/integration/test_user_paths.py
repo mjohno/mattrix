@@ -149,8 +149,8 @@ def test_invalid_worker_packet_is_corrected_in_its_persistent_session(cli):
         if '"role": "worker"' in line
     ]
     assert len(worker_calls) == 2
-    assert "worker.packet.do.summary" in worker_calls[1]["prompt"]
-    assert "required" in worker_calls[1]["prompt"]
+    assert "worker.do must be a mapping" in worker_calls[1]["prompt"]
+    assert "worker finalizer" in worker_calls[1]["prompt"]
     assert (
         worker_calls[0]["argv"][
             worker_calls[0]["argv"].index("--session-id") + 1
@@ -161,45 +161,45 @@ def test_invalid_worker_packet_is_corrected_in_its_persistent_session(cli):
     )
 
 
-def test_worker_packet_cannot_redefine_the_approved_task(cli):
+def test_loop_preserves_approved_task_identity_without_worker_input(cli):
     run, step, _ = cli
     init(run)
-    before = step.read_bytes()
-    altered = complete("first")
-    altered["intent"] = "a different task"
-    result = run("gate", "approved", replies={"worker": [{"packet": altered}]})
-
-    assert result.returncode == 2
-    assert "worker packet does not match the approved step" in result.stderr
-    assert step.read_bytes() == before
-
-
-def test_assessor_packet_cannot_change_worker_result(cli):
-    run, step, _ = cli
-    init(run)
-    before = step.read_bytes()
-    altered = assessor("first")
-    altered["current_packet"]["validate"]["result"] = "partial"
     result = run(
         "gate",
         "approved",
         replies={
-            "worker": [{"packet": complete("first")}],
-            "assessor": [altered],
+            "worker": [{"packet": complete("different-task")}],
+            "assessor": [assessor("first")],
+            "coordinator": [coordinator("second")],
         },
     )
 
-    assert result.returncode == 2
-    assert (
-        "assessor packet does not preserve the worker result" in result.stderr
-    )
-    assert step.read_bytes() == before
+    assert result.returncode == 0, result.stderr
+    assert state(step)["current"]["intent"] == "first"
 
 
-def test_clarification_packet_cannot_change_the_approved_task(cli):
+def test_loop_preserves_worker_result_without_assessor_input(cli):
     run, step, _ = cli
     init(run)
-    before = step.read_bytes()
+    worker = complete("first")
+    worker["validate"]["result"] = "partial"
+    result = run(
+        "gate",
+        "approved",
+        replies={
+            "worker": [{"packet": worker}],
+            "assessor": [assessor("first")],
+            "coordinator": [coordinator("second")],
+        },
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert state(step)["current"]["validate"]["result"] == "partial"
+
+
+def test_clarification_preserves_approved_task_identity(cli):
+    run, step, _ = cli
+    init(run)
     result = run(
         "gate",
         "approved",
@@ -208,15 +208,13 @@ def test_clarification_packet_cannot_change_the_approved_task(cli):
                 {"packet": complete("first")},
                 {"packet": complete("different-task")},
             ],
-            "assessor": [assessor("first", clarify=True)],
+            "assessor": [assessor("first", clarify=True), assessor("first")],
+            "coordinator": [coordinator("second")],
         },
     )
 
-    assert result.returncode == 2
-    assert (
-        "clarification packet does not match the approved step" in result.stderr
-    )
-    assert step.read_bytes() == before
+    assert result.returncode == 0, result.stderr
+    assert state(step)["current"]["slug"] == "first"
 
 
 def test_missing_coordinator_finalizer_is_repaired_in_the_same_role_session(
@@ -398,7 +396,7 @@ def test_second_invalid_worker_packet_keeps_step_state_unchanged(cli):
         "gate", "approved", replies={"worker": [invalid, {"packet": "invalid"}]}
     )
     assert result.returncode == 2
-    assert "worker.packet must be a mapping" in result.stderr
+    assert "worker.do must be a mapping" in result.stderr
     assert step.read_bytes() == before
 
 

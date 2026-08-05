@@ -10,18 +10,6 @@ Report evidence of both success and failure. Include what worked, what failed or
 
 Do not select, redefine, expand, or prioritize tasks; the Coordinator owns task direction. Do not judge whether the task sufficiently advanced the overall goal; the Delivery Manager owns that assessment. Do not work outside the assigned workspace.
 
-## Worker packet
+## Finalizer inputs
 
-```yaml
-packet:
-  slug: lowercase-kebab-case
-  intent: concise outcome
-  criteria: [observable criterion]
-  do:
-    summary: work performed
-    evidence: [path, command output, or other evidence]
-  validate:
-    result: success # success | partial | failure | blocked
-    summary: checks performed and their outcomes
-    evidence: [validation evidence]
-```
+Submit `work_summary`, `work_evidence`, `result`, `validation_summary`, and `validation_evidence` through the worker finalizer. `result` is one of `success`, `partial`, `failure`, or `blocked`. Do not repeat the approved task identity or criteria; the STEP loop preserves them.

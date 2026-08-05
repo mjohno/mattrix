@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import signal
@@ -93,7 +94,7 @@ def parser() -> argparse.ArgumentParser:
     )
     sub = p.add_subparsers(dest="command", required=True)
     normalize = sub.add_parser(
-        "normalize", help="normalize one role YAML response from standard input"
+        "normalize", help="normalize one role JSON response from standard input"
     )
     normalize.add_argument("--role", choices=ROLES, required=True)
     init = sub.add_parser("init", help="create a new STEP state")
@@ -276,10 +277,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "normalize":
             try:
-                candidate = yaml.safe_load(sys.stdin.read())
-            except yaml.YAMLError as exc:
-                raise StateError(f"invalid role YAML: {exc}") from exc
-            emit(normalize_packet(args.role, candidate))
+                candidate = json.load(sys.stdin)
+            except json.JSONDecodeError as exc:
+                raise StateError(f"invalid role JSON: {exc}") from exc
+            print(json.dumps(normalize_packet(args.role, candidate)), flush=True)
             return 0
         if args.command == "init":
             path = path_from(args, create=True)
