@@ -1,6 +1,6 @@
 ---
 name: change
-description: Use when output or map skills need the temporary local change workspace contract.
+description: Use when another skill needs the local artifact-directory contract for a caller-provided change path.
 metadata:
   type: interface
   category: interface
@@ -8,24 +8,23 @@ metadata:
 
 # change
 
-Goal: Define the minimal temporary local workspace contract for work that concerns a target plus an intended or possible delta.
-Non-Goals: Do not coordinate work, define a lifecycle, draft specs/plans/tasks/checks/reviews, implement changes, deploy, release, or create repository-level active-change state.
-Use-When: Another skill needs the `change` interface contract before creating, using, checking, or coordinating temporary local change workspace artifacts.
+Goal: Define the minimal local artifact-directory contract for a supplied change path.
+Non-Goals: Do not select, create, identify, or coordinate a change; define a lifecycle; draft artifacts; implement work; deploy; release; or create persistent state.
+Use-When: Another skill receives a change path and needs the `change` interface contract before using or checking change-scoped local artifacts.
 
 ## Selection
 
-Default: load only the compact change contract.
+Default: load only the compact change-path contract.
 
 Also select:
-- `change_template.md` when the caller asks to create, scaffold, outline, or draft a `CHANGE.md` file.
-- `change_checklist.md` when the caller asks to check change workspace conformance or skill compliance.
+- `change_checklist.md` when the caller asks to check change-path conformance or interface compliance.
 
 If caller intent is unclear, assume default contract only and state the assumption.
-If requested change needs fall outside this interface, state the unsupported need and hand off to the appropriate skill.
+If the caller has not supplied a change path, ask the caller to supply the path; the interface has no artifact location to govern.
 
 ## Context Loading
 
-Load each selected package-local reference or asset into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
+Load each selected package-local reference into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
 
 When invoked alone, respond only with `Loaded: <relative path(s)>.` When composed with another task, continue that task without an interface-only response.
 
@@ -33,17 +32,14 @@ Default path:
 - `references/change_contract.md`
 
 Optional paths:
-- `assets/change_template.md`
 - `references/change_checklist.md`
 
 ## Next Steps
 
-- `draft` — create a first-pass `CHANGE.md` from the template.
-- `modify` — revise an existing change workspace artifact while preserving boundaries.
-- `output/check` — check change workspace conformance with `change_checklist.md`.
-- `map/coordinate` — orchestrate local work using prompt coordinates or change-scoped `COORDS.md`.
+- `modify` — revise a change-scoped artifact while preserving its own contract.
+- `output/check` — check artifact-location conformance with `change_checklist.md`.
 
 ## Minimal Example
 
-Prompt: "Use the change interface for auth error cleanup."
+Prompt: "Use the change interface for artifacts at the supplied change path."
 Direct invocation response: `Loaded: references/change_contract.md.`

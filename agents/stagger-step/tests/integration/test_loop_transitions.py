@@ -21,6 +21,8 @@ def test_approval_consumes_the_promoted_step_and_clears_recommendation():
     state = {
         "version": 1,
         "goal": "Goal",
+        "change_path": None,
+        "commit_mode": False,
         "lessons": [],
         "history": [],
         "current": None,

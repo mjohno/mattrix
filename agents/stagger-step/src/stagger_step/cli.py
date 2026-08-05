@@ -52,16 +52,33 @@ def emit(value: Any) -> None:
     print(yaml.safe_dump(value, sort_keys=False), end="")
 
 
+def resolve_change_path(step_path: Path, value: str | None) -> str | None:
+    """Resolve a configured change path relative to its STEP file."""
+    if value is None:
+        return None
+    path = Path(value)
+    if not path.is_absolute():
+        path = step_path.parent / path
+    path = path.resolve()
+    if not path.is_dir():
+        raise StateError(f"change_path must name an existing directory: {path}")
+    return str(path)
+
+
+def select_commit_mode(
+    state: dict[str, Any], step_path: Path, cwd: Path, commit_off: bool
+) -> CommitMode | None:
+    """Select persisted commit mode unless this invocation disables it."""
+    if not state["commit_mode"] or commit_off:
+        return None
+    return CommitMode(step_path, cwd)
+
+
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description="Deterministic, approval-gated STEP loop"
     )
     p.add_argument("--file", help="STEP file path; defaults to STEP_FILE")
-    p.add_argument(
-        "--commit",
-        action="store_true",
-        help="create a local Git commit after each approved completed packet",
-    )
     p.add_argument(
         "--log-level",
         choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
@@ -83,20 +100,42 @@ def parser() -> argparse.ArgumentParser:
     init.add_argument("--goal", required=True)
     init.add_argument("--lesson", action="append", default=[])
     init.add_argument(
+        "--change",
+        help="existing artifact directory, resolved relative to the STEP file",
+    )
+    init.add_argument(
+        "--commit",
+        action="store_true",
+        help="persist local commit mode for this STEP workflow",
+    )
+    init.add_argument(
         "--session",
         action="store_true",
         help="enter the continuous session after initialization",
     )
     sub.add_parser("validate", help="validate existing manual YAML state")
-    gate = sub.add_parser("gate", help="apply one STEP gate response and exit")
+    gate = sub.add_parser(
+        "gate", help="apply one STEP gate response and exit", allow_abbrev=False
+    )
     gate.add_argument(
         "response",
         nargs="?",
         help="exact approved, break, or revision feedback",
     )
-    sub.add_parser(
+    gate.add_argument(
+        "--commit-off",
+        action="store_true",
+        help="disable persisted commit mode for this invocation",
+    )
+    session = sub.add_parser(
         "session",
         help="render a gate and accept one human response in this process",
+        allow_abbrev=False,
+    )
+    session.add_argument(
+        "--commit-off",
+        action="store_true",
+        help="disable persisted commit mode for this session",
     )
     return p
 
@@ -246,6 +285,7 @@ def main(argv: list[str] | None = None) -> int:
             path = path_from(args, create=True)
             if path.exists():
                 raise StateError("refusing to replace an existing STEP file")
+            change_path = resolve_change_path(path, args.change)
             commit = CommitMode(path, Path.cwd()) if args.commit else None
             if commit is not None:
                 commit.begin()
@@ -253,9 +293,17 @@ def main(argv: list[str] | None = None) -> int:
                 PiRpcHarness(
                     session_enabled=args.harness_session == "on",
                     session_scope=str(path.resolve()),
+                ),
+                change_path,
+            )
+            state = loop.bootstrap(
+                create_state(
+                    args.goal,
+                    args.lesson,
+                    change_path=args.change,
+                    commit_mode=args.commit,
                 )
             )
-            state = loop.bootstrap(create_state(args.goal, args.lesson))
             write_atomic(path, state)
             if args.session:
                 return run_session(path, state, loop, commit)
@@ -266,7 +314,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "validate":
             emit({"ok": True, "state": state})
             return 0
-        commit = CommitMode(path, Path.cwd()) if args.commit else None
+        if args.command == "gate" and args.response == "break":
+            emit({"changed": False})
+            return 0
+        change_path = resolve_change_path(path, state["change_path"])
+        commit = select_commit_mode(state, path, Path.cwd(), args.commit_off)
         if commit is not None:
             pending = state.get("current")
             commit.begin(
@@ -280,12 +332,10 @@ def main(argv: list[str] | None = None) -> int:
             PiRpcHarness(
                 session_enabled=args.harness_session == "on",
                 session_scope=str(path.resolve()),
-            )
+            ),
+            change_path,
         )
         if args.command == "gate":
-            if args.response == "break":
-                emit({"changed": False})
-                return 0
             prepared = prepare(state, loop, commit)
             if prepared != state:
                 write_atomic(path, prepared)

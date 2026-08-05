@@ -82,6 +82,15 @@ def validate_state(state: Any) -> dict[str, Any]:
         raise StateError("version must be 1")
     if not isinstance(state.get("goal"), str) or not state["goal"].strip():
         raise StateError("goal is required")
+    if "change_path" not in state:
+        raise StateError("change_path is required")
+    change_path = state["change_path"]
+    if change_path is not None and (
+        not isinstance(change_path, str) or not change_path.strip()
+    ):
+        raise StateError("change_path must be a non-empty string or null")
+    if "commit_mode" not in state or not isinstance(state["commit_mode"], bool):
+        raise StateError("commit_mode must be boolean")
     _strings(state.get("lessons"), "lessons")
     history = state.get("history")
     if not isinstance(history, list):
@@ -132,10 +141,17 @@ def validate_state(state: Any) -> dict[str, Any]:
     return state
 
 
-def create_state(goal: str, lessons: list[str] | None = None) -> dict[str, Any]:
+def create_state(
+    goal: str,
+    lessons: list[str] | None = None,
+    change_path: str | None = None,
+    commit_mode: bool = False,
+) -> dict[str, Any]:
     return {
         "version": 1,
         "goal": goal,
+        "change_path": change_path,
+        "commit_mode": commit_mode,
         "lessons": lessons or [],
         "history": [],
         "current": None,

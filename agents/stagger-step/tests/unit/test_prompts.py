@@ -48,6 +48,19 @@ def test_role_prompt_is_self_contained_and_role_specific(
     assert "## Invocation context" in prompt
 
 
+def test_role_prompt_includes_active_change_path_only_when_supplied():
+    without_path = build_prompt("worker", {"goal": "Ship the change"})
+    with_path = build_prompt(
+        "worker", {"goal": "Ship the change"}, "/tmp/change-artifacts"
+    )
+
+    assert "## Change path" not in without_path
+    assert "## Change path" in with_path
+    assert "`/tmp/change-artifacts`" in with_path
+    assert "not a security boundary" in with_path
+    assert "CHANGE.md" not in with_path
+
+
 def test_coordinator_embeds_bounded_task_guidance():
     prompt = build_prompt("coordinator", {"goal": "Ship the change"})
 

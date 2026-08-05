@@ -114,6 +114,8 @@ def test_cli_approval_commits_before_persisting_history(tmp_path):
             {
                 "version": 1,
                 "goal": "Commit the packet",
+                "change_path": None,
+                "commit_mode": True,
                 "lessons": [],
                 "history": [],
                 "current": {
@@ -135,7 +137,6 @@ def test_cli_approval_commits_before_persisting_history(tmp_path):
             "stagger_step.cli",
             "--file",
             str(step),
-            "--commit",
             "gate",
             "approved",
         ],

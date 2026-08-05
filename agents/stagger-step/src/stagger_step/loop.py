@@ -65,8 +65,9 @@ def _unique_proposals(
 class StepLoop:
     """Own STEP transitions without exposing state files to the harness."""
 
-    def __init__(self, harness: Harness):
+    def __init__(self, harness: Harness, change_path: str | None = None):
         self.harness = harness
+        self.change_path = change_path
 
     def bootstrap(self, state: dict[str, Any]) -> dict[str, Any]:
         self.harness.begin_transition()
@@ -320,6 +321,5 @@ class StepLoop:
             raise TransitionError("assessor clarification flag is invalid")
         return assessor
 
-    @staticmethod
-    def _prompt(role: str, context: dict[str, Any]) -> str:
-        return build_prompt(role, context)
+    def _prompt(self, role: str, context: dict[str, Any]) -> str:
+        return build_prompt(role, context, self.change_path)

@@ -635,3 +635,70 @@ def test_session_revision_keeps_running_then_breaks_without_promotion(cli):
         saved["next"][0]["slug"] == "third" and saved["recommended"] == "third"
     )
     assert "STEP response:" not in result.stdout
+
+
+def test_init_persists_change_path_and_supplies_it_to_each_role(cli):
+    run, step, log = cli
+    artifacts = step.parent / "artifacts"
+    artifacts.mkdir()
+    result = run(
+        "init",
+        "--goal",
+        "Goal",
+        "--change",
+        "artifacts",
+        replies=scenario("fresh"),
+    )
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["change_path"] == "artifacts"
+    assert saved["commit_mode"] is False
+
+    result = run("gate", "approved", replies=scenario("complete_continue"))
+    assert result.returncode == 0, result.stderr
+    role_calls = [
+        call
+        for call in calls(log)
+        if call["role"] in {"worker", "assessor", "coordinator"}
+    ]
+    assert {call["role"] for call in role_calls} == {
+        "worker",
+        "assessor",
+        "coordinator",
+    }
+    for call in role_calls:
+        assert "## Change path" in call["prompt"]
+        assert f"`{artifacts.resolve()}`" in call["prompt"]
+
+
+def test_init_rejects_missing_change_path(cli):
+    run, _, _ = cli
+
+    result = run("init", "--goal", "Goal", "--change", "missing")
+
+    assert result.returncode == 2
+    assert "change_path must name an existing directory" in result.stderr
+
+
+def test_removed_change_path_fails_before_role_invocation(cli):
+    run, step, log = cli
+    artifacts = step.parent / "artifacts"
+    artifacts.mkdir()
+    result = run(
+        "init",
+        "--goal",
+        "Goal",
+        "--change",
+        "artifacts",
+        replies={"coordinator": [coordinator("first")]},
+    )
+    assert result.returncode == 0, result.stderr
+    artifacts.rmdir()
+
+    result = run(
+        "gate", "approved", replies={"worker": [{"packet": complete("first")}]}
+    )
+
+    assert result.returncode == 2
+    assert "change_path must name an existing directory" in result.stderr
+    assert not log.exists()

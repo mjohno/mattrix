@@ -1,43 +1,26 @@
-# Change Contract
+# Change Path Contract
 
-A change is a temporary local workspace for work that concerns a target thing plus an intended or possible delta to that thing.
+A change path is a caller-provided local directory for artifacts concerning a target plus an intended or possible delta.
 
 ```text
 change = target + intended or possible delta
+change path = local directory for that change's artifacts
 ```
 
 - Target: the thing being changed, evaluated for change, or prepared for change.
 - Delta: what may be added, removed, fixed, revised, replaced, validated, or decided.
+- The delta does not need to be fully known. "Determine the necessary fix" is a valid possible delta.
 
-The delta does not need to be fully known. "Determine the necessary fix" is a valid possible delta.
+## Ownership
 
-## Location
+The caller owns change-path selection, identity, lifecycle, access, retention, and coordination. This interface does not infer an active change path, prescribe its parent directory or name, or create it.
 
-Default root:
+## Use
 
-```text
-./tmp/changes/<change-id>/
-```
+Artifacts at a change path support the same target and delta. They may include specifications, plans, implementation notes, review findings, validation evidence, and supporting files. Each artifact follows its own contract.
 
-Artifacts may live under the change directory and should follow their own contracts.
+A change path is an artifact location, not an approval record, state store, or security boundary. Do not place deployment, release-management, publishing, promotion, or remote-environment work under this contract.
 
-## Identity
+## Locality
 
-Use one safe path-segment ID. Prefer lowercase hyphenated slugs when choosing one. Only one change is active, selected in prompt/context.
-
-Do not create a repository-level active-change pointer file.
-
-## CHANGE.md
-
-`CHANGE.md` identifies the workspace. Keep it shallow:
-
-- Change ID/title
-- Target
-- Intent
-- Artifact index
-
-## Scope
-
-Change workspaces are temporary local working state and should not be committed by default.
-
-Deployment, release management, publishing, promotion, and remote environment changes are out of scope.
+A change path is normally local and temporary. It should not be committed by default unless its caller or repository policy explicitly requires otherwise.

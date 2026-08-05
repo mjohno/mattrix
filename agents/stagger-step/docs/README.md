@@ -9,7 +9,7 @@ All generated Stagger Step build artifacts belong in the repository-root `build/
 ## CLI
 
 ```bash
-STEP_FILE=STEP-example.yaml python -m stagger_step.cli init --goal "Ship the change"
+STEP_FILE=STEP-example.yaml python -m stagger_step.cli init --goal "Ship the change" --change artifacts --commit
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli validate
 printf '%s\n' 'packet: {slug: validate-cli, intent: Validate CLI, criteria: [checks], do: {summary: Ran checks, evidence: []}, validate: {result: success, summary: Checks passed, evidence: []}}' | stagger-step normalize --role worker
 # One-shot approval promotes work, runs its cycle, and prints the next gate.
@@ -20,9 +20,11 @@ STEP_FILE=STEP-example.yaml python -m stagger_step.cli session
 
 `init` creates bootstrap state. Thereafter, only the exact input `approved` writes state. `break` and revisions are read-only. `session` keeps the pending role output in process memory, so an arbitrary edited YAML gate can never be submitted as an approval. A manually edited state is accepted only through `validate_state`.
 
-## Commit mode
+## Change path and commit mode
 
-Pass `--commit` to `init`, `gate`, or `session` to create a local Git commit after an approved completed packet and before the approved STEP state is written. Commit mode requires the invoking directory to be a clean, non-bare Git worktree with no index lock and configured author and committer identity. The STEP file is excluded from packet staging.
+`init --change PATH` stores an optional root-level `change_path`. Relative paths are resolved from the STEP file, must name an existing directory, and are supplied to every role as its shared artifact location. The STEP file is the change record; no `CHANGE.md` is required.
+
+`init --commit` stores root-level `commit_mode: true`; without it, `commit_mode` is false. Later `gate` and `session` commands inherit that setting. Pass `--commit-off` to either command to bypass commit behavior for that invocation or session without changing STEP state. Enabled commit mode requires the invoking directory to be a clean, non-bare Git worktree with no index lock and configured author and committer identity. The STEP file is excluded from packet staging.
 
 A changed packet commits with Stagger Step's fixed Conventional Commit type:
 
@@ -48,7 +50,7 @@ In `session`, enter `afk` at a manual gate to approve that gate and automaticall
 
 ## State and gates
 
-Persisted state contains `version`, `goal`, `lessons`, completed `history`, an approved `active_packet`, and `completed`. Pending coordinator/assessor outputs are intentionally never persisted. A gate contains `goal`, `lessons`, `current_packet`, ranked `proposed_next_packets`, and `recommendation`.
+Persisted state contains `version`, `goal`, optional `change_path`, `commit_mode`, `lessons`, completed `history`, an approved `active_packet`, and `completed`. Pending coordinator/assessor outputs are intentionally never persisted. A gate contains `goal`, `lessons`, `current_packet`, ranked `proposed_next_packets`, and `recommendation`.
 
 The coordinator selects durable gate lessons from existing lessons, completed history, and assessor actions. Approval validates the displayed gate, then atomically commits its completed current packet, coordinator-selected lessons, and recommended next packet (or terminal completion). The next `session` runs an approved active task through worker → assessor → coordinator before returning to the human.
 

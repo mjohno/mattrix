@@ -25,13 +25,31 @@ def _finalizer(role: str) -> str:
     return f"stagger_step_finalize_{role}"
 
 
-def build_prompt(role: str, context: dict[str, Any]) -> str:
+def build_prompt(
+    role: str, context: dict[str, Any], change_path: str | None = None
+) -> str:
     """Build the complete self-contained prompt for one STEP role invocation."""
     finalizer = _finalizer(role)
-    return "\n\n".join(
+    sections = [_source("common.md"), _source(f"{role}.md")]
+    if change_path is not None:
+        sections.append(
+            "## Change path\n\n"
+            "A change path is active for this STEP workflow:\n\n"
+            f"`{change_path}`\n\n"
+            "Use this directory for artifacts produced by your role for the "
+            "approved task, such as plans, implementation notes, review "
+            "findings, validation evidence, and supporting files. Reuse "
+            "relevant existing artifacts there when they apply.\n\n"
+            "The change path is an artifact location, not STEP state or an "
+            "approval mechanism. Do not inspect, modify, or validate the "
+            "STEP file. Keep artifacts scoped to the approved task and report "
+            "relevant artifact paths in your role evidence where the packet "
+            "format permits it.\n\n"
+            "This path is not a security boundary; continue to follow your "
+            "assigned workspace and task-scope constraints."
+        )
+    sections.extend(
         (
-            _source("common.md"),
-            _source(f"{role}.md"),
             "## Invocation context\n\n```yaml\n"
             + yaml.safe_dump(context, sort_keys=False).strip()
             + "\n```",
@@ -41,6 +59,7 @@ def build_prompt(role: str, context: dict[str, Any]) -> str:
             "assistant text.",
         )
     )
+    return "\n\n".join(sections)
 
 
 def build_continuation_prompt(role: str) -> str:
