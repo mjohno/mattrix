@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import yaml
-
 from stagger_step.diagnostics import artifact_path, write_diagnostics
 
 
@@ -16,7 +15,9 @@ def test_writes_one_redacted_debug_artifact_and_removes_legacy_files(tmp_path):
     try:
         raise RuntimeError("failed")
     except RuntimeError as error:
-        result = write_diagnostics(step_file, event="unhandled_failure", error=error)
+        result = write_diagnostics(
+            step_file, event="unhandled_failure", error=error
+        )
 
     assert result == artifact_path(step_file)
     debug = yaml.safe_load(result.read_text())

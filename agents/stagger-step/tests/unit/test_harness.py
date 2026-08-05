@@ -3,9 +3,8 @@ from __future__ import annotations
 import queue
 
 import pytest
-
 from stagger_step import harness
-from stagger_step.harness import HarnessError, PiRpcHarness, RoleSession
+from stagger_step.harness import HarnessError, PiRpcHarness
 
 
 def test_default_harness_command_uses_windows_pi_shim(monkeypatch):
@@ -27,7 +26,9 @@ def test_stdout_queue_read_returns_a_line():
 def test_stdout_queue_read_times_out():
     lines: queue.Queue[str | None] = queue.Queue()
 
-    with pytest.raises(HarnessError, match="RPC idle timed out before settlement"):
+    with pytest.raises(
+        HarnessError, match="RPC idle timed out before settlement"
+    ):
         PiRpcHarness._read_stdout_line(
             lines, 0.01, "RPC idle timed out before settlement"
         )
@@ -64,13 +65,11 @@ def test_cleanup_escalates_after_bounded_termination(monkeypatch):
 
     proc = Process()
     killed = []
-    monkeypatch.setattr(PiRpcHarness, "_kill_process_tree", lambda _, p: killed.append(p))
-
-    PiRpcHarness()._terminate_process(
-        proc,
-        RoleSession("session-id", "STEP-test-worker"),
-        queue.Queue(),
+    monkeypatch.setattr(
+        PiRpcHarness, "_kill_process_tree", lambda _, p: killed.append(p)
     )
+
+    PiRpcHarness()._terminate_process(proc, queue.Queue())
 
     assert proc.terminated
     assert killed == [proc]

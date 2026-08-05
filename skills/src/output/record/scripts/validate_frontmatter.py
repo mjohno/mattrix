@@ -27,7 +27,9 @@ log = logging.getLogger(__name__)
 
 REQUIRED = ("type", "title", "description", "tags")
 KNOWN = set(REQUIRED) | {"resource", "generated_by"}
-REQUIRED_HINT = "required MKF frontmatter fields are: type, title, description, tags"
+REQUIRED_HINT = (
+    "required MKF frontmatter fields are: type, title, description, tags"
+)
 
 
 def parse_simple_yaml(raw: str) -> dict[str, Any]:
@@ -72,7 +74,9 @@ def parse_simple_yaml(raw: str) -> dict[str, Any]:
 def split_frontmatter(text: str) -> tuple[dict[str, Any], str]:
     """Split a Markdown document into parsed YAML frontmatter and body."""
     if not text.startswith("---\n"):
-        raise ValueError(f"missing YAML frontmatter opening delimiter; {REQUIRED_HINT}")
+        raise ValueError(
+            f"missing YAML frontmatter opening delimiter; {REQUIRED_HINT}"
+        )
     end = text.find("\n---", 4)
     if end == -1:
         raise ValueError("missing YAML frontmatter closing delimiter '---'")
@@ -150,8 +154,12 @@ def configure_logging(log_level: str) -> None:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description="Validate MKF concept frontmatter.")
-    parser.add_argument("paths", nargs="*", help="Markdown concept paths to validate")
+    parser = argparse.ArgumentParser(
+        description="Validate MKF concept frontmatter."
+    )
+    parser.add_argument(
+        "paths", nargs="*", help="Markdown concept paths to validate"
+    )
     parser.add_argument(
         "--json", action="store_true", help="Emit JSON output to stdout"
     )
@@ -175,7 +183,9 @@ def main(args: argparse.Namespace) -> int:
 
     if args.json:
         print(
-            json.dumps({"valid": ok, "results": results}, indent=2, ensure_ascii=False)
+            json.dumps(
+                {"valid": ok, "results": results}, indent=2, ensure_ascii=False
+            )
         )
     else:
         emit_human_results(results)
@@ -187,7 +197,9 @@ def run_tests() -> int:
 
     class TestValidateFrontmatter(unittest.TestCase):
         def test_parse_args(self) -> None:
-            parsed = parse_args(["--json", "concept.md", "--log-level", "DEBUG"])
+            parsed = parse_args(
+                ["--json", "concept.md", "--log-level", "DEBUG"]
+            )
             self.assertTrue(parsed.json)
             self.assertEqual(parsed.paths, ["concept.md"])
             self.assertEqual(parsed.log_level, "DEBUG")
@@ -213,11 +225,16 @@ def run_tests() -> int:
         def test_missing_required_field(self) -> None:
             with tempfile.TemporaryDirectory() as temp_dir:
                 path = Path(temp_dir) / "bad.md"
-                path.write_text("---\ntitle: Bad\n---\nBody\n", encoding="utf-8")
+                path.write_text(
+                    "---\ntitle: Bad\n---\nBody\n", encoding="utf-8"
+                )
                 result = validate(path)
                 self.assertFalse(result["valid"])
                 self.assertTrue(
-                    any("missing required field: type" in e for e in result["errors"])
+                    any(
+                        "missing required field: type" in e
+                        for e in result["errors"]
+                    )
                 )
 
     suite = unittest.TestLoader().loadTestsFromTestCase(TestValidateFrontmatter)

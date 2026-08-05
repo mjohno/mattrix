@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from stagger_step.prompts import (
     build_continuation_prompt,
     build_finalization_prompt,
@@ -11,7 +10,9 @@ from stagger_step.prompts import (
 
 def test_retry_prompts_target_continuation_or_finalization():
     continuation = build_continuation_prompt("worker")
-    finalization = build_finalization_prompt("worker", ValueError("missing packet"))
+    finalization = build_finalization_prompt(
+        "worker", ValueError("missing packet")
+    )
 
     assert "idle period passed" in continuation
     assert "Do not restart" in continuation

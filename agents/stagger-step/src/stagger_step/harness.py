@@ -35,7 +35,9 @@ class FinalizerProtocolError(HarnessError):
 logger = logging.getLogger("stagger_step.harness")
 # Set a positive character limit here to truncate individual DEBUG values; None is unlimited.
 _DEBUG_VALUE_LIMIT: int | None = None
-_SENSITIVE_FIELD = re.compile(r"(?:api[-_]?key|authorization|cookie|password|secret|token)", re.I)
+_SENSITIVE_FIELD = re.compile(
+    r"(?:api[-_]?key|authorization|cookie|password|secret|token)", re.I
+)
 
 
 def _inline_debug_text(value: object) -> str:
@@ -48,17 +50,24 @@ def _inline_debug_text(value: object) -> str:
 
 def _safe_debug_value(value: object) -> str:
     """Serialize tool data without leaking common credential fields."""
+
     def redact(item: object) -> object:
         if isinstance(item, dict):
             return {
-                str(key): "[redacted]" if _SENSITIVE_FIELD.search(str(key)) else redact(child)
+                str(key): (
+                    "[redacted]"
+                    if _SENSITIVE_FIELD.search(str(key))
+                    else redact(child)
+                )
                 for key, child in item.items()
             }
         if isinstance(item, list):
             return [redact(child) for child in item]
         return item
 
-    rendered = json.dumps(redact(value), default=str, ensure_ascii=False, separators=(",", ":"))
+    rendered = json.dumps(
+        redact(value), default=str, ensure_ascii=False, separators=(",", ":")
+    )
     return _inline_debug_text(rendered)
 
 
@@ -77,7 +86,6 @@ class Harness(Protocol):
         task_slug: str = "bootstrap",
         follow_up: bool = False,
     ) -> dict[str, Any]: ...
-    def close(self) -> None: ...
 
 
 @dataclass(frozen=True)
@@ -257,19 +265,22 @@ class PiRpcHarness:
             except subprocess.TimeoutExpired:
                 logger.error("pi process-tree kill timed out pid=%s", proc.pid)
             except OSError as exc:
-                logger.error("pi process-tree kill failed pid=%s error=%s", proc.pid, exc)
+                logger.error(
+                    "pi process-tree kill failed pid=%s error=%s", proc.pid, exc
+                )
             return
         try:
             os.killpg(proc.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
         except OSError as exc:
-            logger.error("pi process-group kill failed pid=%s error=%s", proc.pid, exc)
+            logger.error(
+                "pi process-group kill failed pid=%s error=%s", proc.pid, exc
+            )
 
     def _terminate_process(
         self,
         proc: subprocess.Popen[str],
-        session: RoleSession,
         stderr_lines: queue.Queue[str | None],
     ) -> None:
         self._close_pipe(proc.stdin)
@@ -388,7 +399,9 @@ class PiRpcHarness:
                 event = json.loads(line)
                 event_type = event.get("type")
                 if event_type == "agent_start":
-                    logger.info("pi agent started role=%s task=%s", role, task_slug)
+                    logger.info(
+                        "pi agent started role=%s task=%s", role, task_slug
+                    )
                 elif event_type == "agent_end":
                     logger.info(
                         "pi agent ended role=%s task=%s will_retry=%s",
@@ -398,14 +411,23 @@ class PiRpcHarness:
                     )
                     if not saw_streamed_content:
                         for message in event.get("messages", []):
-                            if not isinstance(message, dict) or message.get("role") != "assistant":
+                            if (
+                                not isinstance(message, dict)
+                                or message.get("role") != "assistant"
+                            ):
                                 continue
                             for content in message.get("content", []):
                                 if not isinstance(content, dict):
                                     continue
                                 kind = content.get("type")
-                                output = content.get("thinking") if kind == "thinking" else content.get("text")
-                                if kind in {"thinking", "text"} and isinstance(output, str):
+                                output = (
+                                    content.get("thinking")
+                                    if kind == "thinking"
+                                    else content.get("text")
+                                )
+                                if kind in {"thinking", "text"} and isinstance(
+                                    output, str
+                                ):
                                     logger.debug(
                                         "pi %s end role=%s task=%s output=%s",
                                         kind,
@@ -417,11 +439,16 @@ class PiRpcHarness:
                     update = event.get("assistantMessageEvent")
                     if isinstance(update, dict):
                         update_type = update.get("type")
-                        match = re.fullmatch(r"(thinking|text|toolcall)_(start|delta|end)", str(update_type))
+                        match = re.fullmatch(
+                            r"(thinking|text|toolcall)_(start|delta|end)",
+                            str(update_type),
+                        )
                         if match:
                             kind, phase = match.groups()
                             index = update.get("contentIndex")
-                            content_index = index if isinstance(index, int) else 0
+                            content_index = (
+                                index if isinstance(index, int) else 0
+                            )
                             key = (kind, content_index)
                             if phase == "start":
                                 streamed_blocks[key] = []
@@ -435,15 +462,21 @@ class PiRpcHarness:
                             elif phase == "delta":
                                 delta = update.get("delta")
                                 if isinstance(delta, str):
-                                    streamed_blocks.setdefault(key, []).append(delta)
+                                    streamed_blocks.setdefault(key, []).append(
+                                        delta
+                                    )
                             else:
                                 saw_streamed_content = True
                                 output = update.get("content")
                                 if not isinstance(output, str):
-                                    output = "".join(streamed_blocks.get(key, []))
+                                    output = "".join(
+                                        streamed_blocks.get(key, [])
+                                    )
                                 streamed_blocks.pop(key, None)
                                 if kind == "toolcall":
-                                    output = _safe_debug_value(update.get("toolCall", output))
+                                    output = _safe_debug_value(
+                                        update.get("toolCall", output)
+                                    )
                                 else:
                                     output = _inline_debug_text(output)
                                 logger.debug(
@@ -473,14 +506,27 @@ class PiRpcHarness:
                             _safe_debug_value(event.get("result")),
                         )
                 elif event_type == "extension_error":
-                    logger.error("pi extension error role=%s task=%s error=%s", role, task_slug, event.get("error", "unknown"))
+                    logger.error(
+                        "pi extension error role=%s task=%s error=%s",
+                        role,
+                        task_slug,
+                        event.get("error", "unknown"),
+                    )
                 elif event_type == "auto_retry_start":
-                    logger.error("pi automatic retry role=%s task=%s attempt=%s error=%s", role, task_slug, event.get("attempt", "unknown"), event.get("errorMessage", "unknown"))
+                    logger.error(
+                        "pi automatic retry role=%s task=%s attempt=%s error=%s",
+                        role,
+                        task_slug,
+                        event.get("attempt", "unknown"),
+                        event.get("errorMessage", "unknown"),
+                    )
                 if event_type == "agent_settled":
                     settled = True
                     break
                 if event_type == "response" and event.get("success") is False:
-                    raise HarnessError(event.get("error", "RPC rejected request"))
+                    raise HarnessError(
+                        event.get("error", "RPC rejected request")
+                    )
                 if (
                     event_type == "tool_execution_end"
                     and event.get("toolName") == f"stagger_step_finalize_{role}"
@@ -531,10 +577,7 @@ class PiRpcHarness:
             )
             return payload
         finally:
-            self._terminate_process(proc, session, stderr_lines)
-
-    def close(self) -> None:
-        pass
+            self._terminate_process(proc, stderr_lines)
 
 
 def _yaml_mapping(text: str) -> dict[str, Any]:

@@ -3,7 +3,6 @@ from __future__ import annotations
 import pytest
 from stagger_step.loop import StepLoop
 
-
 pytestmark = pytest.mark.integration
 
 

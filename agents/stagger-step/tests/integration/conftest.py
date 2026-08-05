@@ -19,6 +19,77 @@ def scenario(name: str) -> dict:
 
 
 @pytest.fixture
+def git_cli(tmp_path):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    subprocess.run(
+        ("git", "init"), cwd=repository, check=True, capture_output=True
+    )
+    subprocess.run(
+        ("git", "config", "user.name", "STEP Test"),
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ("git", "config", "user.email", "step@example.test"),
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    )
+    (repository / "tracked.txt").write_text("base\n")
+    subprocess.run(
+        ("git", "add", "tracked.txt"),
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ("git", "commit", "-m", "initial"),
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    )
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake = bin_dir / "pi"
+    fake.symlink_to(FAKE)
+    fake.chmod(0o755)
+    scenario, log, step = (
+        tmp_path / "scenario.json",
+        tmp_path / "pi.log",
+        tmp_path / "STEP-qual.yaml",
+    )
+
+    def run(
+        *args: str, input: str = "", replies: dict | None = None
+    ) -> subprocess.CompletedProcess[str]:
+        if replies is not None:
+            scenario.write_text(json.dumps(replies))
+            log.unlink(missing_ok=True)
+        env = {
+            **os.environ,
+            "PATH": f"{bin_dir}:{os.environ['PATH']}",
+            "PYTHONPATH": str(ROOT / "src"),
+            "STEP_FILE": str(step),
+            "FAKE_PI_SCENARIO": str(scenario),
+            "FAKE_PI_LOG": str(log),
+        }
+        env.pop("STAGGER_STEP_HARNESS_SESSION", None)
+        return subprocess.run(
+            [sys.executable, "-m", "stagger_step.cli", *args],
+            cwd=repository,
+            input=input,
+            text=True,
+            capture_output=True,
+            env=env,
+            check=False,
+        )
+
+    return run, step, log, repository
+
+
+@pytest.fixture
 def cli(tmp_path):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()

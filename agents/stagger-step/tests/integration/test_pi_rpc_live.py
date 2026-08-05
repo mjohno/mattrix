@@ -15,7 +15,8 @@ pytestmark = [
     pytest.mark.integration,
     pytest.mark.live,
     pytest.mark.skipif(
-        os.getenv("PI_RPC_INTEGRATION") != "1", reason="set PI_RPC_INTEGRATION=1"
+        os.getenv("PI_RPC_INTEGRATION") != "1",
+        reason="set PI_RPC_INTEGRATION=1",
     ),
 ]
 

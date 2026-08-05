@@ -14,7 +14,9 @@ class TransitionError(StateError):
 
 
 def _dedupe(values: list[str]) -> list[str]:
-    return list(dict.fromkeys(value.strip() for value in values if value.strip()))
+    return list(
+        dict.fromkeys(value.strip() for value in values if value.strip())
+    )
 
 
 def _unique_slug(slug: str, used: set[str]) -> str:
@@ -43,7 +45,9 @@ def _unique_proposals(
     normalized_recommendation = recommendation
     recommendation_updated = False
     for proposal in proposals:
-        if not isinstance(proposal, dict) or not isinstance(proposal.get("slug"), str):
+        if not isinstance(proposal, dict) or not isinstance(
+            proposal.get("slug"), str
+        ):
             normalized.append(proposal)
             continue
         original = proposal["slug"]
@@ -104,8 +108,7 @@ class StepLoop:
                 follow_up=True,
             )
             packet = self._validated_worker_packet(worker)
-        if packet["slug"] != active["slug"]:
-            raise TransitionError("worker packet does not match current step")
+        self._require_task_identity(active, packet, "worker packet")
         assessor = self._assess(state, active, worker)
         if assessor["clarification_needed"]:
             clarification = self.harness.invoke(
@@ -121,18 +124,18 @@ class StepLoop:
                 task_slug=active["slug"],
                 follow_up=True,
             )
-            packet = (
-                clarification.get("packet") if isinstance(clarification, dict) else None
-            )
-            validate_task(packet, "worker.packet", True)
+            packet = self._validated_worker_packet(clarification)
+            self._require_task_identity(active, packet, "clarification packet")
             assessor = self._assess(
                 state, active, clarification, clarification_used=True
             )
             if assessor["clarification_needed"]:
-                raise TransitionError("assessor requested more than one clarification")
+                raise TransitionError(
+                    "assessor requested more than one clarification"
+                )
         current = deepcopy(assessor["current_packet"])
-        if current["slug"] != active["slug"]:
-            raise TransitionError("assessor packet does not match current step")
+        self._require_task_identity(active, current, "assessor packet")
+        self._require_worker_result(packet, current)
         current["retro"] = assessor["retro"]
         prepared = deepcopy(state)
         prepared["current"] = current
@@ -157,20 +160,30 @@ class StepLoop:
             raise TransitionError("workflow is already complete")
         current = state["current"]
         selected = next(
-            (step for step in state["next"] if step["slug"] == state["recommended"]),
+            (
+                step
+                for step in state["next"]
+                if step["slug"] == state["recommended"]
+            ),
             None,
         )
         if current is not None and not is_completed(current):
-            raise TransitionError("current step must be assessed before approval")
+            raise TransitionError(
+                "current step must be assessed before approval"
+            )
         if current is None and selected is None:
-            raise TransitionError("bootstrap state requires a recommended next step")
+            raise TransitionError(
+                "bootstrap state requires a recommended next step"
+            )
         next_state = deepcopy(state)
         if current is not None:
             next_state["history"].append(current)
         next_state["current"] = deepcopy(selected) if selected else None
         if selected is not None:
             next_state["next"] = [
-                step for step in next_state["next"] if step["slug"] != selected["slug"]
+                step
+                for step in next_state["next"]
+                if step["slug"] != selected["slug"]
             ]
             next_state["recommended"] = None
         else:
@@ -248,6 +261,27 @@ class StepLoop:
         packet = worker.get("packet") if isinstance(worker, dict) else None
         return validate_task(packet, "worker.packet", True)
 
+    @staticmethod
+    def _require_task_identity(
+        active: dict[str, Any], packet: dict[str, Any], label: str
+    ) -> None:
+        if any(
+            packet[field] != active[field]
+            for field in ("slug", "intent", "criteria")
+        ):
+            raise TransitionError(f"{label} does not match the approved step")
+
+    @staticmethod
+    def _require_worker_result(
+        worker: dict[str, Any], assessor: dict[str, Any]
+    ) -> None:
+        if any(
+            worker[field] != assessor[field] for field in ("do", "validate")
+        ):
+            raise TransitionError(
+                "assessor packet does not preserve the worker result"
+            )
+
     def _assess(
         self,
         state: dict[str, Any],
@@ -274,7 +308,9 @@ class StepLoop:
             key not in assessor for key in required
         ):
             raise TransitionError("assessor returned an incomplete packet")
-        validate_task(assessor["current_packet"], "assessor.current_packet", True)
+        validate_task(
+            assessor["current_packet"], "assessor.current_packet", True
+        )
         if not isinstance(assessor["retro"], dict) or any(
             not isinstance(assessor["retro"].get(k), list)
             for k in ("wins", "issues", "actions")

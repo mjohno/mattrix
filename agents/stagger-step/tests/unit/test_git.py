@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from stagger_step.git import CommitMode
 from stagger_step.state import StateError
 
@@ -64,7 +63,9 @@ def test_commit_mode_commits_packet_changes_and_ignores_step_file(tmp_path):
     assert git(root, "status", "--porcelain") == "?? STEP-test.yaml"
 
 
-def test_commit_mode_truncates_normalized_conventional_subject_at_50_characters(tmp_path):
+def test_commit_mode_truncates_normalized_conventional_subject_at_50_characters(
+    tmp_path,
+):
     root, step = repository(tmp_path)
     mode = CommitMode(step, root)
     long_packet = packet()
@@ -75,7 +76,9 @@ def test_commit_mode_truncates_normalized_conventional_subject_at_50_characters(
     mode.commit(long_packet, base)
 
     assert git(root, "log", "-1", "--pretty=%s") == (
-        f"step(update-file): {' '.join(str(long_packet['intent']).split())}"[:50].rstrip()
+        f"step(update-file): {' '.join(str(long_packet['intent']).split())}"[
+            :50
+        ].rstrip()
     )
 
 

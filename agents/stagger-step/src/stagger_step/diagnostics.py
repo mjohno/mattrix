@@ -11,7 +11,14 @@ from typing import Any
 import yaml
 
 _REDACTED = "[redacted]"
-_SECRET_MARKERS = ("secret", "password", "token", "api_key", "apikey", "authorization")
+_SECRET_MARKERS = (
+    "secret",
+    "password",
+    "token",
+    "api_key",
+    "apikey",
+    "authorization",
+)
 
 
 def artifact_path(step_file: Path) -> Path:
@@ -68,7 +75,9 @@ def write_diagnostics(
     if step_file.exists():
         try:
             debug["state"] = yaml.safe_load(step_file.read_text())
-        except Exception as exc:  # Diagnostics must still explain unreadable state.
+        except (
+            Exception
+        ) as exc:  # Diagnostics must still explain unreadable state.
             debug["state_read_error"] = f"{type(exc).__name__}: {exc}"
     try:
         _write_atomic(debug_path, debug)

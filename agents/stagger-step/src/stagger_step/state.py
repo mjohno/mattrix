@@ -11,6 +11,7 @@ import yaml
 SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 RESULTS = {"success", "partial", "failure", "blocked"}
 
+
 class StateError(ValueError):
     pass
 
@@ -30,7 +31,9 @@ def validate_task(
 ) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise StateError(f"{label} must be a mapping")
-    if not isinstance(value.get("slug"), str) or not SLUG.fullmatch(value["slug"]):
+    if not isinstance(value.get("slug"), str) or not SLUG.fullmatch(
+        value["slug"]
+    ):
         raise StateError(f"{label}.slug must be lowercase kebab-case")
     if not isinstance(value.get("intent"), str) or not value["intent"].strip():
         raise StateError(f"{label}.intent is required")
@@ -54,7 +57,10 @@ def validate_task(
         ):
             raise StateError(f"{label}.do.summary is required")
         _strings(do.get("evidence"), f"{label}.do.evidence")
-        if not isinstance(validation, dict) or validation.get("result") not in RESULTS:
+        if (
+            not isinstance(validation, dict)
+            or validation.get("result") not in RESULTS
+        ):
             raise StateError(f"{label}.validate.result is invalid")
         if (
             not isinstance(validation.get("summary"), str)
@@ -95,7 +101,8 @@ def validate_state(state: Any) -> dict[str, Any]:
     if not isinstance(next_steps, list):
         raise StateError("next must be a list")
     next_slugs = [
-        validate_task(step, f"next[{i}]")["slug"] for i, step in enumerate(next_steps)
+        validate_task(step, f"next[{i}]")["slug"]
+        for i, step in enumerate(next_steps)
     ]
     if len(next_slugs) != len(set(next_slugs)):
         raise StateError("next contains duplicate slug")
@@ -108,7 +115,9 @@ def validate_state(state: Any) -> dict[str, Any]:
         raise StateError("completed must be boolean")
     if state["completed"]:
         if current is not None or next_steps or recommended is not None:
-            raise StateError("terminal state cannot have current, next, or recommended")
+            raise StateError(
+                "terminal state cannot have current, next, or recommended"
+            )
     elif current is None and not next_steps:
         raise StateError("non-terminal state requires current or next")
     elif current is None and recommended is None:

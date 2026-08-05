@@ -35,13 +35,15 @@ def normalize_packet(role: str, candidate: Any) -> dict[str, Any]:
         if not isinstance(proposals, list):
             raise StateError("coordinator.proposed_next_packets must be a list")
         slugs = [
-            validate_task(proposal, f"coordinator.proposed_next_packets[{index}]")[
-                "slug"
-            ]
+            validate_task(
+                proposal, f"coordinator.proposed_next_packets[{index}]"
+            )["slug"]
             for index, proposal in enumerate(proposals)
         ]
         if len(slugs) != len(set(slugs)):
-            raise StateError("coordinator.proposed_next_packets contains duplicate slugs")
+            raise StateError(
+                "coordinator.proposed_next_packets contains duplicate slugs"
+            )
         recommendation = packet.get("recommendation")
         if recommendation is not None and recommendation not in slugs:
             raise StateError(
@@ -50,7 +52,9 @@ def normalize_packet(role: str, candidate: Any) -> dict[str, Any]:
     elif role == "worker":
         validate_task(packet.get("packet"), "worker.packet", True)
     else:
-        validate_task(packet.get("current_packet"), "assessor.current_packet", True)
+        validate_task(
+            packet.get("current_packet"), "assessor.current_packet", True
+        )
         retro = _mapping(packet.get("retro"), "assessor.retro")
         for key in ("wins", "issues", "actions"):
             _strings(retro.get(key), f"assessor.retro.{key}")

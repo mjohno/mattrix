@@ -5,6 +5,7 @@ import logging
 import os
 import signal
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,22 @@ from .normalizer import ROLES, normalize_packet
 from .state import StateError, create_state, load_state, write_atomic
 
 logger = logging.getLogger("stagger_step.cli")
+_INTERRUPT_REQUESTED = threading.Event()
+
+
+def _request_interrupt() -> None:
+    _INTERRUPT_REQUESTED.set()
+
+
+def _consume_interrupt() -> bool:
+    requested = _INTERRUPT_REQUESTED.is_set()
+    _INTERRUPT_REQUESTED.clear()
+    return requested
+
+
+def _raise_if_interrupt_requested() -> None:
+    if _consume_interrupt():
+        raise KeyboardInterrupt
 
 
 def path_from(args: argparse.Namespace, create: bool = False) -> Path:
@@ -36,7 +53,9 @@ def emit(value: Any) -> None:
 
 
 def parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Deterministic, approval-gated STEP loop")
+    p = argparse.ArgumentParser(
+        description="Deterministic, approval-gated STEP loop"
+    )
     p.add_argument("--file", help="STEP file path; defaults to STEP_FILE")
     p.add_argument(
         "--commit",
@@ -71,10 +90,13 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("validate", help="validate existing manual YAML state")
     gate = sub.add_parser("gate", help="apply one STEP gate response and exit")
     gate.add_argument(
-        "response", nargs="?", help="exact approved, break, or revision feedback"
+        "response",
+        nargs="?",
+        help="exact approved, break, or revision feedback",
     )
     sub.add_parser(
-        "session", help="render a gate and accept one human response in this process"
+        "session",
+        help="render a gate and accept one human response in this process",
     )
     return p
 
@@ -104,7 +126,9 @@ def approve(
     if commit is None or current is None:
         return changed
     if "commit_base" not in current:
-        raise StateError("commit mode requires a clean baseline for the current packet")
+        raise StateError(
+            "commit mode requires a clean baseline for the current packet"
+        )
     sha = commit.commit(current, current["commit_base"])
     history_packet = changed["history"][-1]
     history_packet.pop("commit_base", None)
@@ -140,45 +164,52 @@ def run_session(
         state = load_state(path)
         try:
             prepared = prepare(state, loop, commit)
+            _raise_if_interrupt_requested()
+            if prepared != state:
+                write_atomic(path, prepared)
+            _raise_if_interrupt_requested()
+            emit(loop.gate(prepared))
+            if afk and _afk_failure(prepared, outcomes):
+                afk = False
+                logger.info(
+                    "AFK disabled by failure threshold; returning to manual mode"
+                )
+            if afk:
+                _raise_if_interrupt_requested()
+                logger.info("AFK automatically approved the current gate")
+                user_input = "approved"
+            else:
+                print("STEP response: ", end="", file=sys.stderr, flush=True)
+                try:
+                    user_input = input()
+                except EOFError:
+                    return 0
+            if user_input == "break":
+                emit({"changed": False})
+                return 0
+            if user_input == "afk":
+                afk = True
+                outcomes.clear()
+                logger.info("AFK enabled")
+                user_input = "approved"
+            changed = (
+                approve(prepared, loop, commit)
+                if user_input == "approved"
+                else loop.revise(prepared, user_input)
+            )
+            _raise_if_interrupt_requested()
+            write_atomic(path, changed)
+            _raise_if_interrupt_requested()
+            emit({"ok": True, "changed": True})
+            if changed["completed"]:
+                return 0
+            state = changed
         except KeyboardInterrupt:
             if not afk:
                 raise
+            _consume_interrupt()
             afk = False
             logger.info("AFK disabled by Ctrl+C; returning to manual mode")
-            continue
-        if prepared != state:
-            write_atomic(path, prepared)
-        emit(loop.gate(prepared))
-        if afk and _afk_failure(prepared, outcomes):
-            afk = False
-            logger.info("AFK disabled by failure threshold; returning to manual mode")
-        if afk:
-            logger.info("AFK automatically approved the current gate")
-            user_input = "approved"
-        else:
-            print("STEP response: ", end="", file=sys.stderr, flush=True)
-            try:
-                user_input = input()
-            except EOFError:
-                return 0
-        if user_input == "break":
-            emit({"changed": False})
-            return 0
-        if user_input == "afk":
-            afk = True
-            outcomes.clear()
-            logger.info("AFK enabled")
-            user_input = "approved"
-        changed = (
-            approve(prepared, loop, commit)
-            if user_input == "approved"
-            else loop.revise(prepared, user_input)
-        )
-        write_atomic(path, changed)
-        emit({"ok": True, "changed": True})
-        if changed["completed"]:
-            return 0
-        state = changed
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -191,15 +222,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     raw_path = args.file or os.getenv("STEP_FILE")
     diagnostic_path = Path(raw_path) if raw_path else None
-    interrupted = False
+    _consume_interrupt()
 
     def on_sigint(signum: int, frame: Any) -> None:
-        nonlocal interrupted
         del signum, frame
-        logger.debug("SIGINT received; cancelling active STEP harness process")
-        if interrupted:
-            os._exit(130)
-        interrupted = True
+        logger.info(
+            "SIGINT received; interrupt requested at the next STEP boundary"
+        )
+        _request_interrupt()
         write_diagnostics(diagnostic_path, event="SIGINT")
         raise KeyboardInterrupt
 
@@ -280,7 +310,9 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:
         write_diagnostics(diagnostic_path, event="unhandled_failure", error=exc)
         logger.critical(
-            "STEP harness error: %s", exc, exc_info=logger.isEnabledFor(logging.DEBUG)
+            "STEP harness error: %s",
+            exc,
+            exc_info=logger.isEnabledFor(logging.DEBUG),
         )
         return 3
     finally:

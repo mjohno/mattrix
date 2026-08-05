@@ -38,6 +38,38 @@ def test_afk_approves_subsequent_gate_and_never_persists_mode(cli):
     assert "afk" not in step.read_text().lower()
 
 
+def test_ctrl_c_during_afk_returns_to_a_manual_unapproved_gate(cli):
+    run, step, _ = cli
+    replies = {
+        "coordinator": [coordinator("first"), coordinator("second")],
+        "worker": ["interrupt", {"packet": complete("first")}],
+        "assessor": [assessor("first")],
+    }
+
+    result = run(
+        "--log-level",
+        "INFO",
+        "init",
+        "--goal",
+        "Goal",
+        "--session",
+        input="afk\nbreak\n",
+        replies=replies,
+    )
+
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["history"] == []
+    assert saved["current"]["slug"] == "first"
+    assert saved["current"]["validate"]["result"] == "success"
+    assert "INFO " in result.stderr
+    assert (
+        "SIGINT received; interrupt requested at the next STEP boundary"
+        in result.stderr
+    )
+    assert "AFK disabled by Ctrl+C; returning to manual mode" in result.stderr
+
+
 def test_afk_allows_one_failure_then_returns_to_manual_break_gate(cli):
     run, step, _ = cli
     first = complete("first")
@@ -75,5 +107,7 @@ def test_afk_allows_one_failure_then_returns_to_manual_break_gate(cli):
     assert [entry["slug"] for entry in saved["history"]] == ["first"]
     assert saved["current"]["slug"] == "second"
     assert saved["current"]["validate"]["result"] == "blocked"
-    assert result.stderr.count("AFK automatically approved the current gate") == 1
+    assert (
+        result.stderr.count("AFK automatically approved the current gate") == 1
+    )
     assert "AFK disabled by failure threshold" in result.stderr

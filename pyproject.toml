@@ -38,6 +38,9 @@ exclude = [".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".venv", "buil
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
+# Black owns Python layout; its valid long strings and comments need not be
+# duplicated as Ruff E501 violations.
+ignore = ["E501"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -73,5 +76,8 @@ disable = [
   "too-many-nested-blocks",
   "too-many-return-statements",
   "too-many-statements",
+  "too-many-instance-attributes",
+  "line-too-long",
+  "fixme",
   "unnecessary-lambda",
 ]

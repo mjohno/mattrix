@@ -69,7 +69,9 @@ def git_value(directory: Path, *arguments: str) -> str | None:
     """Return Git stdout for a successful command, otherwise ``None``."""
     success, output = run_git(directory, *arguments)
     if not success:
-        log.debug("git -C %s %s failed: %s", directory, " ".join(arguments), output)
+        log.debug(
+            "git -C %s %s failed: %s", directory, " ".join(arguments), output
+        )
         return None
     return output.splitlines()[0] if output else ""
 
@@ -148,7 +150,9 @@ def validate_workspace(root: Path) -> list[str]:
 
     for remote in remotes:
         if not is_bare_repository(remote):
-            failures.append(f"remote is not a valid bare Git repository: {remote}")
+            failures.append(
+                f"remote is not a valid bare Git repository: {remote}"
+            )
 
         project = project_path_for_remote(remote, remotes_root, projects_root)
         expected_projects.add(project)
@@ -197,7 +201,9 @@ def validate_workspace(root: Path) -> list[str]:
                 continue
 
             expected_remote = remotes_root / project.relative_to(projects_root)
-            expected_remote = expected_remote.with_name(f"{expected_remote.name}.git")
+            expected_remote = expected_remote.with_name(
+                f"{expected_remote.name}.git"
+            )
             actual_remote = canonical_local_target(checkout, local_url)
             if actual_remote != expected_remote.resolve():
                 failures.append(
@@ -251,13 +257,19 @@ def run_tests() -> int:
 
     class ValidatorTests(unittest.TestCase):
         def test_relative_git_paths(self) -> None:
-            self.assertTrue(is_relative_git_path("../../../remotes/team/app.git"))
+            self.assertTrue(
+                is_relative_git_path("../../../remotes/team/app.git")
+            )
             self.assertTrue(is_relative_git_path("remotes/team/app.git"))
-            self.assertFalse(is_relative_git_path("/workspace/remotes/team/app.git"))
+            self.assertFalse(
+                is_relative_git_path("/workspace/remotes/team/app.git")
+            )
             self.assertFalse(
                 is_relative_git_path("file:///workspace/remotes/team/app.git")
             )
-            self.assertFalse(is_relative_git_path("git@example.test:team/app.git"))
+            self.assertFalse(
+                is_relative_git_path("git@example.test:team/app.git")
+            )
 
         def test_remote_to_project_mapping(self) -> None:
             remotes = Path("/workspace/remotes")
@@ -271,7 +283,9 @@ def run_tests() -> int:
         def test_local_target_is_checkout_relative(self) -> None:
             checkout = Path("/workspace/projects/team/app/main")
             self.assertEqual(
-                canonical_local_target(checkout, "../../../../remotes/team/app.git"),
+                canonical_local_target(
+                    checkout, "../../../../remotes/team/app.git"
+                ),
                 Path("/workspace/remotes/team/app.git"),
             )
 

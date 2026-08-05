@@ -74,7 +74,10 @@ def split_frontmatter(path: Path) -> tuple[dict[str, Any], str]:
     end = text.find("\n---", 4)
     if end == -1:
         return {}, text
-    return parse_simple_yaml(text[4:end].strip("\n")), text[end + len("\n---") :]
+    return (
+        parse_simple_yaml(text[4:end].strip("\n")),
+        text[end + len("\n---") :],
+    )
 
 
 def titleize(name: str) -> str:
@@ -97,15 +100,23 @@ def child_concepts(directory: Path) -> list[Path]:
     concepts = [
         child
         for child in directory.iterdir()
-        if child.is_file() and child.suffix == ".md" and child.name != "index.md"
+        if child.is_file()
+        and child.suffix == ".md"
+        and child.name != "index.md"
     ]
     return sorted(concepts, key=lambda path: path.name)
 
 
 def render_index(bundle_root: Path, directory: Path) -> str:
     """Render a generated MKF index concept for one bundle directory."""
-    rel = directory.relative_to(bundle_root) if directory != bundle_root else Path("")
-    title = titleize(bundle_root.name if directory == bundle_root else directory.name)
+    rel = (
+        directory.relative_to(bundle_root)
+        if directory != bundle_root
+        else Path("")
+    )
+    title = titleize(
+        bundle_root.name if directory == bundle_root else directory.name
+    )
     description = (
         "Generated index for this MKF bundle."
         if directory == bundle_root
@@ -155,7 +166,9 @@ def all_directories(bundle_root: Path) -> Iterable[Path]:
     yield bundle_root
     for path in sorted(bundle_root.rglob("*")):
         rel_parts = path.relative_to(bundle_root).parts
-        if path.is_dir() and not any(part.startswith(".") for part in rel_parts):
+        if path.is_dir() and not any(
+            part.startswith(".") for part in rel_parts
+        ):
             yield path
 
 
@@ -182,7 +195,9 @@ def validate_index_text(text: str) -> list[str]:
     if frontmatter.get("type") != "index":
         errors.append("generated index must use type: index")
     if not isinstance(frontmatter.get("tags"), list):
-        errors.append("tags must be a list; use tags: [] when there are no tags")
+        errors.append(
+            "tags must be a list; use tags: [] when there are no tags"
+        )
     return errors
 
 
@@ -197,7 +212,11 @@ def rebuild(
 
     for directory in all_directories(bundle_root):
         index_path = directory / "index.md"
-        if index_path.exists() and not force and not is_generated_index(index_path):
+        if (
+            index_path.exists()
+            and not force
+            and not is_generated_index(index_path)
+        ):
             skipped.append(
                 {
                     "path": str(index_path),
@@ -212,7 +231,9 @@ def rebuild(
         text = render_index(bundle_root, directory)
         validation_errors = validate_index_text(text)
         if validation_errors:
-            errors.append({"path": str(index_path), "errors": validation_errors})
+            errors.append(
+                {"path": str(index_path), "errors": validation_errors}
+            )
             continue
 
         if dry_run:
@@ -332,7 +353,9 @@ def run_tests() -> int:
 
     class TestRebuildIndexes(unittest.TestCase):
         def test_parse_args(self) -> None:
-            parsed = parse_args(["--dry-run", "/tmp/example", "--log-level", "DEBUG"])
+            parsed = parse_args(
+                ["--dry-run", "/tmp/example", "--log-level", "DEBUG"]
+            )
             self.assertTrue(parsed.dry_run)
             self.assertEqual(parsed.bundle_root, "/tmp/example")
             self.assertEqual(parsed.log_level, "DEBUG")

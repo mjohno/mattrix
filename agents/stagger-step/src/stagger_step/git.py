@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import re
 import subprocess
 import textwrap
@@ -32,10 +31,18 @@ class CommitMode:
 
     def _run(self, *args: str, check: bool = True) -> str:
         result = subprocess.run(
-            ("git", *args), cwd=self.cwd, text=True, capture_output=True, check=False
+            ("git", *args),
+            cwd=self.cwd,
+            text=True,
+            capture_output=True,
+            check=False,
         )
         if check and result.returncode:
-            detail = result.stderr.strip() or result.stdout.strip() or "git command failed"
+            detail = (
+                result.stderr.strip()
+                or result.stdout.strip()
+                or "git command failed"
+            )
             raise StateError(f"git {' '.join(args)}: {detail}")
         return result.stdout.strip()
 
@@ -48,19 +55,29 @@ class CommitMode:
         if not git_dir.is_absolute():
             git_dir = self.cwd / git_dir
         if (git_dir / "index.lock").exists():
-            raise StateError("commit mode cannot run while the Git index is locked")
+            raise StateError(
+                "commit mode cannot run while the Git index is locked"
+            )
         author = self._run("var", "GIT_AUTHOR_IDENT")
         committer = self._run("var", "GIT_COMMITTER_IDENT")
         branch = self._run("branch", "--show-current") or "(detached HEAD)"
-        logger.info("commit mode repository branch=%s author=%s committer=%s", branch, author, committer)
+        logger.info(
+            "commit mode repository branch=%s author=%s committer=%s",
+            branch,
+            author,
+            committer,
+        )
         if require_clean:
             self._require_clean()
         return self.head()
 
     def head(self) -> str | None:
         result = subprocess.run(
-            ("git", "rev-parse", "--verify", "HEAD"), cwd=self.cwd,
-            text=True, capture_output=True, check=False
+            ("git", "rev-parse", "--verify", "HEAD"),
+            cwd=self.cwd,
+            text=True,
+            capture_output=True,
+            check=False,
         )
         if result.returncode:
             return None
@@ -72,7 +89,9 @@ class CommitMode:
     def _state_relative(self) -> str | None:
         assert self.root is not None
         try:
-            return str(self.step_path.resolve().relative_to(self.root.resolve()))
+            return str(
+                self.step_path.resolve().relative_to(self.root.resolve())
+            )
         except ValueError:
             return None
 
@@ -103,7 +122,9 @@ class CommitMode:
     def _require_clean(self) -> None:
         dirty = self._status()
         if dirty:
-            raise StateError("commit mode requires a clean Git baseline: " + ", ".join(dirty))
+            raise StateError(
+                "commit mode requires a clean Git baseline: " + ", ".join(dirty)
+            )
 
     def clean_baseline(self) -> str | None:
         self._require_clean()
@@ -113,25 +134,40 @@ class CommitMode:
         if self.root is None:
             raise AssertionError("commit mode was not initialized")
         if self.head() != base:
-            raise StateError("Git HEAD changed since this packet's clean baseline")
+            raise StateError(
+                "Git HEAD changed since this packet's clean baseline"
+            )
         paths = self._status()
         if not paths:
-            logger.info("commit mode packet=%s has no Git changes", packet["slug"])
+            logger.info(
+                "commit mode packet=%s has no Git changes", packet["slug"]
+            )
             return None
         self._run("add", "-A", "--", *paths)
         staged = subprocess.run(
             ("git", "diff", "--cached", "--quiet"), cwd=self.cwd, check=False
         )
         if staged.returncode == 0:
-            logger.info("commit mode packet=%s has no staged Git changes", packet["slug"])
+            logger.info(
+                "commit mode packet=%s has no staged Git changes",
+                packet["slug"],
+            )
             return None
         intent = " ".join(str(packet["intent"]).split())
         subject = f"step({packet['slug']}): {intent}"[:50].rstrip()
-        done = str((packet.get("do") or {}).get("summary", "")).strip()
-        verified = str(
-            (packet.get("validate") or {}).get("summary", "")
+        work = packet.get("do")
+        validation = packet.get("validate")
+        done = str(
+            work.get("summary", "") if isinstance(work, dict) else ""
         ).strip()
-        result = str((packet.get("validate") or {}).get("result", ""))
+        verified = str(
+            validation.get("summary", "")
+            if isinstance(validation, dict)
+            else ""
+        ).strip()
+        result = str(
+            validation.get("result", "") if isinstance(validation, dict) else ""
+        )
         sections = []
         if done:
             sections.append(f"Done:\n{_wrap_body(done)}")
@@ -143,5 +179,7 @@ class CommitMode:
         sha = self.head()
         if sha is None:
             raise StateError("git commit did not produce a HEAD SHA")
-        logger.info("commit mode committed packet=%s sha=%s", packet["slug"], sha)
+        logger.info(
+            "commit mode committed packet=%s sha=%s", packet["slug"], sha
+        )
         return sha

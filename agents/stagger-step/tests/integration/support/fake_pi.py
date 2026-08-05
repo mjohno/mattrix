@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import sys
 import time
 from pathlib import Path
@@ -12,7 +13,11 @@ from pathlib import Path
 
 def main() -> int:
     name = next(
-        (sys.argv[index + 1] for index, arg in enumerate(sys.argv) if arg == "--name"),
+        (
+            sys.argv[index + 1]
+            for index, arg in enumerate(sys.argv)
+            if arg == "--name"
+        ),
         "unknown",
     )
     role = name.rsplit("-", 1)[-1]
@@ -40,10 +45,21 @@ def main() -> int:
         )
     reply = scenario[role][index]
     thinking = None
+    writes = None
     if isinstance(reply, dict):
         reply = dict(reply)
         thinking = reply.pop("_thinking", None)
+        writes = reply.pop("_write", None)
+    if writes is not None:
+        for path, content in writes.items():
+            target = Path(path)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content)
     if reply == "close":
+        return 0
+    if reply == "interrupt":
+        os.kill(os.getppid(), signal.SIGINT)
+        time.sleep(0.1)
         return 0
     if reply == "sleep":
         time.sleep(30)
@@ -129,7 +145,9 @@ def main() -> int:
                 "messages": [
                     {
                         "role": "assistant",
-                        "content": [{"type": "text", "text": "ignored assistant text"}],
+                        "content": [
+                            {"type": "text", "text": "ignored assistant text"}
+                        ],
                     }
                 ],
             }

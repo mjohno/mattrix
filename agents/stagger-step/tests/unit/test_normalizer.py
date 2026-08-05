@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import pytest
-
 from stagger_step.normalizer import normalize_packet
 from stagger_step.state import StateError
-
 
 COMPLETE = {
     "slug": "validate-cli",
