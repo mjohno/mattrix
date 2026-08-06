@@ -58,6 +58,7 @@ def main() -> int:
             )
             + "\n"
         )
+        stream.flush()
     reply = scenario[role][index]
     thinking = None
     writes = None

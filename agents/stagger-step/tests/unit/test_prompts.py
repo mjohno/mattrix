@@ -1,29 +1,19 @@
 from __future__ import annotations
 
 import pytest
-from stagger_step.prompts import (
-    build_continuation_prompt,
-    build_finalization_prompt,
-    build_prompt,
-)
+from stagger_step.prompts import build_finalization_prompt, build_prompt
 
 
-def test_retry_prompts_target_continuation_or_finalization():
-    continuation = build_continuation_prompt("worker")
+def test_finalization_retry_prompt_targets_prior_session_result():
     finalization = build_finalization_prompt(
         "worker", ValueError("missing packet")
     )
 
-    assert "idle period passed" in continuation
-    assert "Do not restart" in continuation
     assert "Finalize the current STEP role result" in finalization
     assert "Do not resume implementation" in finalization
     assert "missing packet" in finalization
-    assert "stagger_step_finalize_worker" in continuation
     assert "stagger_step_finalize_worker" in finalization
-    assert "with its required typed arguments" in continuation
     assert "with its required typed arguments" in finalization
-    assert "## Invocation context" not in continuation
     assert "## Invocation context" not in finalization
 
 

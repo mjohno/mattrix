@@ -97,7 +97,7 @@ def test_harness_retains_finalizer_details_but_parses_text(
     monkeypatch.setenv("FAKE_PI_LOG", str(log_path))
     monkeypatch.setenv("PYTHONPATH", str(Path(__file__).parents[2] / "src"))
     fake = Path(__file__).parents[1] / "integration" / "support" / "fake_pi.py"
-    adapter = PiRpcHarness(command=(sys.executable, str(fake)), retries=0)
+    adapter = PiRpcHarness(command=(sys.executable, str(fake)))
 
     payload = adapter.invoke("coordinator", "finalize")
 

@@ -77,16 +77,6 @@ def build_prompt(
     return "\n\n".join(sections)
 
 
-def build_continuation_prompt(role: str) -> str:
-    """Nudge an idle role session to finish its outstanding work."""
-    return (
-        "Continue the current STEP role session from its existing context. "
-        "An idle period passed before the session settled. Resume the next "
-        "unfinished action. Do not restart, repeat completed work, or expand "
-        "scope. " + _response_protocol(role)
-    )
-
-
 def build_finalization_prompt(role: str, error: Exception) -> str:
     """Ask a role to format already-complete work through its finalizer."""
     _finalizer(role)

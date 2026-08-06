@@ -16,7 +16,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any, Protocol
 
-from .prompts import build_continuation_prompt, build_finalization_prompt
+from .prompts import build_finalization_prompt
 from .state import StateError
 
 
@@ -33,6 +33,7 @@ class FinalizerProtocolError(HarnessError):
 
 
 logger = logging.getLogger("stagger_step.harness")
+_IDLE_TIMEOUT_SCHEDULE = (30.0, 60.0, 120.0)
 # Set a positive character limit here to truncate individual DEBUG values; None is unlimited.
 _DEBUG_VALUE_LIMIT: int | None = None
 _SENSITIVE_FIELD = re.compile(
@@ -99,9 +100,7 @@ class PiRpcHarness:
     """Run one short-lived Pi RPC process per role without exposing STEP files."""
 
     command: tuple[str, ...] = field(default_factory=_default_pi_command)
-    timeout_seconds: float = 120.0
     max_invocation_seconds: float | None = 1800.0
-    retries: int = 2
     session_enabled: bool = True
     session_scope: str = "STEP-default.yaml"
     normalizer_command: tuple[str, ...] = (
@@ -180,9 +179,15 @@ class PiRpcHarness:
         session = self._role_session(role, task_slug)
         retry_prompt = prompt
         finalization_retried = False
-        for attempt in range(self.retries + 1):
+        for attempt, idle_timeout_seconds in enumerate(_IDLE_TIMEOUT_SCHEDULE):
             try:
-                return self._invoke_once(role, retry_prompt, session, task_slug)
+                return self._invoke_once(
+                    role,
+                    retry_prompt,
+                    session,
+                    task_slug,
+                    idle_timeout_seconds,
+                )
             except (PacketNormalizationError, FinalizerProtocolError) as exc:
                 if finalization_retried:
                     raise
@@ -191,18 +196,36 @@ class PiRpcHarness:
                 retry_prompt = build_finalization_prompt(role, exc)
                 finalization_retried = True
             except (OSError, HarnessError) as exc:
-                if attempt == self.retries:
+                is_idle_timeout = str(exc) == "RPC idle timed out before settlement"
+                if is_idle_timeout:
+                    logger.error(
+                        "pi idle timeout role=%s task=%s attempt=%s timeout_seconds=%s",
+                        role,
+                        task_slug,
+                        attempt + 1,
+                        idle_timeout_seconds,
+                    )
+                    if attempt == len(_IDLE_TIMEOUT_SCHEDULE) - 1:
+                        raise HarnessError(
+                            f"{role} harness failure: {exc}"
+                        ) from exc
+                    # _invoke_once has already terminated and reaped this process.
+                    # Discard its Pi session and replay the unpersisted task in a
+                    # fresh session rather than continuing a potentially stuck one.
+                    self._role_sessions.pop(role, None)
+                    session = self._role_session(role, task_slug)
+                    retry_prompt = prompt
+                elif attempt == len(_IDLE_TIMEOUT_SCHEDULE) - 1:
                     raise HarnessError(
                         f"{role} harness failure: {exc}"
                     ) from exc
-                if str(exc) == "RPC idle timed out before settlement":
-                    retry_prompt = build_continuation_prompt(role)
-                logger.error(
-                    "pi invocation retry role=%s attempt=%s error=%s",
-                    role,
-                    attempt + 1,
-                    exc,
-                )
+                else:
+                    logger.error(
+                        "pi invocation retry role=%s attempt=%s error=%s",
+                        role,
+                        attempt + 1,
+                        exc,
+                    )
                 time.sleep(0.1 * (2**attempt))
         raise AssertionError("unreachable")
 
@@ -326,7 +349,12 @@ class PiRpcHarness:
         return _json_mapping(result.stdout)
 
     def _invoke_once(
-        self, role: str, prompt: str, session: RoleSession, task_slug: str
+        self,
+        role: str,
+        prompt: str,
+        session: RoleSession,
+        task_slug: str,
+        idle_timeout_seconds: float,
     ) -> dict[str, Any]:
         command = [
             *self.command,
@@ -387,7 +415,7 @@ class PiRpcHarness:
             streamed_blocks: dict[tuple[str, int], list[str]] = {}
             saw_streamed_content = False
             while True:
-                idle_remaining = self.timeout_seconds - (
+                idle_remaining = idle_timeout_seconds - (
                     time.monotonic() - last_activity
                 )
                 if idle_remaining <= 0:

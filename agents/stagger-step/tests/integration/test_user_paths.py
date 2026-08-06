@@ -346,28 +346,37 @@ def test_wrong_finalizer_is_rejected_without_step_state_mutation(cli):
     assert step.read_bytes() == before
 
 
-def test_timeout_retries_against_fake_pi(tmp_path, monkeypatch):
+def test_idle_timeout_restarts_the_session_and_replays_task(
+    tmp_path, monkeypatch
+):
     scenario_path = tmp_path / "scenario.json"
     log_path = tmp_path / "pi.log"
-    scenario_path.write_text(json.dumps({"worker": ["sleep", "sleep"]}))
+    scenario_path.write_text(
+        json.dumps({"worker": ["sleep", "sleep", "sleep"]})
+    )
     monkeypatch.setenv("FAKE_PI_SCENARIO", str(scenario_path))
     monkeypatch.setenv("FAKE_PI_LOG", str(log_path))
-    harness = PiRpcHarness(
-        command=(str(FAKE),),
-        timeout_seconds=0.2,
-        retries=1,
-        session_enabled=False,
+    monkeypatch.setattr(
+        "stagger_step.harness._IDLE_TIMEOUT_SCHEDULE", (0.05, 0.1, 0.2)
     )
+    harness = PiRpcHarness(command=(str(FAKE),), session_enabled=True)
 
     with pytest.raises(
-        HarnessError, match="RPC idle timed out before settlement"
+        HarnessError, match="worker harness failure: RPC idle timed out before settlement"
     ):
         harness.invoke("worker", "test timeout")
 
-    retry = calls(log_path)[1]["prompt"]
-    assert "Continue the current STEP role session" in retry
-    assert "idle period passed" in retry
-    assert "test timeout" not in retry
+    attempts = calls(log_path)
+    assert [attempt["prompt"] for attempt in attempts] == [
+        "test timeout",
+        "test timeout",
+        "test timeout",
+    ]
+    session_ids = [
+        attempt["argv"][attempt["argv"].index("--session-id") + 1]
+        for attempt in attempts
+    ]
+    assert len(set(session_ids)) == 3
 
 
 def test_activity_resets_the_rpc_idle_timeout(tmp_path, monkeypatch):
@@ -376,11 +385,12 @@ def test_activity_resets_the_rpc_idle_timeout(tmp_path, monkeypatch):
     scenario_path.write_text(json.dumps({"worker": ["heartbeat"]}))
     monkeypatch.setenv("FAKE_PI_SCENARIO", str(scenario_path))
     monkeypatch.setenv("FAKE_PI_LOG", str(log_path))
+    monkeypatch.setattr(
+        "stagger_step.harness._IDLE_TIMEOUT_SCHEDULE", (0.15, 0.2, 0.3)
+    )
     harness = PiRpcHarness(
         command=(str(FAKE),),
-        timeout_seconds=0.15,
         max_invocation_seconds=1,
-        retries=0,
         session_enabled=False,
     )
 

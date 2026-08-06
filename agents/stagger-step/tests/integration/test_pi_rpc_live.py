@@ -22,7 +22,7 @@ pytestmark = [
 
 
 def test_real_pi_rpc_adapter_returns_typed_coordinator_json():
-    payload = PiRpcHarness(timeout_seconds=120, retries=0).invoke(
+    payload = PiRpcHarness().invoke(
         "coordinator",
         "Call stagger_step_finalize_coordinator exactly once with "
         "lessons=[], proposals=[], and recommendation=null. "
