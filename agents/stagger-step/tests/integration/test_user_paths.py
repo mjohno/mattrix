@@ -34,6 +34,21 @@ def test_init_persists_ranked_next_and_recommendation(cli):
     )
 
 
+def test_init_preserves_supplied_lessons_when_bootstrap_omits_them(cli):
+    run, step, _ = cli
+    result = run(
+        "init",
+        "--goal",
+        "Goal",
+        "--lesson",
+        "Plan before implementing",
+        replies={"coordinator": [coordinator("first")]},
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert state(step)["lessons"] == ["Plan before implementing"]
+
+
 def test_default_harness_sessions_are_named_logged_and_keep_state_clean(cli):
     run, step, log = cli
     result = run(
@@ -424,7 +439,7 @@ def test_gate_approval_prepares_the_promoted_step_before_exit(cli):
             "coordinator": [
                 {
                     "lessons": [],
-                    "proposed_next_packets": [
+                    "proposals": [
                         {
                             "slug": "first",
                             "intent": "first",
@@ -514,7 +529,7 @@ def test_session_continues_through_work_cycle_to_final_signoff(cli):
             coordinator("first"),
             {
                 "lessons": ["terminal lesson"],
-                "proposed_next_packets": [],
+                "proposals": [],
                 "recommendation": None,
             },
         ],

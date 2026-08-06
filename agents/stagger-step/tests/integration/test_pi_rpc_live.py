@@ -30,6 +30,6 @@ def test_real_pi_rpc_adapter_returns_typed_coordinator_json():
     )
     assert payload == {
         "lessons": [],
-        "proposed_next_packets": [],
+        "proposals": [],
         "recommendation": None,
     }

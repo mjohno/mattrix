@@ -50,7 +50,7 @@ In `session`, enter `afk` at a manual gate to approve that gate and automaticall
 
 ## State and gates
 
-Persisted state contains `version`, `goal`, optional `change_path`, `commit_mode`, `lessons`, completed `history`, an approved `active_packet`, and `completed`. Pending coordinator/assessor outputs are intentionally never persisted. A gate contains `goal`, `lessons`, `current_packet`, ranked `proposed_next_packets`, and `recommendation`.
+Persisted state contains `version`, `goal`, optional `change_path`, `commit_mode`, `lessons`, completed `history`, an approved `active_packet`, and `completed`. Pending coordinator/assessor outputs are intentionally never persisted. A gate contains `goal`, `lessons`, `history`, `current`, ranked `proposals`, `recommended`, and `completed`.
 
 The coordinator selects durable gate lessons from existing lessons, completed history, and assessor actions. Approval validates the displayed gate, then atomically commits its completed current packet, coordinator-selected lessons, and recommended next packet (or terminal completion). The next `session` runs an approved active task through worker → assessor → coordinator before returning to the human.
 

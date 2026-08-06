@@ -71,7 +71,9 @@ worker.execute("test", {
         "validation_evidence",
     ]
     assert schema["additionalProperties"] is False
-    assert {value["const"] for value in schema["properties"]["result"]["anyOf"]} == {
+    assert {
+        value["const"] for value in schema["properties"]["result"]["anyOf"]
+    } == {
         "success",
         "partial",
         "failure",

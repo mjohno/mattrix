@@ -280,7 +280,9 @@ def main(argv: list[str] | None = None) -> int:
                 candidate = json.load(sys.stdin)
             except json.JSONDecodeError as exc:
                 raise StateError(f"invalid role JSON: {exc}") from exc
-            print(json.dumps(normalize_packet(args.role, candidate)), flush=True)
+            print(
+                json.dumps(normalize_packet(args.role, candidate)), flush=True
+            )
             return 0
         if args.command == "init":
             path = path_from(args, create=True)

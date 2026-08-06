@@ -23,7 +23,7 @@ from stagger_step.state import StateError
             },
             {
                 "lessons": ["Keep evidence"],
-                "proposed_next_packets": [
+                "proposals": [
                     {
                         "slug": "validate-cli",
                         "intent": "Validate the CLI",
@@ -69,6 +69,7 @@ def test_normalizes_each_role(role, candidate, expected):
     normalized = normalize_packet(role, candidate)
 
     assert normalized == expected
+    assert normalize_packet(role, normalized) == expected
     assert normalized is not candidate
 
 
@@ -88,7 +89,10 @@ def test_rejects_worker_owned_fields_in_coordinator_proposals():
                         "slug": "validate-cli",
                         "intent": "Validate the CLI",
                         "criteria": ["all checks pass"],
-                        "do": {"summary": "not coordinator work", "evidence": []},
+                        "do": {
+                            "summary": "not coordinator work",
+                            "evidence": [],
+                        },
                         "validate": {
                             "result": "success",
                             "summary": "not coordinator work",

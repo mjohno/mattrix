@@ -36,3 +36,29 @@ def test_approval_consumes_the_promoted_step_and_clears_recommendation():
     assert approved["current"]["slug"] == "first"
     assert [step["slug"] for step in approved["next"]] == ["second"]
     assert approved["recommended"] is None
+
+
+def test_gate_exposes_next_steps_as_proposals():
+    """Keep the human-facing gate aligned with coordinator packets."""
+
+    class NoHarness:
+        pass
+
+    proposal = {"slug": "task", "intent": "Task", "criteria": ["done"]}
+    state = {
+        "version": 1,
+        "goal": "Goal",
+        "change_path": None,
+        "commit_mode": False,
+        "lessons": [],
+        "history": [],
+        "current": None,
+        "next": [proposal],
+        "recommended": "task",
+        "completed": False,
+    }
+
+    gate = StepLoop(NoHarness()).gate(state)
+
+    assert gate["proposals"] == [proposal]
+    assert "next" not in gate

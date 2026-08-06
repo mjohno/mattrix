@@ -54,7 +54,7 @@ def normalize_packet(role: str, candidate: Any) -> dict[str, Any]:
             )
         return {
             "lessons": deepcopy(packet["lessons"]),
-            "proposed_next_packets": deepcopy(proposals),
+            "proposals": deepcopy(proposals),
             "recommendation": recommendation,
         }
     if role == "worker":

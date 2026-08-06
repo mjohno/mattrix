@@ -12,15 +12,9 @@ from pathlib import Path
 
 
 def _finalizer_response(role: str, reply: object) -> object:
-    """Adapt legacy fixture packets to the current role-owned finalizer output."""
+    """Adapt worker and assessor fixtures to finalizer output."""
     if not isinstance(reply, dict):
         return reply
-    if role == "coordinator" and "proposed_next_packets" in reply:
-        return {
-            "lessons": reply["lessons"],
-            "proposals": reply["proposed_next_packets"],
-            "recommendation": reply["recommendation"],
-        }
     if role == "worker" and isinstance(reply.get("packet"), dict):
         packet = reply["packet"]
         return {"do": packet.get("do"), "validate": packet.get("validate")}

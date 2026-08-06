@@ -5,7 +5,7 @@
         "lessons": [
           "coordinator lesson"
         ],
-        "proposed_next_packets": [
+        "proposals": [
           {
             "slug": "first",
             "intent": "first",
@@ -82,7 +82,7 @@
         "lessons": [
           "chosen by coordinator"
         ],
-        "proposed_next_packets": [
+        "proposals": [
           {
             "slug": "second",
             "intent": "second",
@@ -159,7 +159,7 @@
         "lessons": [
           "terminal lesson"
         ],
-        "proposed_next_packets": [],
+        "proposals": [],
         "recommendation": null
       }
     ]

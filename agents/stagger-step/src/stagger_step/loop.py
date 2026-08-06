@@ -73,7 +73,11 @@ class StepLoop:
         self.harness.begin_transition()
         if state["current"] is not None or state["next"]:
             raise TransitionError("state is already bootstrapped")
-        return self._propose(state, actions=[], revision=None)
+        proposed = self._propose(state, actions=[], revision=None)
+        proposed["lessons"] = _dedupe(
+            [*state["lessons"], *proposed["lessons"]]
+        )
+        return validate_state(proposed)
 
     def prepare(self, state: dict[str, Any]) -> dict[str, Any]:
         """Execute current work once, then propose follow-up work for a gate."""
@@ -191,18 +195,19 @@ class StepLoop:
 
     def gate(self, state: dict[str, Any]) -> dict[str, Any]:
         validate_state(state)
-        return {
+        gate = {
             key: deepcopy(state[key])
             for key in (
                 "goal",
                 "lessons",
                 "history",
                 "current",
-                "next",
                 "recommended",
                 "completed",
             )
         }
+        gate["proposals"] = deepcopy(state["next"])
+        return gate
 
     def _propose(
         self, state: dict[str, Any], *, actions: list[str], revision: str | None
@@ -238,7 +243,7 @@ class StepLoop:
             raise TransitionError("coordinator returned no packet")
         lessons, proposals, recommendation = (
             response.get("lessons"),
-            response.get("proposed_next_packets"),
+            response.get("proposals"),
             response.get("recommendation"),
         )
         reserved = {step["slug"] for step in state["history"]}

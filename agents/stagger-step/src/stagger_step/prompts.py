@@ -83,8 +83,7 @@ def build_continuation_prompt(role: str) -> str:
         "Continue the current STEP role session from its existing context. "
         "An idle period passed before the session settled. Resume the next "
         "unfinished action. Do not restart, repeat completed work, or expand "
-        "scope. "
-        + _response_protocol(role)
+        "scope. " + _response_protocol(role)
     )
 
 

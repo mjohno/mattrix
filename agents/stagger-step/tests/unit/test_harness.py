@@ -79,7 +79,9 @@ def test_cleanup_escalates_after_bounded_termination(monkeypatch):
     assert proc.stdin.closed and proc.stdout.closed and proc.stderr.closed
 
 
-def test_harness_retains_finalizer_details_but_parses_text(monkeypatch, tmp_path):
+def test_harness_retains_finalizer_details_but_parses_text(
+    monkeypatch, tmp_path
+):
     scenario_path = tmp_path / "scenario.json"
     log_path = tmp_path / "pi.log"
     scenario_path.write_text(
@@ -101,7 +103,7 @@ def test_harness_retains_finalizer_details_but_parses_text(monkeypatch, tmp_path
 
     assert payload == {
         "lessons": [],
-        "proposed_next_packets": [],
+        "proposals": [],
         "recommendation": None,
     }
     assert adapter.last_finalizer_details == {
