@@ -3,7 +3,7 @@ FROM debian:bookworm-slim
 
 ARG TARGETARCH
 ARG NODE_VERSION=22.19.0
-ARG PI_VERSION=0.81.1
+ARG PI_VERSION=0.83.0
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
