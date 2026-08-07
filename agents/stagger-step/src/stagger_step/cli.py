@@ -11,13 +11,12 @@ import time
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from .diagnostics import write_diagnostics
 from .git import CommitMode
 from .harness import PiRpcHarness
 from .loop import StepLoop, TransitionError
 from .normalizer import ROLES, normalize_packet
+from .render import render_gate
 from .state import StateError, create_state, load_state, write_atomic
 
 logger = logging.getLogger("stagger_step.cli")
@@ -49,8 +48,8 @@ def path_from(args: argparse.Namespace, create: bool = False) -> Path:
     return path
 
 
-def emit(value: Any) -> None:
-    print(yaml.safe_dump(value, sort_keys=False), end="")
+def emit_gate(gate: dict[str, Any]) -> None:
+    print(render_gate(gate), end="")
 
 
 def is_revision_feedback(value: str) -> bool:
@@ -214,7 +213,7 @@ def run_session(
             if prepared != state:
                 write_atomic(path, prepared)
             _raise_if_interrupt_requested()
-            emit(loop.gate(prepared))
+            emit_gate(loop.gate(prepared))
             if afk and _afk_failure(prepared, outcomes):
                 afk = False
                 logger.info(
@@ -225,13 +224,11 @@ def run_session(
                 logger.info("AFK automatically approved the current gate")
                 user_input = "approved"
             else:
-                print("STEP response: ", end="", file=sys.stderr, flush=True)
                 try:
                     user_input = input()
                 except EOFError:
                     return 0
             if user_input == "break":
-                emit({"changed": False})
                 return 0
             if user_input == "afk":
                 afk = True
@@ -251,7 +248,6 @@ def run_session(
             _raise_if_interrupt_requested()
             write_atomic(path, changed)
             _raise_if_interrupt_requested()
-            emit({"ok": True, "changed": True})
             if changed["completed"]:
                 return 0
             state = changed
@@ -321,15 +317,11 @@ def main(argv: list[str] | None = None) -> int:
             write_atomic(path, state)
             if args.session:
                 return run_session(path, state, loop, commit)
-            emit({"ok": True, "created": str(path), "gate": loop.gate(state)})
+            emit_gate(loop.gate(state))
             return 0
         path = path_from(args)
         state = load_state(path)
-        if args.command == "validate":
-            emit({"ok": True, "state": state})
-            return 0
         if args.command == "gate" and args.response == "break":
-            emit({"changed": False})
             return 0
         change_path = resolve_change_path(path, state["change_path"])
         commit = select_commit_mode(state, path, Path.cwd(), args.commit_off)
@@ -349,24 +341,27 @@ def main(argv: list[str] | None = None) -> int:
             ),
             change_path,
         )
+        if args.command == "validate":
+            emit_gate(loop.gate(state))
+            return 0
         if args.command == "gate":
             prepared = prepare(state, loop, commit)
             if prepared != state:
                 write_atomic(path, prepared)
             if args.response is None:
-                emit(loop.gate(prepared))
+                emit_gate(loop.gate(prepared))
                 return 0
             if args.response == "approved":
                 changed = approve(prepared, loop, commit)
                 if not changed["completed"]:
                     changed = prepare(changed, loop, commit)
             elif not is_revision_feedback(args.response):
-                emit({"changed": False, "gate": loop.gate(prepared)})
+                emit_gate(loop.gate(prepared))
                 return 0
             else:
                 changed = loop.revise(prepared, args.response)
             write_atomic(path, changed)
-            emit({"ok": True, "changed": True, "gate": loop.gate(changed)})
+            emit_gate(loop.gate(changed))
             return 0
         return run_session(path, state, loop, commit)
     except (StateError, TransitionError) as exc:

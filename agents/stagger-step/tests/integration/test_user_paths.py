@@ -5,6 +5,7 @@ import re
 
 import pytest
 from stagger_step.harness import HarnessError, PiRpcHarness
+from stagger_step.state import load_state
 
 from .conftest import (
     FAKE,
@@ -138,7 +139,8 @@ def test_gate_ignores_nonsensical_feedback(cli, response):
 
     assert result.returncode == 0, result.stderr
     assert step.read_text() == before
-    assert "changed: false" in result.stdout
+    assert result.stdout.startswith("# STEP Review - Initial Plan\n")
+    assert result.stdout.endswith("**Response:**\n")
 
 
 def test_gate_approval_promotes_recommended_step(cli):
@@ -153,6 +155,7 @@ def test_gate_approval_promotes_recommended_step(cli):
         saved["next"][0]["slug"] == "second"
         and saved["recommended"] == "second"
     )
+    assert load_state(step) == saved
 
 
 def test_invalid_worker_packet_is_corrected_in_its_persistent_session(cli):
@@ -611,7 +614,9 @@ def test_session_continues_through_work_cycle_to_final_signoff(cli):
         and saved["current"] is None
         and [entry["slug"] for entry in saved["history"]] == ["first"]
     )
-    assert result.stdout.count("recommended:") == 2
+    assert result.stdout.count("**RECOMMENDED**") == 1
+    assert result.stdout.count("**Response:**") == 2
+    assert result.stderr == ""
 
 
 def test_session_revision_keeps_running_then_breaks_without_promotion(cli):
@@ -673,7 +678,8 @@ def test_session_revision_keeps_running_then_breaks_without_promotion(cli):
     assert (
         saved["next"][0]["slug"] == "third" and saved["recommended"] == "third"
     )
-    assert "STEP response:" not in result.stdout
+    assert result.stdout.endswith("**Response:**\n")
+    assert "STEP response:" not in result.stderr
 
 
 def test_init_persists_change_path_and_supplies_it_to_each_role(cli):

@@ -1,6 +1,6 @@
 # stagger-step
 
-`stagger-step` owns the STEP YAML schema, validation, legal transitions, atomic approval writes, YAML user gates, and self-contained role prompts under `src/stagger_step/prompts/`.
+`stagger-step` owns the STEP YAML schema, validation, legal transitions, atomic approval writes, Markdown user reviews, and self-contained role prompts under `src/stagger_step/prompts/`.
 
 ## Build output
 
@@ -18,7 +18,7 @@ STEP_FILE=STEP-example.yaml python -m stagger_step.cli gate approved
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli session
 ```
 
-`init` creates bootstrap state. Only the exact input `approved` promotes the recommendation. Revision feedback must contain a letter and more than three non-whitespace characters; empty, whitespace-only, numeric, and punctuation-only input is ignored. `break` is read-only. `session` keeps the pending role output in process memory, so an arbitrary edited YAML gate can never be submitted as an approval. A manually edited state is accepted only through `validate_state`.
+`init` creates bootstrap state and renders its owner review as Markdown on stdout. Only the exact input `approved` promotes the recommendation. Revision feedback must contain a letter and more than three non-whitespace characters; empty, whitespace-only, numeric, and punctuation-only input is ignored. `break` is read-only. `session` keeps the pending role output in process memory, so an arbitrary edited YAML gate can never be submitted as an approval. A manually edited state is accepted only through `validate_state`.
 
 ## Change path and commit mode
 
@@ -49,6 +49,8 @@ No-op packets advance without an empty commit. A commit failure leaves the packe
 In `session`, enter `afk` at a manual gate to approve that gate and automatically approve later gates in the same process. AFK is never written to STEP state. It returns to manual mode when more than one of the last ten completed tasks is `failure` or `blocked`; before ten tasks complete, one such result is allowed. `partial` does not stop it. Ctrl+C while AFK also returns to manual mode. From manual mode, `break` exits the session and Ctrl+C keeps the normal crash/debug behavior.
 
 ## State and gates
+
+Owner gates render as Markdown on stdout. They show the goal, applicable lessons and current-task results, ranked next tasks, and the recommendation; they end with `**Response:**`. The recommended next task is marked `**RECOMMENDED**`. Empty sections are omitted. YAML remains the persisted STEP state format.
 
 Persisted state contains `version`, `goal`, optional `change_path`, `commit_mode`, `lessons`, completed `history`, an approved `active_packet`, and `completed`. Pending coordinator/assessor outputs are intentionally never persisted. A gate contains `goal`, `lessons`, `history`, `current`, ranked `proposals`, `recommended`, and `completed`.
 
