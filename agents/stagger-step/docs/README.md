@@ -18,7 +18,7 @@ STEP_FILE=STEP-example.yaml python -m stagger_step.cli gate approved
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli session
 ```
 
-`init` creates bootstrap state. Thereafter, only the exact input `approved` writes state. `break` and revisions are read-only. `session` keeps the pending role output in process memory, so an arbitrary edited YAML gate can never be submitted as an approval. A manually edited state is accepted only through `validate_state`.
+`init` creates bootstrap state. Only the exact input `approved` promotes the recommendation. Revision feedback must contain a letter and more than three non-whitespace characters; empty, whitespace-only, numeric, and punctuation-only input is ignored. `break` is read-only. `session` keeps the pending role output in process memory, so an arbitrary edited YAML gate can never be submitted as an approval. A manually edited state is accepted only through `validate_state`.
 
 ## Change path and commit mode
 

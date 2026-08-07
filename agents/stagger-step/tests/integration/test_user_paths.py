@@ -126,6 +126,21 @@ def test_harness_session_off_uses_no_session(cli):
     assert "--session-id" not in argv
 
 
+@pytest.mark.parametrize(
+    "response", ("", "    ", " #@%567!  ", "5%@!#%", "abc")
+)
+def test_gate_ignores_nonsensical_feedback(cli, response):
+    run, step, _ = cli
+    init(run)
+    before = step.read_text()
+
+    result = run("gate", response)
+
+    assert result.returncode == 0, result.stderr
+    assert step.read_text() == before
+    assert "changed: false" in result.stdout
+
+
 def test_gate_approval_promotes_recommended_step(cli):
     run, step, _ = cli
     init(run)
@@ -362,7 +377,8 @@ def test_idle_timeout_restarts_the_session_and_replays_task(
     harness = PiRpcHarness(command=(str(FAKE),), session_enabled=True)
 
     with pytest.raises(
-        HarnessError, match="worker harness failure: RPC idle timed out before settlement"
+        HarnessError,
+        match="worker harness failure: RPC idle timed out before settlement",
     ):
         harness.invoke("worker", "test timeout")
 

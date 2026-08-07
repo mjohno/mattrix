@@ -196,7 +196,9 @@ class PiRpcHarness:
                 retry_prompt = build_finalization_prompt(role, exc)
                 finalization_retried = True
             except (OSError, HarnessError) as exc:
-                is_idle_timeout = str(exc) == "RPC idle timed out before settlement"
+                is_idle_timeout = (
+                    str(exc) == "RPC idle timed out before settlement"
+                )
                 if is_idle_timeout:
                     logger.error(
                         "pi idle timeout role=%s task=%s attempt=%s timeout_seconds=%s",

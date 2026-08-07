@@ -53,6 +53,12 @@ def emit(value: Any) -> None:
     print(yaml.safe_dump(value, sort_keys=False), end="")
 
 
+def is_revision_feedback(value: str) -> bool:
+    """Accept meaningful revision feedback, not accidental keystrokes."""
+    normalized = value.strip()
+    return len(normalized) > 3 and any(char.isalpha() for char in normalized)
+
+
 def resolve_change_path(step_path: Path, value: str | None) -> str | None:
     """Resolve a configured change path relative to its STEP file."""
     if value is None:
@@ -121,7 +127,7 @@ def parser() -> argparse.ArgumentParser:
     gate.add_argument(
         "response",
         nargs="?",
-        help="exact approved, break, or revision feedback",
+        help="exact approved, break, or revision feedback with a letter and more than 3 characters",
     )
     gate.add_argument(
         "--commit-off",
@@ -232,6 +238,11 @@ def run_session(
                 outcomes.clear()
                 logger.info("AFK enabled")
                 user_input = "approved"
+            elif user_input != "approved" and not is_revision_feedback(
+                user_input
+            ):
+                logger.info("Ignored nonsensical STEP response")
+                continue
             changed = (
                 approve(prepared, loop, commit)
                 if user_input == "approved"
@@ -349,6 +360,9 @@ def main(argv: list[str] | None = None) -> int:
                 changed = approve(prepared, loop, commit)
                 if not changed["completed"]:
                     changed = prepare(changed, loop, commit)
+            elif not is_revision_feedback(args.response):
+                emit({"changed": False, "gate": loop.gate(prepared)})
+                return 0
             else:
                 changed = loop.revise(prepared, args.response)
             write_atomic(path, changed)

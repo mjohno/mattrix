@@ -74,9 +74,7 @@ class StepLoop:
         if state["current"] is not None or state["next"]:
             raise TransitionError("state is already bootstrapped")
         proposed = self._propose(state, actions=[], revision=None)
-        proposed["lessons"] = _dedupe(
-            [*state["lessons"], *proposed["lessons"]]
-        )
+        proposed["lessons"] = _dedupe([*state["lessons"], *proposed["lessons"]])
         return validate_state(proposed)
 
     def prepare(self, state: dict[str, Any]) -> dict[str, Any]:
