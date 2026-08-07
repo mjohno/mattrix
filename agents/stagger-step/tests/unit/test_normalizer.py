@@ -73,6 +73,26 @@ def test_normalizes_each_role(role, candidate, expected):
     assert normalized is not candidate
 
 
+def test_allows_proposal_slug_with_terminate_prefix():
+    proposal = {
+        "slug": "terminate-xyz-thingy",
+        "intent": "Continue delivery",
+        "criteria": ["evidence exists"],
+    }
+
+    assert (
+        normalize_packet(
+            "coordinator",
+            {
+                "lessons": [],
+                "proposals": [proposal],
+                "recommendation": "terminate-xyz-thingy",
+            },
+        )["recommendation"]
+        == "terminate-xyz-thingy"
+    )
+
+
 def test_rejects_wrong_role_packet():
     with pytest.raises(StateError, match="worker.do must be a mapping"):
         normalize_packet("worker", {"current_packet": {}})

@@ -170,7 +170,7 @@ def coordinator(slug: str | None, lessons: list[str] | None = None) -> dict:
     return {
         "lessons": lessons or [],
         "proposals": [] if slug is None else [task(slug)],
-        "recommendation": slug,
+        "recommendation": "terminate" if slug is None else slug,
     }
 
 

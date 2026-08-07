@@ -123,7 +123,7 @@ def test_cli_approval_commits_before_persisting_history(tmp_path):
                     "commit_base": base,
                 },
                 "next": [],
-                "recommended": None,
+                "recommended": "terminate",
                 "completed": False,
             },
             sort_keys=False,

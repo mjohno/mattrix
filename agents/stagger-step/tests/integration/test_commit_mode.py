@@ -150,7 +150,7 @@ def test_session_commit_off_preserves_existing_packet_commit_state(git_cli):
         "history": [],
         "current": {**complete("first"), "commit_base": base},
         "next": [],
-        "recommended": None,
+        "recommended": "terminate",
         "completed": False,
     }
     step.write_text(yaml.safe_dump(configured, sort_keys=False))

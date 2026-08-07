@@ -187,7 +187,7 @@ class StepLoop:
             next_state["recommended"] = None
         else:
             next_state["next"] = []
-            next_state["recommended"] = None
+            next_state["recommended"] = "terminate"
             next_state["completed"] = True
         return validate_state(next_state)
 

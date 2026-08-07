@@ -118,26 +118,38 @@ def validate_state(state: Any) -> dict[str, Any]:
     if any(slug in historical_slugs for slug in next_slugs):
         raise StateError("next slug already exists in history")
     recommended = state.get("recommended")
-    if recommended is not None and recommended not in next_slugs:
+    if not isinstance(recommended, str) and recommended is not None:
+        raise StateError("recommended must be a string or null")
+    if any(slug == "terminate" for slug in next_slugs):
+        raise StateError("next must not use reserved slug: terminate")
+    if recommended not in {None, "terminate"} and recommended not in next_slugs:
         raise StateError("recommended must name a next step or be null")
     if not isinstance(state.get("completed"), bool):
         raise StateError("completed must be boolean")
     if state["completed"]:
-        if current is not None or next_steps or recommended is not None:
+        if current is not None or next_steps or recommended != "terminate":
             raise StateError(
-                "terminal state cannot have current, next, or recommended"
+                "terminal state requires no current or next step and a terminate recommendation"
             )
     elif current is None and not next_steps:
         raise StateError("non-terminal state requires current or next")
-    elif current is None and recommended is None:
-        raise StateError("state without current requires a recommendation")
+    elif current is None and recommended in {None, "terminate"}:
+        raise StateError(
+            "state without current requires a recommended next step"
+        )
+    elif recommended == "terminate" and not (
+        current is not None and is_completed(current) and not next_steps
+    ):
+        raise StateError("terminate recommendation requires final signoff")
     elif (
         current is not None
         and is_completed(current)
         and not next_steps
-        and recommended is not None
+        and recommended != "terminate"
     ):
-        raise StateError("final-signoff state requires null recommendation")
+        raise StateError(
+            "final-signoff state requires terminate recommendation"
+        )
     return state
 
 

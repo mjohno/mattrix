@@ -31,7 +31,7 @@ function parametersFor(role: Role) {
       {
         lessons: stringsSchema,
         proposals: Type.Array(proposalSchema),
-        recommendation: Type.Union([Type.String(), Type.Null()]),
+        recommendation: Type.String(),
       },
       { additionalProperties: false },
     );
@@ -87,8 +87,11 @@ function canonicalInput(role: Role, params: Record<string, unknown>): Record<str
       return item.slug;
     });
     if (new Set(slugs).size !== slugs.length) throw new Error("proposals contains duplicate slugs");
-    if (params.recommendation !== null && !slugs.includes(params.recommendation as string)) {
-      throw new Error("recommendation must name a proposal or be null");
+    if (slugs.some((slug) => slug === "terminate")) {
+      throw new Error("terminate is reserved for terminal recommendations");
+    }
+    if (params.recommendation !== "terminate" && !slugs.includes(params.recommendation as string)) {
+      throw new Error('recommendation must name a proposal or be "terminate"');
     }
     return { lessons: params.lessons, proposals: params.proposals, recommendation: params.recommendation };
   }

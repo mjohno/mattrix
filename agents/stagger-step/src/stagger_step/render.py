@@ -30,7 +30,7 @@ def render_gate(gate: dict[str, Any]) -> str:
         isinstance(current, dict)
         and is_completed(current)
         and not proposals
-        and recommended is None
+        and recommended == "terminate"
     )
     title = current["slug"] if isinstance(current, dict) else "Initial Plan"
     lines = [f"# STEP Review - {title}", "", f"**Goal:** {gate['goal']}", ""]

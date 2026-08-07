@@ -86,3 +86,50 @@ worker.execute("test", {
     }
     assert output["invalid"]["isError"] is True
     assert "work_summary is required" in output["invalid"]["content"][0]["text"]
+
+
+def test_extension_accepts_terminate_terminal_recommendation(tmp_path):
+    normalizer = tmp_path / "stagger-step"
+    normalizer.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "sys.stdout.write(sys.stdin.read())\n"
+    )
+    normalizer.chmod(0o755)
+    script = r"""
+const createJiti = require(process.argv[1]);
+const extension = createJiti(process.argv[2])(process.argv[2]).default;
+const tools = {};
+const handlers = {};
+extension({
+  registerFlag() {},
+  getFlag() { return "coordinator"; },
+  on(name, handler) { handlers[name] = handler; },
+  registerTool(tool) { tools.coordinator = tool; },
+});
+handlers.session_start();
+tools.coordinator.execute("test", {
+  lessons: ["goal is complete"],
+  proposals: [],
+  recommendation: "terminate",
+}, new AbortController().signal).then((result) => console.log(JSON.stringify(result)));
+"""
+    result = subprocess.run(
+        ["node", "-e", script, JITI, str(EXTENSION)],
+        check=True,
+        text=True,
+        capture_output=True,
+        env={
+            **os.environ,
+            "NODE_PATH": "/usr/lib/node_modules/@earendil-works/pi-coding-agent/node_modules",
+            "PATH": f"{tmp_path}:{os.environ['PATH']}",
+        },
+    )
+
+    output = json.loads(result.stdout)
+    assert output.get("isError", False) is False
+    assert output["details"]["canonical"] == {
+        "lessons": ["goal is complete"],
+        "proposals": [],
+        "recommendation": "terminate",
+    }

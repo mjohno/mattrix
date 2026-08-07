@@ -88,7 +88,11 @@ def test_harness_retains_finalizer_details_but_parses_text(
         json.dumps(
             {
                 "coordinator": [
-                    {"lessons": [], "proposals": [], "recommendation": None}
+                    {
+                        "lessons": [],
+                        "proposals": [],
+                        "recommendation": "terminate",
+                    }
                 ]
             }
         )
@@ -104,13 +108,13 @@ def test_harness_retains_finalizer_details_but_parses_text(
     assert payload == {
         "lessons": [],
         "proposals": [],
-        "recommendation": None,
+        "recommendation": "terminate",
     }
     assert adapter.last_finalizer_details == {
         "canonical": {
             "lessons": [],
             "proposals": [],
-            "recommendation": None,
+            "recommendation": "terminate",
         }
     }
 

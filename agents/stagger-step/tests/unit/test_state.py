@@ -38,13 +38,34 @@ def test_state_accepts_final_signoff_and_rejects_ambiguous_terminal():
         "history": [],
         "current": DONE,
         "next": [],
-        "recommended": None,
+        "recommended": "terminate",
         "completed": False,
     }
     assert validate_state(signoff) == signoff
     signoff["completed"] = True
     with pytest.raises(StateError):
         validate_state(signoff)
+
+
+def test_state_rejects_null_terminal_recommendation():
+    state = {
+        "version": 1,
+        "goal": "Goal",
+        "change_path": None,
+        "commit_mode": False,
+        "lessons": [],
+        "history": [],
+        "current": DONE,
+        "next": [],
+        "recommended": None,
+        "completed": False,
+    }
+
+    with pytest.raises(
+        StateError,
+        match="final-signoff state requires terminate recommendation",
+    ):
+        validate_state(state)
 
 
 def test_fresh_state_has_root_change_and_commit_fields():

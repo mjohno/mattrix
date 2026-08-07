@@ -48,9 +48,13 @@ def normalize_packet(role: str, candidate: Any) -> dict[str, Any]:
         if len(slugs) != len(set(slugs)):
             raise StateError("coordinator.proposals contains duplicate slugs")
         recommendation = packet.get("recommendation")
-        if recommendation is not None and recommendation not in slugs:
+        if any(slug == "terminate" for slug in slugs):
             raise StateError(
-                "coordinator.recommendation must name a proposal or be null"
+                "coordinator.proposals must not use reserved slug: terminate"
+            )
+        if recommendation != "terminate" and recommendation not in slugs:
+            raise StateError(
+                'coordinator.recommendation must name a proposal or be "terminate"'
             )
         return {
             "lessons": deepcopy(packet["lessons"]),

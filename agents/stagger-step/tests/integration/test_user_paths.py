@@ -508,7 +508,7 @@ def test_gate_prepares_cycle_before_rendering_and_final_signoff(cli):
     )
     assert (
         saved["next"] == []
-        and saved["recommended"] is None
+        and saved["recommended"] == "terminate"
         and saved["completed"] is False
     )
     signed = run("gate", "approved")
@@ -559,7 +559,7 @@ def test_session_continues_through_work_cycle_to_final_signoff(cli):
             {
                 "lessons": ["terminal lesson"],
                 "proposals": [],
-                "recommendation": None,
+                "recommendation": "terminate",
             },
         ],
         "worker": [

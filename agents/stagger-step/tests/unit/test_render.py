@@ -97,7 +97,7 @@ def test_final_signoff_has_terminal_next_task_and_recommendation():
                 "retro": {"wins": [], "issues": [], "actions": []},
             },
             "proposals": [],
-            "recommended": None,
+            "recommended": "terminate",
             "completed": False,
         }
     )
