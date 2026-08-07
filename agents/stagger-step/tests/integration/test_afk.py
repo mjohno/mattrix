@@ -35,6 +35,7 @@ def test_afk_approves_subsequent_gate_and_never_persists_mode(cli):
     assert [entry["slug"] for entry in saved["history"]] == ["first"]
     assert "AFK enabled" in result.stderr
     assert "AFK automatically approved the current gate" in result.stderr
+    assert result.stdout.count("afk\n\n---\n") == 2
     assert "afk" not in step.read_text().lower()
 
 

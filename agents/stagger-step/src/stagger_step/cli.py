@@ -52,6 +52,11 @@ def emit_gate(gate: dict[str, Any]) -> None:
     print(render_gate(gate), end="")
 
 
+def emit_response(response: str) -> None:
+    """Append the submitted response and a review separator to stdout."""
+    print(f"{response}\n\n---")
+
+
 def is_revision_feedback(value: str) -> bool:
     """Accept meaningful revision feedback, not accidental keystrokes."""
     normalized = value.strip()
@@ -223,11 +228,14 @@ def run_session(
                 _raise_if_interrupt_requested()
                 logger.info("AFK automatically approved the current gate")
                 user_input = "approved"
+                displayed_response = "afk"
             else:
                 try:
                     user_input = input()
                 except EOFError:
                     return 0
+                displayed_response = user_input
+            emit_response(displayed_response)
             if user_input == "break":
                 return 0
             if user_input == "afk":

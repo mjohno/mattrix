@@ -50,7 +50,7 @@ In `session`, enter `afk` at a manual gate to approve that gate and automaticall
 
 ## State and gates
 
-Owner gates render as Markdown on stdout. They show the goal, applicable lessons and current-task results, ranked next tasks, and the recommendation; they end with `**Response:**`. The recommended next task is marked `**RECOMMENDED**`. Empty sections are omitted. YAML remains the persisted STEP state format.
+Owner gates render as Markdown on stdout. They show the goal, applicable lessons and current-task results, ranked next tasks, and the recommendation, then prompt with `**Response:**`. Submitted responses are echoed and followed by `---` before the next review. The recommended next task is marked `**RECOMMENDED**`. Empty sections are omitted. YAML remains the persisted STEP state format.
 
 Persisted state contains `version`, `goal`, optional `change_path`, `commit_mode`, `lessons`, completed `history`, an approved `active_packet`, and `completed`. Pending coordinator/assessor outputs are intentionally never persisted. A gate contains `goal`, `lessons`, `history`, `current`, ranked `proposals`, `recommended`, and `completed`.
 

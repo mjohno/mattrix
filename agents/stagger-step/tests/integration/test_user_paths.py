@@ -616,6 +616,7 @@ def test_session_continues_through_work_cycle_to_final_signoff(cli):
     )
     assert result.stdout.count("**RECOMMENDED**") == 1
     assert result.stdout.count("**Response:**") == 2
+    assert result.stdout.count("approved\n\n---\n") == 2
     assert result.stderr == ""
 
 
@@ -678,7 +679,7 @@ def test_session_revision_keeps_running_then_breaks_without_promotion(cli):
     assert (
         saved["next"][0]["slug"] == "third" and saved["recommended"] == "third"
     )
-    assert result.stdout.endswith("**Response:**\n")
+    assert result.stdout.endswith("break\n\n---\n")
     assert "STEP response:" not in result.stderr
 
 
