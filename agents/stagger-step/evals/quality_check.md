@@ -1,0 +1,1 @@
+Run the four quality-procedure commands as separate tasks and record their exit status; baseline: no recorded procedure result; target: all four commands succeed, evidenced by their command output and build artifacts, to confirm the package is ready to deliver. Assumption: the next release-candidate review is the required deadline.

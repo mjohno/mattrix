@@ -132,6 +132,7 @@ def clean(quiet: bool) -> int:
         ".pytest_cache",
         ".ruff_cache",
         "htmlcov",
+        "tmp",
     }
     excluded_names = {".git", ".venv", "env", "venv"}
     artifacts: list[Path] = []
