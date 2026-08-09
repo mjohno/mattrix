@@ -55,7 +55,8 @@ def test_commit_mode_commits_packet_changes_and_ignores_step_file(tmp_path):
 
     assert sha == git(root, "rev-parse", "HEAD")
     assert git(root, "log", "-1", "--pretty=%B") == (
-        "step(update-file): Update the tracked file with a\n\n"
+        "step: update-file\n\n"
+        "Intent:\nUpdate the tracked file\nwith a wrapped intent\n\n"
         "Done:\nChanged tracked.txt\n\n"
         "Verified:\nChecked the updated file; coverage remains incomplete\n\n"
         "Result: partial"
@@ -63,22 +64,18 @@ def test_commit_mode_commits_packet_changes_and_ignores_step_file(tmp_path):
     assert git(root, "status", "--porcelain") == "?? STEP-test.yaml"
 
 
-def test_commit_mode_truncates_normalized_conventional_subject_at_50_characters(
-    tmp_path,
-):
+def test_commit_mode_truncates_subject_at_50_characters(tmp_path):
     root, step = repository(tmp_path)
     mode = CommitMode(step, root)
     long_packet = packet()
-    long_packet["intent"] = "  " + "very long intent " * 10
+    long_packet["slug"] = ("very-long-slug-" * 9) + "final"
     base = mode.begin()
     (root / "tracked.txt").write_text("changed\n")
 
     mode.commit(long_packet, base)
 
     assert git(root, "log", "-1", "--pretty=%s") == (
-        f"step(update-file): {' '.join(str(long_packet['intent']).split())}"[
-            :50
-        ].rstrip()
+        f"step: {long_packet['slug']}"[:50].rstrip()
     )
 
 
@@ -86,6 +83,7 @@ def test_commit_mode_wraps_body_content_at_72_characters(tmp_path):
     root, step = repository(tmp_path)
     mode = CommitMode(step, root)
     wrapped_packet = packet()
+    wrapped_packet["intent"] = "intent " * 20
     wrapped_packet["do"]["summary"] = "work " * 20
     wrapped_packet["validate"]["summary"] = "checked " * 20
     base = mode.begin()

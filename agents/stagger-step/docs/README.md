@@ -26,10 +26,13 @@ STEP_FILE=STEP-example.yaml python -m stagger_step.cli session
 
 `init --commit` stores root-level `commit_mode: true`; without it, `commit_mode` is false. Later `gate` and `session` commands inherit that setting. Pass `--commit-off` to either command to bypass commit behavior for that invocation or session without changing STEP state. Enabled commit mode requires the invoking directory to be a clean, non-bare Git worktree with no index lock and configured author and committer identity. The STEP file is excluded from packet staging.
 
-A changed packet commits with Stagger Step's fixed Conventional Commit type:
+A changed packet commits with Stagger Step's fixed message format:
 
 ```text
-step(<slug>): <intent>
+step: <slug>
+
+Intent:
+<intent>
 
 Done:
 <do.summary>
@@ -40,7 +43,7 @@ Verified:
 Result: <success|partial|failure|blocked>
 ```
 
-The normalized subject is deterministically truncated to 50 characters; body content is wrapped to 72 characters. Intent appears only in the subject; empty `Done` or `Verified` sections are omitted.
+The subject is deterministically truncated to 50 characters; body content, including intent, is wrapped to 72 characters. Empty `Done` or `Verified` sections are omitted.
 
 No-op packets advance without an empty commit. A commit failure leaves the packet awaiting approval; Stagger Step does not push, switch branches, rebase, merge, reset, or stash.
 

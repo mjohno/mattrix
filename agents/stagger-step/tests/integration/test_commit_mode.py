@@ -70,7 +70,7 @@ def test_commit_session_commits_approved_worker_changes_and_records_sha(
     saved = state(step)
     assert saved["completed"] is True
     assert saved["history"][0]["commit"] == git(repository, "rev-parse", "HEAD")
-    assert git(repository, "log", "-1", "--pretty=%s") == "step(first): first"
+    assert git(repository, "log", "-1", "--pretty=%s") == "step: first"
     assert git(repository, "status", "--porcelain") == ""
 
 

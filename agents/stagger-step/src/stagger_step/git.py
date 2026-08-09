@@ -153,8 +153,8 @@ class CommitMode:
                 packet["slug"],
             )
             return None
-        intent = " ".join(str(packet["intent"]).split())
-        subject = f"step({packet['slug']}): {intent}"[:50].rstrip()
+        subject = f"step: {packet['slug']}"[:50].rstrip()
+        intent = str(packet["intent"]).strip()
         work = packet.get("do")
         validation = packet.get("validate")
         done = str(
@@ -168,7 +168,7 @@ class CommitMode:
         result = str(
             validation.get("result", "") if isinstance(validation, dict) else ""
         )
-        sections = []
+        sections = [f"Intent:\n{_wrap_body(intent)}"]
         if done:
             sections.append(f"Done:\n{_wrap_body(done)}")
         if verified:
