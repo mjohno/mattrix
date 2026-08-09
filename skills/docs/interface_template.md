@@ -6,7 +6,7 @@ metadata:
   category: interface
 ---
 
-<!-- For context-only project terms, use vocab_template.md instead. -->
+<!-- For user-loaded communication controls, use communications_template.md instead. -->
 <!-- Resolve every relative path in this SKILL.md from this file's directory. -->
 
 # [interface-name]

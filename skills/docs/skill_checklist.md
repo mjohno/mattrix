@@ -2,7 +2,7 @@
 
 ## Base Checklist
 
-Inherits all items from [base_checklist.md](base_checklist.md). Apply base items before these skill-specific items. Use this checklist for `metadata.type: skill` only; use [interface_checklist.md](interface_checklist.md) for interfaces, [vocab_checklist.md](vocab_checklist.md) for vocabulary, [protocol_checklist.md](protocol_checklist.md) for protocols, and [persona_checklist.md](persona_checklist.md) for personas.
+Inherits all items from [base_checklist.md](base_checklist.md). Apply base items before these skill-specific items. Use this checklist for `metadata.type: skill` only; use [interface_checklist.md](interface_checklist.md) for interfaces, [communications_checklist.md](communications_checklist.md) for communications, [protocol_checklist.md](protocol_checklist.md) for protocols, and [persona_checklist.md](persona_checklist.md) for personas.
 
 ## Skill-Specific CRITICAL
 

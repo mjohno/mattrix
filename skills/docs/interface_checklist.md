@@ -2,7 +2,7 @@
 
 ## Base Checklist
 
-Inherits all items from [base_checklist.md](base_checklist.md). Apply base items before these interface-specific items. Use this checklist for `metadata.type: interface` only; use [vocab_checklist.md](vocab_checklist.md) for `metadata.type: vocabulary`.
+Inherits all items from [base_checklist.md](base_checklist.md). Apply base items before these interface-specific items. Use this checklist for `metadata.type: interface` only; use [communications_checklist.md](communications_checklist.md) for `metadata.type: communications`.
 
 ## Interface-Specific CRITICAL
 

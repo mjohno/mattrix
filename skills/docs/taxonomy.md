@@ -5,7 +5,7 @@ This repository uses a role-based skill taxonomy. Each category defines the skil
 ## Mental Model
 
 - **Nouns are interfaces** — artifact schemas, storage contracts, protocols, and canonical shapes.
-- **Vocabulary is context** — human-loaded term definitions that shape interpretation without model invocation.
+- **Communications are context** — human-loaded controls that shape LLM interpretation or generated communication without model invocation.
 - **Specialized verbs are invocable skills** — skills that retrieve, produce, persist, or orchestrate work through a dedicated contract.
 - **Protocols are governed interaction contracts** — stateful or approval-sensitive flows that agents follow through an authoritative interface.
 - **Personas are lenses** — perspectives that modify how another skill evaluates or presents information.
@@ -16,7 +16,7 @@ Every package declares both type and category:
 
 - `metadata.type` describes runtime treatment:
   - `interface` — passive contract provider selected and loaded for context
-  - `vocabulary` — human-loadable context definitions with model invocation disabled
+  - `communications` — human-loadable communication controls with model invocation disabled
   - `skill` — invocable behavior that retrieves, produces, writes, or orchestrates
   - `protocol` — governed interaction contract, usually map-category, that defines safe transitions between agent, user, tools, and state
   - `persona` — composable lens that changes evaluation or presentation
@@ -24,7 +24,7 @@ Every package declares both type and category:
 
 Valid pairs:
 - `type: interface`, `category: interface`
-- `type: vocabulary`, `category: interface`
+- `type: communications`, `category: interface`
 - `type: skill`, `category: input|output|map`
 - `type: protocol`, `category: map`, with top-level `disable_model_invocation: true`
 - `type: persona`, `category: persona`
@@ -32,27 +32,27 @@ Valid pairs:
 ## Categories
 
 ### interface
-Passive noun/domain contract packages that supply conventions, quality checks, templates, schemas, protocols, artifact shapes, vocabulary, or storage rules used by verb skills.
-- Declares `metadata.category: interface` with either `metadata.type: interface` or `metadata.type: vocabulary`
-- Selected and loaded when another skill needs artifact shape, schema, protocol, conventions, quality criteria, or storage rules; vocabulary packages are human-loaded instead
+Passive noun/domain contract packages that supply conventions, quality checks, templates, schemas, protocols, artifact shapes, or storage rules used by verb skills.
+- Declares `metadata.type: interface` and `metadata.category: interface`
+- Is selected and loaded when another skill needs artifact shape, schema, protocol, conventions, quality criteria, or storage rules
 - Lives as direct packages under `../src/interface/<name>/SKILL.md`
-- Examples: `interface/spec`, `interface/rfc`, `interface/plan`, `interface/code`, `interface/prose`, `interface/script`, `interface/prototype`, `interface/memory`, `interface/knowledge-base`, `interface/vocab`
-- Defines the desired state of a noun-like artifact, protocol, domain, or context vocabulary
+- Examples: `interface/spec`, `interface/rfc`, `interface/plan`, `interface/code`, `interface/prose`, `interface/script`, `interface/prototype`, `interface/memory`, `interface/knowledge-base`
+- Defines the desired state of a noun-like artifact, protocol, or domain
 - May select an applicable domain from context, such as a script language or storage backend
-- Loads the minimal selected reference/asset contents into context without emitting them in chat; when invoked alone, acknowledges only selected relative paths. Vocabulary packages remain human-loaded context.
+- Loads the minimal selected reference/asset contents into context without emitting them in chat; when invoked alone, acknowledges only selected relative paths.
 - Domain- or intent-specific materials should be clearly named, e.g. `python_template.py`, `plan_quality.md`, `plan_checklist.md`, or `github_protocol.md`
-- **Do NOT use if** the package performs artifact production, external retrieval, evaluation, persistence, or orchestration — it only supplies contract data or vocabulary context for other skills to apply
+- **Do NOT use if** the package performs artifact production, external retrieval, evaluation, persistence, or orchestration — it only supplies contract data for other skills to apply
 
-### vocabulary
-Special interface-category packages that define project operational terms for human-loaded context.
-- Declares `metadata.type: vocabulary` and `metadata.category: interface`
+### communications
+Special interface-category packages that define human-loaded LLM communication controls.
+- Declares `metadata.type: communications` and `metadata.category: interface`
 - Requires top-level `disable_model_invocations: true`
-- Is loaded directly by a human before prompting; the model should not invoke or route to it
-- Defines only terms that are not already owned by skill names or skill descriptions
-- Keeps terms in the `description` trigger and body content; do not add frontmatter term metadata
-- May include compact behavioral controls, but contains no formal inputs, processes, outputs, return contract, verification, or next-step behavior
-- Project `vocab` is operational vocabulary; knowledge-base `glossary` content is domain-local terminology
-- **Do NOT use if** the term needs structured inputs, formal outputs, verification criteria, or multi-step process — create or update a verb skill instead
+- Is loaded directly by a user at the start of, or during, a session; the model must not invoke or route to it
+- Defines compact communication terms, language standards, or other declarative communication controls
+- States its activation, scope, applicable exact-text exclusions, and higher-priority instruction precedence
+- May include package-specific sections such as `Terms` or `Language Rules`, but contains no formal inputs, processes, outputs, return contract, verification, or next-step behavior
+- Project `vocab` defines operational terms; `simplified-technical-english` defines generated-prose language rules; knowledge-base `glossary` content is domain-local terminology
+- **Do NOT use if** the package needs an artifact schema, structured inputs, formal outputs, verification criteria, tool procedures, or a multi-step process — create or update an interface or verb skill instead
 
 ### input
 Skills that bring information into the working context from outside the current reasoning process.
@@ -103,15 +103,17 @@ Classify a skill by its dominant state transition:
 - Working context → constrained by a reusable contract: **interface**
 - Working context → communicated, derived, or durable result: **output**
 - Goal or context → ordered multi-step execution: **map**
+- User-loaded communication controls → LLM interpretation or generated communication: **communications**
 - Neutral processing → perspective-shaped processing: **persona**
 
 A skill may touch adjacent concerns, but its category follows the primary result it owns. Reusable criteria belong in an interface; a skill that applies those criteria and reports findings is output.
 
 ## Composition Patterns
 
+### Interface composition
+
 Interfaces define contract data that invocable skills consume:
 
-- **interface/vocab** — Human-load project terms such as `study`, `outline`, `draft`, `modify`, `simplify`, or `lean` before the first prompt; reserve dedicated skills for verbs that need a specialized contract or workflow.
 - **interface/spec + outline** — Outline a traceable future-state spec using the spec template.
 - **interface/spec + draft** — Draft a generic future-state spec using the spec contract.
 - **task** — Turn context into a concise, testable INVEST task statement.
@@ -119,6 +121,14 @@ Interfaces define contract data that invocable skills consume:
 - **interface/code + modify** — Modify code while preserving code-brief boundaries and verification hints.
 - **interface/knowledge-base + output/record** — Record durable knowledge using the KB root and entry contract.
 - **interface/memory + output/memorize** — Append memory using the memory file and entry contract.
+
+### Communications context
+
+A user loads communications packages as session context. Their location under `interface/` does not make them model-invocable.
+
+- **interface/vocab** — User-load project terms such as `study`, `outline`, `draft`, `modify`, `simplify`, or `lean`. These terms control user-request interpretation and generated responses; reserve dedicated skills for verbs that need a specialized contract or workflow.
+- **interface/simplified-technical-english** — User-load ASD-STE100 rules for generated chat prose only.
+- **vocab + simplified-technical-english** — A user can load both packages. Apply vocab to request interpretation and response behavior, and apply STE only to generated chat prose. Keep exact text unchanged when either package excludes it, and follow higher-priority instructions if rules conflict.
 
 Personas modify how information is evaluated at any pipeline stage:
 
@@ -131,6 +141,6 @@ Personas modify how information is evaluated at any pipeline stage:
 - `metadata.type` describes how the package is used at runtime; `metadata.category` describes role and placement.
 - Categories describe primary role. Packages may touch adjacent concerns, but their category reflects the dominant behavior.
 - `interface` packages define shared contracts and are discoverable for model use. They load applicable conventions, checks, templates, schemas, or protocol rules into context without emitting their contents, but do not operate on the artifact themselves.
-- `vocabulary` packages are not model-invocable; they are compact context definitions loaded by a human.
+- `communications` packages are not model-invocable; they are compact context controls loaded by a user.
 - Loading package-local interface references/assets is part of exposing contract data, not external retrieval.
-- Refer to [interface_template.md](interface_template.md), [vocab_template.md](vocab_template.md), [skill_template.md](skill_template.md), [protocol_template.md](protocol_template.md), and [persona_template.md](persona_template.md) for frontmatter format.
+- Refer to [interface_template.md](interface_template.md), [communications_template.md](communications_template.md), [skill_template.md](skill_template.md), [protocol_template.md](protocol_template.md), and [persona_template.md](persona_template.md) for frontmatter format.
