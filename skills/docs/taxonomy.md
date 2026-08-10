@@ -36,7 +36,7 @@ Passive noun/domain contract packages that supply conventions, quality checks, t
 - Declares `metadata.type: interface` and `metadata.category: interface`
 - Is selected and loaded when another skill needs artifact shape, schema, protocol, conventions, quality criteria, or storage rules
 - Lives as direct packages under `../src/interface/<name>/SKILL.md`
-- Examples: `interface/spec`, `interface/rfc`, `interface/plan`, `interface/code`, `interface/prose`, `interface/script`, `interface/prototype`, `interface/memory`, `interface/knowledge-base`
+- Examples: `interface/spec`, `interface/rfc`, `interface/plan`, `interface/code`, `interface/prose`, `interface/script`, `interface/prototype`, `interface/knowledge-base`
 - Defines the desired state of a noun-like artifact, protocol, or domain
 - May select an applicable domain from context, such as a script language or storage backend
 - Loads the minimal selected reference/asset contents into context without emitting them in chat; when invoked alone, acknowledges only selected relative paths.
@@ -59,7 +59,7 @@ Skills that bring information into the working context from outside the current 
 - Reads, retrieves, fetches, or elicits source data
 - Returns raw or structured context
 - Does not primarily judge, prioritize, or persist the data
-- Examples: `input/investigate`, `input/lookup`, `input/remember`, `input/grill-me`
+- Examples: `input/investigate`, `input/lookup`, `input/grill-me`
 - **Do NOT use if** the skill primarily produces a judgment, ranking, report, durable artifact, or workflow — it only brings source information in
 
 ### output
@@ -67,7 +67,7 @@ Verb-shaped production skills that turn working context into a communicated, der
 - Produces reports, validation results, rankings, decisions, revisions, records, logs, or artifacts
 - May return its result in chat or write it to a requested destination
 - Consumes interface-defined artifact nouns and storage contracts when structure matters
-- Examples: `output/task`, `output/goal`, `output/check`, `output/rank`, `output/review`, `output/record`, `output/memorize`, `output/annotate`
+- Examples: `output/task`, `output/goal`, `output/check`, `output/rank`, `output/review`, `output/record`, `output/annotate`, `output/handoff`
 - **Do NOT use if** the package only defines an artifact schema or canonical form — use an interface skill for nouns; if it primarily coordinates multiple skills or approvals, use map
 
 ### map
@@ -120,7 +120,6 @@ Interfaces define contract data that invocable skills consume:
 - **goal** — Turn context into a concise, assessable SMART goal statement.
 - **interface/code + modify** — Modify code while preserving code-brief boundaries and verification hints.
 - **interface/knowledge-base + output/record** — Record durable knowledge using the KB root and entry contract.
-- **interface/memory + output/memorize** — Append memory using the memory file and entry contract.
 
 ### Communications context
 

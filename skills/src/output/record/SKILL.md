@@ -11,7 +11,7 @@ metadata:
 # record
 
 Goal: Safely create or update one MKF concept and rebuild generated indexes.
-Non-Goals: Do not opportunistically record, perform broad lookup, synthesize final advice, or write memory.
+Non-Goals: Do not opportunistically record, perform broad lookup, or synthesize final advice.
 Use-When: The user explicitly asks to record durable knowledge or a workflow explicitly triggers MKF recording.
 
 ## 0. Prerequisites

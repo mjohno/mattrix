@@ -14,7 +14,7 @@ Use-When: You need to review any artifact against its criteria using one or more
 
 ## 0. Prerequisites
 
-Discovery of criteria and personas is **not** the responsibility of this skill — it is assumed done by the calling agent/orchestrator (e.g. via `investigate`, `lookup`, or `remember`).
+Discovery of criteria and personas is **not** the responsibility of this skill — it is assumed done by the calling agent/orchestrator (e.g. via `investigate` or `lookup`).
 
 Before executing, confirm:
 - **Criteria source(s)**: At least one set of evaluation criteria defining correctness for the artifact type (a canonical skill's SKILL.md, an assessment contract, a plan, quality rules, or other agreed-upon criterion). If none exist, **ask the user for them**.
