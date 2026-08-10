@@ -13,13 +13,16 @@ Use this for review. Quality is about usefulness, not only structural conformanc
 7. Are dependencies, deliverables, and done criteria included only where they reduce ambiguity?
 8. Does the plan avoid pretending that status is execution evidence?
 9. When a work item includes a task statement, is it a concise, bounded paragraph that improves implementation readiness?
-10. Is the plan concise enough to maintain, review, and update?
+10. Does each scenario describe a meaningful vertical behaviour, from a relevant starting state through an action or event to an observable outcome?
+11. Do scenarios avoid combinatorial input matrices, lower-level invariants, and edge-case catalogues that are not distinct behaviours meaningful to the plan?
+12. Is the plan concise enough to maintain, review, and update?
 
 ## Quality Signals
 
 - Strong source summaries: brief, specific, and reviewable.
 - Strong gap map: each row explains why work is needed.
 - Strong work items: outcome-oriented, traceable to gaps, and independently reviewable.
+- Strong scenarios: concise, observable, implementation-neutral descriptions of meaningful vertical behaviour.
 - Strong done criteria: observable enough to support later checking.
 - Strong scope control: no unrelated tasks, speculative work, or duplicated sections.
 
@@ -29,4 +32,5 @@ Use this for review. Quality is about usefulness, not only structural conformanc
 - Checklist-style items that do not close a named gap.
 - Overlong task statements that make the plan hard to scan.
 - Overloaded items that close unrelated gaps.
+- Scenario input matrices, lower-level invariants, or edge-case catalogues that do not represent meaningful vertical behaviour.
 - `done` statuses with no linked verification evidence.

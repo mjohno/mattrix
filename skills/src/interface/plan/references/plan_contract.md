@@ -31,6 +31,12 @@ Task: <one bounded INVEST paragraph; use the `task` skill to draft it>
 Deliverables:
 - <deliverable>
 
+Scenarios:
+- SCN-<PLAN_ID>-<N>: <short behavioural name>
+  Given <relevant starting state>
+  When <meaningful action or event>
+  Then <observable outcome>
+
 Done when:
 - <condition>
 ```
@@ -44,7 +50,13 @@ Done when:
 - Preserve stable gap and item IDs across revisions unless explicitly renamed.
 - Items may close multiple gaps when the coupling is real.
 - Dependencies, deliverables, and done criteria are included when they reduce ambiguity.
-- Every work item includes one bounded `Task` paragraph that states the intended outcome without duplicating `Deliverables` or `Done when`.
+- Every work item includes one bounded `Task` paragraph that states the intended outcome without duplicating `Deliverables`, `Scenarios`, or `Done when`.
+- Every work item includes `Scenarios`. Use one or more scenarios when the item establishes, preserves, or removes distinct observable behaviour. Otherwise, state `Scenarios: none`.
+- Scenario IDs are stable and unique within a plan. Change an ID only when its behaviour is removed or materially split.
+- Write scenarios with semantic Gherkin: `Given`, `When`, `Then`, and, when necessary, `And` or `But`.
+- Each scenario describes one meaningful vertical behaviour from a relevant starting state through an action or event to an observable outcome.
+- Do not use scenarios for combinatorial input matrices, lower-level invariants, or edge-case catalogues unless they are distinct behaviours meaningful to the plan.
+- Do not prescribe implementation, tools, test frameworks, or verification methods in scenarios.
 - Use the `task` skill (or `/skill:task`, if available) to draft or refine each `Task` against its INVEST quality criteria, then retain the item's plan metadata.
 
 ## Status Values
@@ -83,10 +95,17 @@ Closes: GAP-1
 Source refs: Auth review
 Status: todo
 Depends on: none
-Task: Normalize login failure messages so users receive clear, consistent recovery guidance and the product avoids conflicting error copy. Preserve existing error-code behavior. Completion is observable when each login failure mode maps to one approved user-facing message.
+Task: Normalize login failure messages so users receive clear, consistent recovery guidance and the product avoids conflicting error copy. Preserve existing error-code behavior.
 
 Deliverables:
 - Updated login error message table.
+
+Scenarios:
+- SCN-PLAN-login-errors-1: Invalid credentials return recovery guidance
+  Given a user attempts to sign in to an existing account
+  When authentication fails because the credentials are invalid
+  Then the user receives the approved invalid-credentials message
+  And the existing authentication error code is preserved
 
 Done when:
 - Each login failure mode maps to one approved user-facing message.
