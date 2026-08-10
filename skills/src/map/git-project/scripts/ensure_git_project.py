@@ -19,6 +19,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
@@ -28,6 +29,14 @@ log = logging.getLogger(__name__)
 
 class BlockedError(Exception):
     """A condition that this conservative command must not repair."""
+
+
+class GitLaunchError(BlockedError):
+    """Git could not start in the current environment."""
+
+    def __init__(self, error: OSError) -> None:
+        self.error = error
+        super().__init__(f"Could not start Git: {error}")
 
 
 @dataclass(frozen=True)
@@ -71,6 +80,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--from", dest="source", default="master", help="source branch")
     parser.add_argument("--checkout", help="direct child clone directory")
     parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="report planned changes without changing the workspace",
+    )
+    parser.add_argument(
         "--log-level",
         default="WARNING",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
@@ -87,7 +101,10 @@ def git(
     if directory is not None:
         command.extend(["-C", str(directory)])
     command.extend(arguments)
-    return subprocess.run(command, text=True, capture_output=True, check=False)
+    try:
+        return subprocess.run(command, text=True, capture_output=True, check=False)
+    except OSError as error:
+        raise GitLaunchError(error) from error
 
 
 def git_output(directory: Path | None, *arguments: str) -> str | None:
@@ -308,9 +325,42 @@ def synchronize(request: Request, unborn: bool) -> str:
     return "synchronized"
 
 
-def execute(request: Request) -> dict[str, object]:
+def planned_actions(request: Request, unborn: bool) -> list[str]:
+    """Describe mutations that a non-dry operation would make."""
+    actions: list[str] = []
+    for directory in (request.root / "remotes", request.root / "projects"):
+        if not directory.exists():
+            actions.append(f"create directory: {directory}")
+    if not request.remote.exists():
+        actions.append(f"create bare remote: {request.remote}")
+    if not request.project_directory.exists():
+        actions.append(f"create project directory: {request.project_directory}")
+    if unborn:
+        if not request.checkout.exists():
+            actions.append(f"clone unborn master branch: {request.checkout}")
+        actions.append("report unborn branch")
+        return actions
+    if not has_ref(request.remote, request.branch):
+        actions.append(
+            f"create branch {request.branch} from {request.source}: {request.remote}"
+        )
+    if not request.checkout.exists():
+        actions.append(f"clone branch {request.branch}: {request.checkout}")
+    else:
+        actions.append(f"fetch and fast-forward: {request.checkout}")
+    return actions
+
+
+def execute(request: Request, dry_run: bool = False) -> dict[str, object]:
     """Perform the validated operation and return machine-readable data."""
     unborn = inspect_existing(request)
+    if dry_run:
+        return {
+            "status": "planned",
+            "dry_run": True,
+            "actions": planned_actions(request, unborn),
+            "identity": identity(),
+        }
     ensure_directories(request)
     remote_created = create_remote_if_missing(request)
     branch_created = False
@@ -339,7 +389,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_tests()
     result: dict[str, object]
     try:
-        result = execute(request_from(args))
+        result = execute(request_from(args), args.dry_run)
+    except GitLaunchError as error:
+        log.error("%s", error)
+        result = {
+            "status": "blocked",
+            "reason": str(error),
+            "exception": {
+                "type": type(error.error).__name__,
+                "message": str(error.error),
+            },
+            "identity": {"username": "unavailable", "email": "unavailable"},
+        }
+        print(json.dumps(result, sort_keys=True))
+        return 1
     except BlockedError as error:
         log.error("%s", error)
         result = {"status": "blocked", "reason": str(error), "identity": identity()}
@@ -386,6 +449,39 @@ def seed_master(root: Path, project: str) -> Path:
 
 
 class GitProjectTests(unittest.TestCase):
+    def test_git_launch_failure_returns_exception(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            with mock.patch(
+                f"{__name__}.subprocess.run",
+                side_effect=FileNotFoundError("git"),
+            ):
+                code, result = run_command(Path(temporary), "--project", "team/app")
+            self.assertEqual(code, 1)
+            self.assertEqual(result["status"], "blocked")
+            self.assertEqual(result["exception"]["type"], "FileNotFoundError")
+            self.assertEqual(result["identity"]["username"], "unavailable")
+
+    def test_project_validation_rejects_unsafe_paths(self) -> None:
+        for project in ("", "/app", "../app", "team/../app", "team\\app"):
+            with self.subTest(project=project):
+                with self.assertRaises(BlockedError):
+                    valid_project(project)
+
+    def test_checkout_name_normalizes_branch_slashes(self) -> None:
+        self.assertEqual(checkout_name("feature/login", None), "feature-login")
+        with self.assertRaises(BlockedError):
+            checkout_name("master", "team\\app")
+
+    def test_dry_run_does_not_create_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            code, result = run_command(root, "--project", "team/app", "--dry-run")
+            self.assertEqual(code, 0)
+            self.assertEqual(result["status"], "planned")
+            self.assertTrue(result["dry_run"])
+            self.assertFalse((root / "remotes").exists())
+            self.assertFalse((root / "projects").exists())
+
     def test_empty_remote_creates_unborn_clone(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -22,19 +22,21 @@ Use-When: Use when one project needs its local bare remote, one branch, and one 
 - `--branch`: Target branch; default `master`.
 - `--from`: Source for a missing target branch; default `master`.
 - `--checkout`: Destination clone name; default is `branch` with `/` replaced by `-`.
+- `--dry-run`: Report planned changes without changing the workspace.
 
 ## 2. Processes
 1. Validate all paths and existing Git state before changing it.
 2. Stop and report any invalid, conflicting, dirty, or non-fast-forward state; do not repair it.
-3. Create only missing workspace directories, bare remotes, project directories, branches with an existing source, and clones.
-4. Configure new clones with a relative `local` remote URL.
-5. Fetch, check out, and fast-forward only the requested branch when it exists remotely.
-6. Report an unborn branch for a new empty remote without creating a commit.
-7. Return Git username and email, or `unset`, for the calling agent to display.
+3. With `--dry-run`, report planned changes without changing the workspace.
+4. Create only missing workspace directories, bare remotes, project directories, branches with an existing source, and clones.
+5. Configure new clones with a relative `local` remote URL.
+6. Fetch, check out, and fast-forward only the requested branch when it exists remotely.
+7. Report an unborn branch for a new empty remote without creating a commit.
+8. Return Git username and email, or `unset`, for the calling agent to display.
 
 ## 3. Outputs
 - One canonical bare remote and one separate branch clone when they can be created safely.
-- Machine-readable result on stdout and diagnostics on stderr.
+- Machine-readable result on stdout and diagnostics on stderr, including planned actions for `--dry-run`.
 - Stable exit codes: `0` success and `1` blocked or invalid state.
 
 ## 4. Next Steps
