@@ -10,7 +10,7 @@ metadata:
 
 # git-commit
 
-Goal: Generate and execute a git commit message that adheres strictly to the [Conventional Commits](git-commit/references/CONVENTIONAL_COMMITS.md) specification.
+Goal: Generate and execute a git commit message that adheres strictly to the [Conventional Commits](references/CONVENTIONAL_COMMITS.md) specification.
 Non-Goals: Committing unstaged changes (requires manual staging first), creating merge commits, amends, or rebases, bypassing commit message standards.
 Use-When: You need to commit staged changes with automated analysis.
 
@@ -63,4 +63,4 @@ Refs: ABC-123
 **Decisions**: Detected a breaking change in the diff; appended `!` to the header and added a `BREAKING CHANGE` footer.
 **Outcome**: `refactor(auth)!: remove deprecated login method` with body and `BREAKING CHANGE` footer.
 
-**Constraints:** Follow the [Conventional Commits](git-commit/references/CONVENTIONAL_COMMITS.md) standard strictly. Header subject <= 50 characters. Breaking changes marked in both header (`!`) and footer. Do not commit if no changes are staged.
+**Constraints:** Follow the [Conventional Commits](references/CONVENTIONAL_COMMITS.md) standard strictly. Header subject <= 50 characters. Breaking changes marked in both header (`!`) and footer. Do not commit if no changes are staged.
