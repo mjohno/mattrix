@@ -58,6 +58,21 @@ def render_gate(gate: dict[str, Any]) -> str:
                 ]
             )
             _list(lines, "Evidence", validation.get("evidence"))
+        clarifications = current.get("clarifications")
+        if isinstance(clarifications, list) and clarifications:
+            lines.extend(["## Clarifications", ""])
+            for clarification in clarifications:
+                if not isinstance(clarification, dict):
+                    continue
+                lines.extend(
+                    [
+                        f"**{clarification.get('target', 'role')}:** {clarification.get('request', '')}",
+                        "",
+                    ]
+                )
+                response = clarification.get("response")
+                if isinstance(response, dict):
+                    _list(lines, "Evidence", response.get("evidence"))
         retro = current.get("retro")
         if isinstance(retro, dict) and any(
             retro.get(key) for key in ("wins", "issues", "actions")

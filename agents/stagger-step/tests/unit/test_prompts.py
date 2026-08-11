@@ -22,6 +22,7 @@ def test_finalization_retry_prompt_targets_prior_session_result():
     (
         ("coordinator", "# Coordinator", "stagger_step_finalize_coordinator"),
         ("worker", "# Team Member", "stagger_step_finalize_worker"),
+        ("validator", "# Validator", "stagger_step_finalize_validator"),
         ("assessor", "# Delivery Manager", "stagger_step_finalize_assessor"),
     ),
 )
@@ -62,11 +63,13 @@ def test_coordinator_embeds_bounded_task_guidance():
     assert "independent, negotiable, small, and testable" in prompt
 
 
-def test_worker_and_assessor_preserve_failure_learning():
+def test_role_prompts_preserve_evidence_boundaries():
     worker = build_prompt("worker", {"goal": "Ship the change"})
+    validator = build_prompt("validator", {"goal": "Ship the change"})
     assessor = build_prompt("assessor", {"goal": "Ship the change"})
 
-    assert "evidence of both success and failure" in worker
+    assert "Do not validate the task" in worker
+    assert "Report evidence of both success and failure" in validator
     assert "credible failure evidence as delivery learning" in assessor
 
 

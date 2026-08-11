@@ -35,32 +35,37 @@ from stagger_step.state import StateError
         ),
         (
             "worker",
+            {"do": {"summary": "Ran checks", "evidence": ["pytest"]}},
+            {"do": {"summary": "Ran checks", "evidence": ["pytest"]}},
+        ),
+        (
+            "validator",
             {
-                "do": {"summary": "Ran checks", "evidence": ["pytest"]},
                 "validate": {
                     "result": "success",
                     "summary": "All checks passed",
                     "evidence": ["all passed"],
                 },
+                "clarification_request": None,
             },
             {
-                "do": {"summary": "Ran checks", "evidence": ["pytest"]},
                 "validate": {
                     "result": "success",
                     "summary": "All checks passed",
                     "evidence": ["all passed"],
                 },
+                "clarification_request": None,
             },
         ),
         (
             "assessor",
             {
                 "retro": {"wins": ["checks run"], "issues": [], "actions": []},
-                "clarification_needed": False,
+                "clarification_requests": [],
             },
             {
                 "retro": {"wins": ["checks run"], "issues": [], "actions": []},
-                "clarification_needed": False,
+                "clarification_requests": [],
             },
         ),
     ],
@@ -96,6 +101,41 @@ def test_allows_proposal_slug_with_terminate_prefix():
 def test_rejects_wrong_role_packet():
     with pytest.raises(StateError, match="worker.do must be a mapping"):
         normalize_packet("worker", {"current_packet": {}})
+
+
+@pytest.mark.parametrize(
+    ("role", "candidate", "message"),
+    [
+        (
+            "worker",
+            {
+                "do": {"summary": "implemented", "evidence": []},
+                "validate": {
+                    "result": "success",
+                    "summary": "forbidden",
+                    "evidence": [],
+                },
+            },
+            "worker packet must contain only do",
+        ),
+        (
+            "validator",
+            {
+                "do": {"summary": "forbidden", "evidence": []},
+                "validate": {
+                    "result": "success",
+                    "summary": "checked",
+                    "evidence": [],
+                },
+                "clarification_request": None,
+            },
+            "validator packet must contain validate and clarification_request",
+        ),
+    ],
+)
+def test_rejects_cross_role_packet_fields(role, candidate, message):
+    with pytest.raises(StateError, match=message):
+        normalize_packet(role, candidate)
 
 
 def test_rejects_worker_owned_fields_in_coordinator_proposals():

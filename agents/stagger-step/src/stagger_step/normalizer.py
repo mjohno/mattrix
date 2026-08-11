@@ -7,8 +7,9 @@ from typing import Any
 
 from .state import StateError, validate_task
 
-ROLES = ("coordinator", "worker", "assessor")
+ROLES = ("coordinator", "worker", "validator", "assessor")
 RESULTS = {"success", "partial", "failure", "blocked"}
+CLARIFICATION_TARGETS = {"worker", "validator"}
 
 
 def _mapping(value: Any, label: str) -> dict[str, Any]:
@@ -23,6 +24,50 @@ def _strings(value: Any, label: str) -> list[str]:
     ):
         raise StateError(f"{label} must be a list of non-empty strings")
     return value
+
+
+def _validate_packet(value: Any, label: str) -> dict[str, Any]:
+    validation = _mapping(value, label)
+    if validation.get("result") not in RESULTS:
+        raise StateError(f"{label}.result is invalid")
+    if (
+        not isinstance(validation.get("summary"), str)
+        or not validation["summary"].strip()
+    ):
+        raise StateError(f"{label}.summary is required")
+    _strings(validation.get("evidence"), f"{label}.evidence")
+    return validation
+
+
+def _clarification_requests(value: Any) -> list[dict[str, str]]:
+    if not isinstance(value, list) or len(value) > 2:
+        raise StateError(
+            "assessor.clarification_requests must contain at most two items"
+        )
+    requests: list[dict[str, str]] = []
+    targets: set[str] = set()
+    for index, item in enumerate(value):
+        request = _mapping(item, f"assessor.clarification_requests[{index}]")
+        if set(request) != {"target", "request"}:
+            raise StateError(
+                f"assessor.clarification_requests[{index}] must contain target and request"
+            )
+        target, text = request.get("target"), request.get("request")
+        if target not in CLARIFICATION_TARGETS:
+            raise StateError(
+                f"assessor.clarification_requests[{index}].target is invalid"
+            )
+        if not isinstance(text, str) or not text.strip():
+            raise StateError(
+                f"assessor.clarification_requests[{index}].request is required"
+            )
+        if target in targets:
+            raise StateError(
+                "assessor.clarification_requests contains duplicate targets"
+            )
+        targets.add(target)
+        requests.append({"target": target, "request": text})
+    return requests
 
 
 def normalize_packet(role: str, candidate: Any) -> dict[str, Any]:
@@ -63,25 +108,37 @@ def normalize_packet(role: str, candidate: Any) -> dict[str, Any]:
         }
     if role == "worker":
         do = _mapping(packet.get("do"), "worker.do")
-        validation = _mapping(packet.get("validate"), "worker.validate")
         if not isinstance(do.get("summary"), str) or not do["summary"].strip():
             raise StateError("worker.do.summary is required")
         _strings(do.get("evidence"), "worker.do.evidence")
-        if validation.get("result") not in RESULTS:
-            raise StateError("worker.validate.result is invalid")
-        if (
-            not isinstance(validation.get("summary"), str)
-            or not validation["summary"].strip()
+        if set(packet) != {"do"}:
+            raise StateError("worker packet must contain only do")
+        return {"do": deepcopy(do)}
+    if role == "validator":
+        validation = _validate_packet(
+            packet.get("validate"), "validator.validate"
+        )
+        clarification = packet.get("clarification_request")
+        if clarification is not None and (
+            not isinstance(clarification, str) or not clarification.strip()
         ):
-            raise StateError("worker.validate.summary is required")
-        _strings(validation.get("evidence"), "worker.validate.evidence")
-        return {"do": deepcopy(do), "validate": deepcopy(validation)}
+            raise StateError(
+                "validator.clarification_request must be a non-empty string or null"
+            )
+        if set(packet) != {"validate", "clarification_request"}:
+            raise StateError(
+                "validator packet must contain validate and clarification_request"
+            )
+        return {
+            "validate": deepcopy(validation),
+            "clarification_request": clarification,
+        }
     retro = _mapping(packet.get("retro"), "assessor.retro")
     for key in ("wins", "issues", "actions"):
         _strings(retro.get(key), f"assessor.retro.{key}")
-    if not isinstance(packet.get("clarification_needed"), bool):
-        raise StateError("assessor.clarification_needed must be boolean")
     return {
         "retro": deepcopy(retro),
-        "clarification_needed": packet["clarification_needed"],
+        "clarification_requests": _clarification_requests(
+            packet.get("clarification_requests")
+        ),
     }

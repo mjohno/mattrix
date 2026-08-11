@@ -29,21 +29,16 @@ const worker = tools.worker;
 worker.execute("test", {
   work_summary: " ",
   work_evidence: [],
-  result: "success",
-  validation_summary: "checked",
-  validation_evidence: [],
 }, new AbortController().signal).then((invalid) => {
   console.log(JSON.stringify({
     schema: worker.parameters,
     checks: {
       missing: Value.Check(worker.parameters, {}),
       wrong_type: Value.Check(worker.parameters, {
-        work_summary: "worked", work_evidence: "not-a-list", result: "success",
-        validation_summary: "checked", validation_evidence: [],
+        work_summary: "worked", work_evidence: "not-a-list",
       }),
       invalid_enum: Value.Check(worker.parameters, {
-        work_summary: "worked", work_evidence: [], result: "unknown",
-        validation_summary: "checked", validation_evidence: [],
+        work_summary: "worked", work_evidence: [], extra: "unknown",
       }),
     },
     invalid,
@@ -63,22 +58,8 @@ worker.execute("test", {
     output = json.loads(result.stdout)
 
     schema = output["schema"]
-    assert schema["required"] == [
-        "work_summary",
-        "work_evidence",
-        "result",
-        "validation_summary",
-        "validation_evidence",
-    ]
+    assert schema["required"] == ["work_summary", "work_evidence"]
     assert schema["additionalProperties"] is False
-    assert {
-        value["const"] for value in schema["properties"]["result"]["anyOf"]
-    } == {
-        "success",
-        "partial",
-        "failure",
-        "blocked",
-    }
     assert output["checks"] == {
         "missing": False,
         "wrong_type": False,

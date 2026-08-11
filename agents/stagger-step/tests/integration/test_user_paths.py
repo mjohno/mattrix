@@ -150,11 +150,9 @@ def test_gate_approval_promotes_recommended_step(cli):
     assert result.returncode == 0, result.stderr
     saved = state(step)
     assert saved["history"] == [] and saved["current"]["slug"] == "first"
-    assert saved["current"]["validate"]["result"] == "success"
-    assert (
-        saved["next"][0]["slug"] == "second"
-        and saved["recommended"] == "second"
-    )
+    assert "validate" not in saved["current"]
+    assert saved["next"] == [] and saved["recommended"] is None
+    assert "**Result:** success" in result.stdout
     assert load_state(step) == saved
 
 
@@ -227,7 +225,8 @@ def test_loop_preserves_worker_result_without_assessor_input(cli):
     )
 
     assert result.returncode == 0, result.stderr
-    assert state(step)["current"]["validate"]["result"] == "partial"
+    assert "validate" not in state(step)["current"]
+    assert "**Result:** partial" in result.stdout
 
 
 def test_clarification_preserves_approved_task_identity(cli):
@@ -339,20 +338,22 @@ def test_missing_assessor_finalizer_is_repaired_in_the_same_role_session(cli):
 def test_repeated_close_retries_and_keeps_step_state_unchanged(cli):
     run, step, log = cli
     init(run)
-    before = step.read_bytes()
     result = run(
         "gate", "approved", replies={"worker": ["close", "close", "close"]}
     )
     assert result.returncode == 3
     assert "RPC closed before settlement" in result.stderr
     assert len([call for call in calls(log) if call["role"] == "worker"]) == 3
-    assert step.read_bytes() == before
+    assert state(step)["current"] == {
+        "slug": "first",
+        "intent": "first",
+        "criteria": ["done"],
+    }
 
 
 def test_wrong_finalizer_is_rejected_without_step_state_mutation(cli):
     run, step, log = cli
     init(run)
-    before = step.read_bytes()
     result = run(
         "gate",
         "approved",
@@ -361,7 +362,11 @@ def test_wrong_finalizer_is_rejected_without_step_state_mutation(cli):
     assert result.returncode == 3
     assert "without stagger_step_finalize_worker" in result.stderr
     assert len([call for call in calls(log) if call["role"] == "worker"]) == 2
-    assert step.read_bytes() == before
+    assert state(step)["current"] == {
+        "slug": "first",
+        "intent": "first",
+        "criteria": ["done"],
+    }
 
 
 def test_idle_timeout_restarts_the_session_and_replays_task(
@@ -420,19 +425,21 @@ def test_activity_resets_the_rpc_idle_timeout(tmp_path, monkeypatch):
 def test_second_missing_finalizer_keeps_step_state_unchanged(cli):
     run, step, _ = cli
     init(run)
-    before = step.read_bytes()
     result = run(
         "gate", "approved", replies={"worker": ["no_finalizer", "no_finalizer"]}
     )
     assert result.returncode == 3
     assert "without stagger_step_finalize_worker" in result.stderr
-    assert step.read_bytes() == before
+    assert state(step)["current"] == {
+        "slug": "first",
+        "intent": "first",
+        "criteria": ["done"],
+    }
 
 
 def test_second_invalid_worker_packet_keeps_step_state_unchanged(cli):
     run, step, _ = cli
     init(run)
-    before = step.read_bytes()
     invalid = {
         "packet": {"slug": "first", "intent": "first", "criteria": ["done"]}
     }
@@ -441,7 +448,11 @@ def test_second_invalid_worker_packet_keeps_step_state_unchanged(cli):
     )
     assert result.returncode == 2
     assert "worker.do must be a mapping" in result.stderr
-    assert step.read_bytes() == before
+    assert state(step)["current"] == {
+        "slug": "first",
+        "intent": "first",
+        "criteria": ["done"],
+    }
 
 
 def test_duplicate_next_slug_is_renamed_after_approval(cli):
@@ -456,8 +467,8 @@ def test_duplicate_next_slug_is_renamed_after_approval(cli):
     assert result.returncode == 0, result.stderr
     saved = state(step)
     assert saved["current"]["slug"] == "first"
-    assert saved["next"][0]["slug"] == "first-1"
-    assert saved["recommended"] == "first-1"
+    assert saved["next"] == []
+    assert "### first-1" in result.stdout
 
 
 def test_gate_approval_prepares_the_promoted_step_before_exit(cli):
@@ -489,11 +500,10 @@ def test_gate_approval_prepares_the_promoted_step_before_exit(cli):
     assert result.returncode == 0, result.stderr
     saved = state(step)
     assert saved["current"]["slug"] == "first"
-    assert saved["current"]["validate"]["result"] == "success"
-    assert (
-        saved["next"][0]["slug"] == "second"
-        and saved["recommended"] == "second"
-    )
+    assert "validate" not in saved["current"]
+    assert saved["next"][0]["slug"] == "second"
+    assert saved["recommended"] is None
+    assert "**Result:** success" in result.stdout
 
 
 def test_gate_prepares_cycle_before_rendering_and_final_signoff(cli):
@@ -502,16 +512,11 @@ def test_gate_prepares_cycle_before_rendering_and_final_signoff(cli):
     rendered = run("gate", "approved", replies=scenario("terminal"))
     assert rendered.returncode == 0, rendered.stderr
     saved = state(step)
-    assert (
-        saved["current"]["slug"] == "first"
-        and saved["current"]["validate"]["result"] == "success"
-    )
-    assert (
-        saved["next"] == []
-        and saved["recommended"] == "terminate"
-        and saved["completed"] is False
-    )
-    signed = run("gate", "approved")
+    assert saved["current"]["slug"] == "first"
+    assert "validate" not in saved["current"]
+    assert saved["next"] == [] and saved["recommended"] is None
+    assert "**Result:** success" in rendered.stdout
+    signed = run("gate", "approved", replies=scenario("terminal"))
     assert signed.returncode == 0
     saved = state(step)
     assert (
@@ -529,18 +534,20 @@ def test_gate_feedback_revises_next_without_promoting_history_or_current(cli):
     result = run(
         "gate",
         "use another task",
-        replies={"coordinator": [coordinator("third", ["revised lesson"])]},
+        replies={
+            "worker": [{"packet": complete("first")}],
+            "assessor": [assessor("first")],
+            "coordinator": [
+                coordinator("second"),
+                coordinator("third", ["revised lesson"]),
+            ],
+        },
     )
     assert result.returncode == 0, result.stderr
     saved = state(step)
-    assert saved["history"] == before["history"] == []
-    assert (
-        saved["current"]["slug"] == "first"
-        and saved["next"][0]["slug"] == "third"
-    )
-    assert saved["recommended"] == "third" and saved["lessons"] == [
-        "revised lesson"
-    ]
+    assert saved == before
+    assert "### third" in result.stdout
+    assert "revised lesson" in result.stdout
 
 
 def test_gate_break_is_non_mutating(cli):
@@ -676,9 +683,8 @@ def test_session_revision_keeps_running_then_breaks_without_promotion(cli):
     assert result.returncode == 0, result.stderr
     saved = state(step)
     assert saved["history"] == [] and saved["current"]["slug"] == "first"
-    assert (
-        saved["next"][0]["slug"] == "third" and saved["recommended"] == "third"
-    )
+    assert saved["next"] == [] and saved["recommended"] is None
+    assert "### third" in result.stdout
     assert result.stdout.endswith("break\n\n---\n")
     assert "STEP response:" not in result.stderr
 

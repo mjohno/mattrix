@@ -62,7 +62,7 @@ def test_ctrl_c_during_afk_returns_to_a_manual_unapproved_gate(cli):
     saved = state(step)
     assert saved["history"] == []
     assert saved["current"]["slug"] == "first"
-    assert saved["current"]["validate"]["result"] == "success"
+    assert "validate" not in saved["current"]
     assert "INFO " in result.stderr
     assert (
         "SIGINT received; interrupt requested at the next STEP boundary"
@@ -98,9 +98,12 @@ def test_afk_stops_at_the_first_blocked_gate(cli):
     saved = state(step)
     assert saved["history"] == []
     assert saved["current"]["slug"] == "first"
-    assert saved["current"]["validate"]["result"] == "blocked"
+    assert "validate" not in saved["current"]
     assert "AFK automatically approved the current gate" not in result.stderr
-    assert "AFK disabled by blocked result; returning to manual mode" in result.stderr
+    assert (
+        "AFK disabled by blocked result; returning to manual mode"
+        in result.stderr
+    )
 
 
 def test_afk_allows_one_failure_then_returns_to_manual_break_gate(cli):
@@ -139,8 +142,11 @@ def test_afk_allows_one_failure_then_returns_to_manual_break_gate(cli):
     assert saved["completed"] is False
     assert [entry["slug"] for entry in saved["history"]] == ["first"]
     assert saved["current"]["slug"] == "second"
-    assert saved["current"]["validate"]["result"] == "blocked"
+    assert "validate" not in saved["current"]
     assert (
         result.stderr.count("AFK automatically approved the current gate") == 1
     )
-    assert "AFK disabled by blocked result; returning to manual mode" in result.stderr
+    assert (
+        "AFK disabled by blocked result; returning to manual mode"
+        in result.stderr
+    )

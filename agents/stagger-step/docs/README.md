@@ -11,7 +11,8 @@ All generated Stagger Step build artifacts belong in the repository-root `build/
 ```bash
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli init --goal "Ship the change" --change artifacts --commit
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli validate
-printf '%s\n' 'packet: {slug: validate-cli, intent: Validate CLI, criteria: [checks], do: {summary: Ran checks, evidence: []}, validate: {result: success, summary: Checks passed, evidence: []}}' | stagger-step normalize --role worker
+printf '%s\n' 'packet: {do: {summary: Ran checks, evidence: []}}' | stagger-step normalize --role worker
+printf '%s\n' 'packet: {validate: {result: success, summary: Checks passed, evidence: []}, clarification_request: null}' | stagger-step normalize --role validator
 # One-shot approval promotes work, runs its cycle, and prints the next gate.
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli gate approved
 # `session` keeps accepting responses in the same process until break or completion.
@@ -55,9 +56,9 @@ In `session`, enter `afk` at a manual gate to approve that gate and automaticall
 
 Owner gates render as Markdown on stdout. They show the goal, applicable lessons and current-task results, ranked next tasks, and the recommendation, then prompt with `**Response:**`. Submitted responses are echoed and followed by `---` before the next review. The recommended next task is marked `**RECOMMENDED**`. Empty sections are omitted. YAML remains the persisted STEP state format.
 
-Persisted state contains `version`, `goal`, optional `change_path`, `commit_mode`, `lessons`, completed `history`, an approved `active_packet`, and `completed`. Pending coordinator/assessor outputs are intentionally never persisted. A gate contains `goal`, `lessons`, `history`, `current`, ranked `proposals`, `recommended`, and `completed`.
+Persisted state contains `version`, `goal`, optional `change_path`, `commit_mode`, `lessons`, completed `history`, the approved `current` task, and `completed`. Worker, Validator, Assessor, and Coordinator outputs are intentionally never persisted before owner approval. A gate contains `goal`, `lessons`, `history`, `current`, ranked `proposals`, `recommended`, and `completed`.
 
-The coordinator selects durable gate lessons from existing lessons, completed history, and assessor actions. Approval validates the displayed gate, then atomically commits its completed current packet, coordinator-selected lessons, and recommended next packet (or terminal completion). The next `session` runs an approved active task through worker → assessor → coordinator before returning to the human.
+The coordinator selects durable gate lessons from existing lessons, completed history, and assessor actions. Approval validates the displayed gate, then atomically commits its completed current packet, coordinator-selected lessons, and recommended next packet (or terminal completion). The next `session` runs an approved active task through Worker → Validator → Assessor → Coordinator before returning to the human.
 
 ## Pi RPC adapter discovery
 
@@ -69,7 +70,7 @@ Stagger-step is execution-environment agnostic: its CLI and harness invoke the c
 
 ## pi-stagger-step extension
 
-The extension source is the packaged asset `src/stagger_step/pi_extension/index.ts`. The harness loads it explicitly for role processes and selects one role through `--step-role`; without that flag, the extension exposes no STEP-specific tool. Its LLM-visible tools are `stagger_step_finalize_coordinator`, `stagger_step_finalize_worker`, and `stagger_step_finalize_assessor`; one role process receives only its matching tool. The wheel includes this asset, so a non-editable installation can invoke Pi-backed roles.
+The extension source is the packaged asset `src/stagger_step/pi_extension/index.ts`. The harness loads it explicitly for role processes and selects one role through `--step-role`; without that flag, the extension exposes no STEP-specific tool. Its LLM-visible tools are `stagger_step_finalize_coordinator`, `stagger_step_finalize_worker`, `stagger_step_finalize_validator`, and `stagger_step_finalize_assessor`; one role process receives only its matching tool. The wheel includes this asset, so a non-editable installation can invoke Pi-backed roles.
 
 For interactive extension development, symlink its directory to `~/.pi/agent/extensions/pi-stagger-step`. The symlinked extension remains inert unless `--step-role` is supplied.
 

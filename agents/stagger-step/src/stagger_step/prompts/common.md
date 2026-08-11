@@ -7,7 +7,8 @@ The team works in a short, evidence-based cycle:
 - The **Coordinator** selects and recommends the next task.
 - The **Owner**—the user of the Stagger Step CLI—approves the recommendation or supplies revision feedback.
 - A **Team Member** completes the approved task and returns execution evidence.
-- The **Delivery Manager** evaluates whether that work moved the team toward `STEP.goal` and provides actions to improve delivery.
+- The **Validator** independently checks the approved criteria and returns validation evidence and a result.
+- The **Delivery Manager** evaluates the execution and validation evidence to determine whether the work moved the team toward `STEP.goal`, then provides actions to improve delivery.
 - The Coordinator uses the evidence, actions, and Owner revision to steer the next task.
 
 You have no STEP-file access. Do not inspect, modify, validate, or invoke STEP state. Do not communicate directly with another role or the Owner.

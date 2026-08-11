@@ -12,16 +12,19 @@ from pathlib import Path
 
 
 def _finalizer_response(role: str, reply: object) -> object:
-    """Adapt worker and assessor fixtures to finalizer output."""
+    """Adapt legacy fixtures to the current role finalizer output."""
     if not isinstance(reply, dict):
         return reply
     if role == "worker" and isinstance(reply.get("packet"), dict):
-        packet = reply["packet"]
-        return {"do": packet.get("do"), "validate": packet.get("validate")}
+        return {"do": reply["packet"].get("do")}
     if role == "assessor" and "current_packet" in reply:
         return {
             "retro": reply.get("retro"),
-            "clarification_needed": reply.get("clarification_needed"),
+            "clarification_requests": (
+                [{"target": "worker", "request": "Provide missing evidence."}]
+                if reply.get("clarification_needed")
+                else []
+            ),
         }
     return reply
 
@@ -59,7 +62,29 @@ def main() -> int:
             + "\n"
         )
         stream.flush()
-    reply = scenario[role][index]
+    replies = scenario.get(role)
+    if replies is None and role == "validator":
+        # Legacy scenarios predate the independent Validator phase. Preserve
+        # their recorded validation outcome while routing it through Validator.
+        worker_reply = scenario.get("worker", [])[index]
+        worker_packet = (
+            worker_reply.get("packet", {})
+            if isinstance(worker_reply, dict)
+            else {}
+        )
+        reply = {
+            "validate": worker_packet.get(
+                "validate",
+                {
+                    "result": "success",
+                    "summary": "Legacy fixture validation",
+                    "evidence": ["legacy fixture"],
+                },
+            ),
+            "clarification_request": None,
+        }
+    else:
+        reply = replies[index]
     thinking = None
     writes = None
     if isinstance(reply, dict):

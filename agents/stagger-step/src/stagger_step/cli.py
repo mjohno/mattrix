@@ -214,13 +214,11 @@ def run_session(
     """Continuously apply the one-shot gate's prepare, revise, and approve flow."""
     afk = False
     outcomes: list[str] = []
+    state = load_state(path)
     while True:
-        state = load_state(path)
         try:
             prepared = prepare(state, loop, commit)
             _raise_if_interrupt_requested()
-            if prepared != state:
-                write_atomic(path, prepared)
             _raise_if_interrupt_requested()
             emit_gate(loop.gate(prepared))
             if afk and (stop_reason := _afk_stop(prepared, outcomes)):
@@ -258,7 +256,8 @@ def run_session(
                 else loop.revise(prepared, user_input)
             )
             _raise_if_interrupt_requested()
-            write_atomic(path, changed)
+            if user_input == "approved":
+                write_atomic(path, changed)
             _raise_if_interrupt_requested()
             if changed["completed"]:
                 return 0
@@ -358,22 +357,24 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "gate":
             prepared = prepare(state, loop, commit)
-            if prepared != state:
-                write_atomic(path, prepared)
             if args.response is None:
                 emit_gate(loop.gate(prepared))
                 return 0
             if args.response == "approved":
                 changed = approve(prepared, loop, commit)
-                if not changed["completed"]:
-                    changed = prepare(changed, loop, commit)
+                write_atomic(path, changed)
+                displayed = (
+                    prepare(changed, loop, commit)
+                    if not changed["completed"]
+                    else changed
+                )
             elif not is_revision_feedback(args.response):
                 emit_gate(loop.gate(prepared))
                 return 0
             else:
                 changed = loop.revise(prepared, args.response)
-            write_atomic(path, changed)
-            emit_gate(loop.gate(changed))
+                displayed = changed
+            emit_gate(loop.gate(displayed))
             return 0
         return run_session(path, state, loop, commit)
     except (StateError, TransitionError) as exc:

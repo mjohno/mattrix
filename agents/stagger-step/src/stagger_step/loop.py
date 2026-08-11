@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from copy import deepcopy
-from typing import Any
+from typing import Any, cast
 
 from .harness import Harness
 from .prompts import build_prompt
@@ -78,7 +78,7 @@ class StepLoop:
         return validate_state(proposed)
 
     def prepare(self, state: dict[str, Any]) -> dict[str, Any]:
-        """Execute current work once, then propose follow-up work for a gate."""
+        """Run Do, Check, Act, and Plan once for one owner gate."""
         self.harness.begin_transition()
         validate_state(state)
         if state["completed"]:
@@ -91,50 +91,32 @@ class StepLoop:
             self._prompt("worker", {"task": active, "goal": state["goal"]}),
             task_slug=active["slug"],
         )
-        try:
-            packet = self._completed_worker_packet(active, worker)
-        except StateError as exc:
-            worker = self.harness.invoke(
-                "worker",
-                self._prompt(
-                    "worker",
-                    {
-                        "task": active,
-                        "goal": state["goal"],
-                        "correction": (
-                            f"Your previous worker response was invalid: {exc}. "
-                            "Call the worker finalizer with complete valid fields only."
-                        ),
-                    },
-                ),
-                task_slug=active["slug"],
-                follow_up=True,
+        do = self._worker_packet(worker)
+        validation = self._validate(state, active, do)
+        packet = self._completed_packet(active, do, validation)
+        assessor = self._assess(
+            state, active, packet, clarification_used=False, clarifications=[]
+        )
+        clarifications: list[dict[str, Any]] = []
+        requests = assessor["clarification_requests"]
+        if requests:
+            clarifications = self._assessor_clarifications(
+                state, active, packet, requests
             )
-            packet = self._completed_worker_packet(active, worker)
-        assessor = self._assess(state, active, packet)
-        if assessor["clarification_needed"]:
-            clarification = self.harness.invoke(
-                "worker",
-                self._prompt(
-                    "worker",
-                    {
-                        "task": active,
-                        "goal": state["goal"],
-                        "clarification": "Provide the missing evidence only.",
-                    },
-                ),
-                task_slug=active["slug"],
-                follow_up=True,
-            )
-            packet = self._completed_worker_packet(active, clarification)
             assessor = self._assess(
-                state, active, packet, clarification_used=True
+                state,
+                active,
+                packet,
+                clarification_used=True,
+                clarifications=clarifications,
             )
-            if assessor["clarification_needed"]:
+            if assessor["clarification_requests"]:
                 raise TransitionError(
-                    "assessor requested more than one clarification"
+                    "assessor requested more than one clarification round"
                 )
-        current = deepcopy(assessor["current_packet"])
+        current = deepcopy(packet)
+        if clarifications:
+            current["clarifications"] = clarifications
         current["retro"] = assessor["retro"]
         prepared = deepcopy(state)
         prepared["current"] = current
@@ -207,6 +189,217 @@ class StepLoop:
         gate["proposals"] = deepcopy(state["next"])
         return gate
 
+    def _validate(
+        self, state: dict[str, Any], active: dict[str, Any], do: dict[str, Any]
+    ) -> dict[str, Any]:
+        validator = self.harness.invoke(
+            "validator",
+            self._prompt(
+                "validator",
+                {
+                    "task": active,
+                    "goal": state["goal"],
+                    "worker_packet": {"do": do},
+                    "clarification_already_used": False,
+                },
+            ),
+            task_slug=active["slug"],
+        )
+        validation, request = self._validator_packet(validator)
+        if request is None:
+            return validation
+        clarification = self.harness.invoke(
+            "worker",
+            self._prompt(
+                "worker",
+                {
+                    "task": active,
+                    "goal": state["goal"],
+                    "clarification": request,
+                },
+            ),
+            task_slug=active["slug"],
+            follow_up=True,
+        )
+        clarified_do = self._merge_do(do, self._worker_packet(clarification))
+        follow_up = self.harness.invoke(
+            "validator",
+            self._prompt(
+                "validator",
+                {
+                    "task": active,
+                    "goal": state["goal"],
+                    "worker_packet": {"do": clarified_do},
+                    "clarification_already_used": True,
+                },
+            ),
+            task_slug=active["slug"],
+            follow_up=True,
+        )
+        validation, repeated_request = self._validator_packet(follow_up)
+        if repeated_request is not None:
+            raise TransitionError(
+                "validator requested more than one clarification"
+            )
+        do.clear()
+        do.update(clarified_do)
+        return validation
+
+    def _assessor_clarifications(
+        self,
+        state: dict[str, Any],
+        active: dict[str, Any],
+        packet: dict[str, Any],
+        requests: list[dict[str, str]],
+    ) -> list[dict[str, Any]]:
+        replies: list[dict[str, Any]] = []
+        for item in requests:
+            target, request = item["target"], item["request"]
+            response = self.harness.invoke(
+                target,
+                self._prompt(
+                    target,
+                    {
+                        "task": active,
+                        "goal": state["goal"],
+                        "completed_packet": packet,
+                        "assessor_clarification": request,
+                    },
+                ),
+                task_slug=active["slug"],
+                follow_up=True,
+            )
+            if target == "worker":
+                evidence = self._worker_packet(response)
+            else:
+                validation, repeated_request = self._validator_packet(response)
+                if repeated_request is not None:
+                    raise TransitionError(
+                        "validator cannot request clarification during assessor clarification"
+                    )
+                evidence = validation
+            replies.append(
+                {"target": target, "request": request, "response": evidence}
+            )
+        return replies
+
+    @staticmethod
+    def _worker_packet(worker: Any) -> dict[str, Any]:
+        if not isinstance(worker, dict) or not isinstance(
+            worker.get("do"), dict
+        ):
+            raise StateError("worker response must contain do")
+        do = cast(dict[str, Any], deepcopy(worker["do"]))
+        if not isinstance(do.get("summary"), str) or not do["summary"].strip():
+            raise StateError("worker.do.summary is required")
+        if not isinstance(do.get("evidence"), list) or not all(
+            isinstance(item, str) and item.strip() for item in do["evidence"]
+        ):
+            raise StateError(
+                "worker.do.evidence must be a list of non-empty strings"
+            )
+        return do
+
+    @staticmethod
+    def _validator_packet(validator: Any) -> tuple[dict[str, Any], str | None]:
+        if not isinstance(validator, dict) or not isinstance(
+            validator.get("validate"), dict
+        ):
+            raise StateError("validator response must contain validate")
+        validation = cast(dict[str, Any], deepcopy(validator["validate"]))
+        request = validator.get("clarification_request")
+        packet = {
+            "slug": "packet",
+            "intent": "packet",
+            "criteria": ["packet"],
+            "do": {"summary": "packet", "evidence": []},
+            "validate": validation,
+        }
+        validate_task(packet, "validator response", True)
+        if request is not None and (
+            not isinstance(request, str) or not request.strip()
+        ):
+            raise StateError(
+                "validator.clarification_request must be a non-empty string or null"
+            )
+        return validation, request
+
+    @staticmethod
+    def _merge_do(
+        original: dict[str, Any], clarification: dict[str, Any]
+    ) -> dict[str, Any]:
+        return {
+            "summary": original["summary"],
+            "evidence": _dedupe(
+                [*original["evidence"], *clarification["evidence"]]
+            ),
+        }
+
+    @staticmethod
+    def _completed_packet(
+        active: dict[str, Any], do: dict[str, Any], validation: dict[str, Any]
+    ) -> dict[str, Any]:
+        return validate_task(
+            {
+                **deepcopy(active),
+                "do": deepcopy(do),
+                "validate": deepcopy(validation),
+            },
+            "completed packet",
+            True,
+        )
+
+    def _assess(
+        self,
+        state: dict[str, Any],
+        active: dict[str, Any],
+        packet: dict[str, Any],
+        *,
+        clarification_used: bool,
+        clarifications: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        assessor = self.harness.invoke(
+            "assessor",
+            self._prompt(
+                "assessor",
+                {
+                    "goal": state["goal"],
+                    "lessons": state["lessons"],
+                    "task": active,
+                    "worker_packet": {"do": packet["do"]},
+                    "validator_packet": {"validate": packet["validate"]},
+                    "clarifications": clarifications,
+                    "clarification_already_used": clarification_used,
+                },
+            ),
+            task_slug=active["slug"],
+            follow_up=clarification_used,
+        )
+        if not isinstance(assessor, dict) or not isinstance(
+            assessor.get("retro"), dict
+        ):
+            raise TransitionError("assessor returned an incomplete response")
+        retro = assessor["retro"]
+        if any(
+            not isinstance(retro.get(k), list)
+            or not all(
+                isinstance(item, str) and item.strip() for item in retro[k]
+            )
+            for k in ("wins", "issues", "actions")
+        ):
+            raise TransitionError("assessor retro is invalid")
+        requests = assessor.get("clarification_requests")
+        if not isinstance(requests, list):
+            raise TransitionError("assessor clarification requests are invalid")
+        if clarification_used and requests:
+            raise TransitionError(
+                "assessor requested more than one clarification round"
+            )
+        return {
+            "retro": deepcopy(retro),
+            "clarification_requests": deepcopy(requests),
+        }
+
     def _propose(
         self, state: dict[str, Any], *, actions: list[str], revision: str | None
     ) -> dict[str, Any]:
@@ -255,58 +448,6 @@ class StepLoop:
         candidate["next"] = proposals
         candidate["recommended"] = recommendation
         return validate_state(candidate)
-
-    @staticmethod
-    def _completed_worker_packet(
-        active: dict[str, Any], worker: Any
-    ) -> dict[str, Any]:
-        if not isinstance(worker, dict):
-            raise StateError("worker response must be a mapping")
-        packet = {
-            **deepcopy(active),
-            "do": worker.get("do"),
-            "validate": worker.get("validate"),
-        }
-        return validate_task(packet, "worker response", True)
-
-    def _assess(
-        self,
-        state: dict[str, Any],
-        active: dict[str, Any],
-        worker: dict[str, Any],
-        clarification_used: bool = False,
-    ) -> dict[str, Any]:
-        assessor = self.harness.invoke(
-            "assessor",
-            self._prompt(
-                "assessor",
-                {
-                    "goal": state["goal"],
-                    "lessons": state["lessons"],
-                    "task": active,
-                    "worker_packet": {"packet": worker},
-                    "clarification_already_used": clarification_used,
-                },
-            ),
-            task_slug=active["slug"],
-        )
-        required = ("retro", "clarification_needed")
-        if not isinstance(assessor, dict) or any(
-            key not in assessor for key in required
-        ):
-            raise TransitionError("assessor returned an incomplete response")
-        if not isinstance(assessor["retro"], dict) or any(
-            not isinstance(assessor["retro"].get(k), list)
-            for k in ("wins", "issues", "actions")
-        ):
-            raise TransitionError("assessor retro is invalid")
-        if not isinstance(assessor["clarification_needed"], bool):
-            raise TransitionError("assessor clarification flag is invalid")
-        return {
-            "current_packet": deepcopy(worker),
-            "retro": deepcopy(assessor["retro"]),
-            "clarification_needed": assessor["clarification_needed"],
-        }
 
     def _prompt(self, role: str, context: dict[str, Any]) -> str:
         return build_prompt(role, context, self.change_path)

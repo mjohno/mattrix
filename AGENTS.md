@@ -18,6 +18,7 @@ Mattrix is a single-owner monorepo for reusable skills, MKF knowledge-base imple
 
 - Read `skills/AGENTS.md` before modifying `skills/`.
 - Maintain dependency flow from `agents` and `kb` to `skills`; do not let a skill or KB component depend on an individual agent.
+- Run `./scripts/stagger-step-eval.sh` from the repository root for the Stagger Step end-to-end evaluation.
 
 ## Constraints
 

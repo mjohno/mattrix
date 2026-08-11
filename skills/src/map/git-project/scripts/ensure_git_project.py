@@ -19,10 +19,10 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest import mock
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
+from unittest import mock
 
 log = logging.getLogger(__name__)
 
@@ -75,9 +75,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Create or safely synchronize one local Git branch clone."
     )
-    parser.add_argument("--project", required=True, help="relative project path")
+    parser.add_argument(
+        "--project", required=True, help="relative project path"
+    )
     parser.add_argument("--branch", default="master", help="target branch")
-    parser.add_argument("--from", dest="source", default="master", help="source branch")
+    parser.add_argument(
+        "--from", dest="source", default="master", help="source branch"
+    )
     parser.add_argument("--checkout", help="direct child clone directory")
     parser.add_argument(
         "--dry-run",
@@ -102,7 +106,9 @@ def git(
         command.extend(["-C", str(directory)])
     command.extend(arguments)
     try:
-        return subprocess.run(command, text=True, capture_output=True, check=False)
+        return subprocess.run(
+            command, text=True, capture_output=True, check=False
+        )
     except OSError as error:
         raise GitLaunchError(error) from error
 
@@ -111,7 +117,9 @@ def git_output(directory: Path | None, *arguments: str) -> str | None:
     """Return Git stdout when successful, otherwise None."""
     result = git(directory, *arguments)
     if result.returncode != 0:
-        log.debug("git %s failed: %s", " ".join(arguments), result.stderr.strip())
+        log.debug(
+            "git %s failed: %s", " ".join(arguments), result.stderr.strip()
+        )
         return None
     return result.stdout.strip()
 
@@ -120,7 +128,9 @@ def require_git(directory: Path | None, *arguments: str) -> str:
     """Run Git or stop with its useful diagnostic."""
     result = git(directory, *arguments)
     if result.returncode != 0:
-        detail = (result.stderr or result.stdout).strip() or "Git command failed"
+        detail = (
+            result.stderr or result.stdout
+        ).strip() or "Git command failed"
         raise BlockedError(f"git {' '.join(arguments)}: {detail}")
     return result.stdout.strip()
 
@@ -169,7 +179,13 @@ def request_from(args: argparse.Namespace) -> Request:
         raise BlockedError("WORK_ROOT must name an existing directory")
     branch = valid_branch(args.branch, "branch")
     source = valid_branch(args.source, "from")
-    return Request(root, valid_project(args.project), branch, source, checkout_name(branch, args.checkout))
+    return Request(
+        root,
+        valid_project(args.project),
+        branch,
+        source,
+        checkout_name(branch, args.checkout),
+    )
 
 
 def is_bare(path: Path) -> bool:
@@ -192,7 +208,16 @@ def relative_remote_url(checkout: Path, remote: Path) -> str:
 
 def has_ref(repository: Path, branch: str) -> bool:
     """Return whether a branch reference exists."""
-    return git(repository, "show-ref", "--verify", "--quiet", f"refs/heads/{branch}").returncode == 0
+    return (
+        git(
+            repository,
+            "show-ref",
+            "--verify",
+            "--quiet",
+            f"refs/heads/{branch}",
+        ).returncode
+        == 0
+    )
 
 
 def remote_is_empty(remote: Path) -> bool:
@@ -237,29 +262,41 @@ def inspect_existing(request: Request) -> bool:
     remote = request.remote
     project = request.project_directory
     checkout = request.checkout
-    if remote.exists() and (not remote.is_dir() or remote.is_symlink() or not is_bare(remote)):
+    if remote.exists() and (
+        not remote.is_dir() or remote.is_symlink() or not is_bare(remote)
+    ):
         raise BlockedError(f"remote is not a valid bare repository: {remote}")
     if project.exists() and (not project.is_dir() or project.is_symlink()):
         raise BlockedError(f"project is not a directory: {project}")
     if checkout.exists():
         if checkout.is_symlink() or not is_worktree(checkout):
-            raise BlockedError(f"checkout is not a valid working tree: {checkout}")
+            raise BlockedError(
+                f"checkout is not a valid working tree: {checkout}"
+            )
         if not local_url_is_canonical(checkout, remote):
-            raise BlockedError(f"checkout local remote is not canonical: {checkout}")
+            raise BlockedError(
+                f"checkout local remote is not canonical: {checkout}"
+            )
         if git(checkout, "ls-remote", "local").returncode != 0:
-            raise BlockedError(f"checkout local remote is unreachable: {checkout}")
+            raise BlockedError(
+                f"checkout local remote is unreachable: {checkout}"
+            )
         if not worktree_is_clean(checkout):
             raise BlockedError(f"checkout has local changes: {checkout}")
 
     if not remote.exists():
         if request.branch != "master":
-            raise BlockedError("a new empty remote can create only the unborn master branch")
+            raise BlockedError(
+                "a new empty remote can create only the unborn master branch"
+            )
         return True
 
     empty = remote_is_empty(remote)
     if empty:
         if request.branch != "master":
-            raise BlockedError("an empty remote can create only the unborn master branch")
+            raise BlockedError(
+                "an empty remote can create only the unborn master branch"
+            )
         return True
 
     target_exists = has_ref(remote, request.branch)
@@ -268,7 +305,9 @@ def inspect_existing(request: Request) -> bool:
             f"source branch does not exist in canonical remote: {request.source}"
         )
     if checkout.exists() and not branch_is_tracked(checkout, request.branch):
-        raise BlockedError(f"checkout does not track local/{request.branch}: {checkout}")
+        raise BlockedError(
+            f"checkout does not track local/{request.branch}: {checkout}"
+        )
     return False
 
 
@@ -284,7 +323,9 @@ def create_remote_if_missing(request: Request) -> bool:
     """Create the bare remote with master as its default symbolic branch."""
     if request.remote.exists():
         return False
-    require_git(None, "init", "--bare", "--initial-branch=master", str(request.remote))
+    require_git(
+        None, "init", "--bare", "--initial-branch=master", str(request.remote)
+    )
     return True
 
 
@@ -318,10 +359,23 @@ def synchronize(request: Request, unborn: bool) -> str:
         return "unborn"
     require_git(request.checkout, "fetch", "local")
     if not branch_is_tracked(request.checkout, request.branch):
-        raise BlockedError(f"checkout does not track local/{request.branch}: {request.checkout}")
-    if git(request.checkout, "merge-base", "--is-ancestor", "HEAD", f"local/{request.branch}").returncode != 0:
+        raise BlockedError(
+            f"checkout does not track local/{request.branch}: {request.checkout}"
+        )
+    if (
+        git(
+            request.checkout,
+            "merge-base",
+            "--is-ancestor",
+            "HEAD",
+            f"local/{request.branch}",
+        ).returncode
+        != 0
+    ):
         raise BlockedError(f"fast-forward is not possible: {request.checkout}")
-    require_git(request.checkout, "merge", "--ff-only", f"local/{request.branch}")
+    require_git(
+        request.checkout, "merge", "--ff-only", f"local/{request.branch}"
+    )
     return "synchronized"
 
 
@@ -405,7 +459,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     except BlockedError as error:
         log.error("%s", error)
-        result = {"status": "blocked", "reason": str(error), "identity": identity()}
+        result = {
+            "status": "blocked",
+            "reason": str(error),
+            "identity": identity(),
+        }
         print(json.dumps(result, sort_keys=True))
         return 1
     print(json.dumps(result, sort_keys=True))
@@ -417,8 +475,8 @@ def run_command(root: Path, *arguments: str) -> tuple[int, dict[str, object]]:
     previous = os.environ.get("WORK_ROOT")
     os.environ["WORK_ROOT"] = str(root)
     try:
-        from io import StringIO
         from contextlib import redirect_stdout
+        from io import StringIO
 
         output = StringIO()
         with redirect_stdout(output):
@@ -455,11 +513,17 @@ class GitProjectTests(unittest.TestCase):
                 f"{__name__}.subprocess.run",
                 side_effect=FileNotFoundError("git"),
             ):
-                code, result = run_command(Path(temporary), "--project", "team/app")
+                code, result = run_command(
+                    Path(temporary), "--project", "team/app"
+                )
             self.assertEqual(code, 1)
             self.assertEqual(result["status"], "blocked")
-            self.assertEqual(result["exception"]["type"], "FileNotFoundError")
-            self.assertEqual(result["identity"]["username"], "unavailable")
+            exception = result["exception"]
+            identity_data = result["identity"]
+            assert isinstance(exception, dict)
+            assert isinstance(identity_data, dict)
+            self.assertEqual(exception["type"], "FileNotFoundError")
+            self.assertEqual(identity_data["username"], "unavailable")
 
     def test_project_validation_rejects_unsafe_paths(self) -> None:
         for project in ("", "/app", "../app", "team/../app", "team\\app"):
@@ -475,7 +539,9 @@ class GitProjectTests(unittest.TestCase):
     def test_dry_run_does_not_create_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            code, result = run_command(root, "--project", "team/app", "--dry-run")
+            code, result = run_command(
+                root, "--project", "team/app", "--dry-run"
+            )
             self.assertEqual(code, 0)
             self.assertEqual(result["status"], "planned")
             self.assertTrue(result["dry_run"])
@@ -491,14 +557,22 @@ class GitProjectTests(unittest.TestCase):
             self.assertEqual(result["status"], "unborn")
             self.assertTrue(is_bare(root / "remotes/team/app.git"))
             self.assertTrue(is_worktree(checkout))
-            self.assertTrue(local_url_is_canonical(checkout, root / "remotes/team/app.git"))
+            self.assertTrue(
+                local_url_is_canonical(checkout, root / "remotes/team/app.git")
+            )
 
     def test_creates_branch_and_clone_from_source(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             seed_master(root, "team/app")
             code, result = run_command(
-                root, "--project", "team/app", "--branch", "foo", "--checkout", "bar"
+                root,
+                "--project",
+                "team/app",
+                "--branch",
+                "foo",
+                "--checkout",
+                "bar",
             )
             checkout = root / "projects/team/app/bar"
             self.assertEqual(code, 0)
@@ -535,7 +609,9 @@ class GitProjectTests(unittest.TestCase):
             self.assertEqual(run_command(root, "--project", "team/app")[0], 0)
             checkout = root / "projects/team/app/master"
             require_git(checkout, "config", "user.name", "Test User")
-            require_git(checkout, "config", "user.email", "test@example.invalid")
+            require_git(
+                checkout, "config", "user.email", "test@example.invalid"
+            )
             (checkout / "LOCAL").write_text("local\n", encoding="utf-8")
             require_git(checkout, "add", "LOCAL")
             require_git(checkout, "commit", "-m", "local")

@@ -6,7 +6,7 @@ from typing import Any
 
 import yaml
 
-ROLES = ("coordinator", "worker", "assessor")
+ROLES = ("coordinator", "worker", "validator", "assessor")
 
 
 @lru_cache
@@ -29,8 +29,10 @@ def _finalizer_example(role: str) -> str:
     if role == "coordinator":
         return '{"lessons":["durable lesson"],"proposals":[{"slug":"next-task","intent":"bounded outcome","criteria":["observable criterion"]}],"recommendation":"next-task"}'
     if role == "worker":
-        return '{"work_summary":"work performed","work_evidence":["evidence"],"result":"success","validation_summary":"checks performed","validation_evidence":["validation evidence"]}'
-    return '{"wins":["effective progress"],"issues":["remaining issue"],"actions":["next-step input"],"clarification_needed":false}'
+        return '{"work_summary":"work performed","work_evidence":["evidence"]}'
+    if role == "validator":
+        return '{"result":"success","validation_summary":"checks performed","validation_evidence":["validation evidence"],"clarification_request":null}'
+    return '{"wins":["effective progress"],"issues":["remaining issue"],"actions":["next-step input"],"clarification_requests":[]}'
 
 
 def _response_protocol(role: str) -> str:

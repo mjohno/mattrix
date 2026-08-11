@@ -137,7 +137,7 @@ class PiRpcHarness:
         return slug
 
     def _session_name(self, role: str, task_slug: str = "bootstrap") -> str:
-        if role not in {"coordinator", "worker", "assessor"}:
+        if role not in {"coordinator", "worker", "validator", "assessor"}:
             raise HarnessError(f"unknown STEP role: {role}")
         if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", task_slug):
             raise HarnessError(
