@@ -6,7 +6,7 @@ from stagger_step.state import StateError, create_state, validate_state
 TASK = {"slug": "task", "intent": "Task", "criteria": ["done"]}
 DONE = {
     **TASK,
-    "do": {"summary": "done", "evidence": []},
+    "work": {"summary": "done", "evidence": []},
     "validate": {"result": "success", "summary": "Ran tests", "evidence": []},
 }
 
@@ -25,6 +25,30 @@ def test_state_rejects_recommendation_not_in_next():
         "completed": False,
     }
     with pytest.raises(StateError):
+        validate_state(state)
+
+
+def test_state_rejects_retired_do_packet():
+    state = {
+        "version": 1,
+        "goal": "Goal",
+        "change_path": None,
+        "commit_mode": False,
+        "lessons": [],
+        "history": [],
+        "current": {
+            **TASK,
+            "do": {"summary": "retired", "evidence": []},
+            "validate": DONE["validate"],
+        },
+        "next": [],
+        "recommended": "terminate",
+        "completed": False,
+    }
+
+    with pytest.raises(
+        StateError, match="current.do is retired; use current.work"
+    ):
         validate_state(state)
 
 

@@ -36,7 +36,7 @@ def packet() -> dict[str, object]:
         "slug": "update-file",
         "intent": "Update the tracked file\nwith a wrapped intent",
         "criteria": ["tracked file is updated"],
-        "do": {"summary": "Changed tracked.txt", "evidence": []},
+        "work": {"summary": "Changed tracked.txt", "evidence": []},
         "validate": {
             "result": "partial",
             "summary": "Checked the updated file; coverage remains incomplete",
@@ -84,7 +84,7 @@ def test_commit_mode_wraps_body_content_at_72_characters(tmp_path):
     mode = CommitMode(step, root)
     wrapped_packet = packet()
     wrapped_packet["intent"] = "intent " * 20
-    wrapped_packet["do"]["summary"] = "work " * 20
+    wrapped_packet["work"]["summary"] = "work " * 20
     wrapped_packet["validate"]["summary"] = "checked " * 20
     base = mode.begin()
     (root / "tracked.txt").write_text("changed\n")

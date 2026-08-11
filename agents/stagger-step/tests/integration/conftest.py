@@ -157,7 +157,7 @@ def task(slug: str) -> dict:
 def complete(slug: str) -> dict:
     return {
         **task(slug),
-        "do": {"summary": "worked", "evidence": ["file"]},
+        "work": {"summary": "worked", "evidence": ["file"]},
         "validate": {
             "result": "success",
             "summary": "Ran the test suite successfully",

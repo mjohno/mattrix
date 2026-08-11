@@ -107,13 +107,16 @@ def normalize_packet(role: str, candidate: Any) -> dict[str, Any]:
             "recommendation": recommendation,
         }
     if role == "worker":
-        do = _mapping(packet.get("do"), "worker.do")
-        if not isinstance(do.get("summary"), str) or not do["summary"].strip():
-            raise StateError("worker.do.summary is required")
-        _strings(do.get("evidence"), "worker.do.evidence")
-        if set(packet) != {"do"}:
-            raise StateError("worker packet must contain only do")
-        return {"do": deepcopy(do)}
+        work = _mapping(packet.get("work"), "worker.work")
+        if (
+            not isinstance(work.get("summary"), str)
+            or not work["summary"].strip()
+        ):
+            raise StateError("worker.work.summary is required")
+        _strings(work.get("evidence"), "worker.work.evidence")
+        if set(packet) != {"work"}:
+            raise StateError("worker packet must contain only work")
+        return {"work": deepcopy(work)}
     if role == "validator":
         validation = _validate_packet(
             packet.get("validate"), "validator.validate"

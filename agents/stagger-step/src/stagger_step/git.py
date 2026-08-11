@@ -155,7 +155,7 @@ class CommitMode:
             return None
         subject = f"step: {packet['slug']}"[:50].rstrip()
         intent = str(packet["intent"]).strip()
-        work = packet.get("do")
+        work = packet.get("work")
         validation = packet.get("validate")
         done = str(
             work.get("summary", "") if isinstance(work, dict) else ""

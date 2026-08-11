@@ -159,7 +159,7 @@ def prepare(
     base = None
     has_base = False
     active = state.get("current")
-    if commit is not None and active is not None and not active.get("do"):
+    if commit is not None and active is not None and not active.get("work"):
         base = commit.clean_baseline()
         has_base = True
     prepared = loop.prepare(state)
@@ -341,7 +341,7 @@ def main(argv: list[str] | None = None) -> int:
             commit.begin(
                 require_clean=not (
                     isinstance(pending, dict)
-                    and pending.get("do")
+                    and pending.get("work")
                     and "commit_base" in pending
                 )
             )

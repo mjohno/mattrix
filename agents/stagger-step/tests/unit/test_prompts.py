@@ -21,9 +21,9 @@ def test_finalization_retry_prompt_targets_prior_session_result():
     ("role", "role_title", "finalizer"),
     (
         ("coordinator", "# Coordinator", "stagger_step_finalize_coordinator"),
-        ("worker", "# Team Member", "stagger_step_finalize_worker"),
+        ("worker", "# Worker", "stagger_step_finalize_worker"),
         ("validator", "# Validator", "stagger_step_finalize_validator"),
-        ("assessor", "# Delivery Manager", "stagger_step_finalize_assessor"),
+        ("assessor", "# Assessor", "stagger_step_finalize_assessor"),
     ),
 )
 def test_role_prompt_is_self_contained_and_role_specific(
@@ -61,6 +61,16 @@ def test_coordinator_embeds_bounded_task_guidance():
 
     assert "bounded, actionable outcome" in prompt
     assert "independent, negotiable, small, and testable" in prompt
+
+
+def test_coordinator_guides_recovery_planning():
+    prompt = build_prompt("coordinator", {"goal": "Ship the change"})
+
+    assert "smallest practical task that removes it" in prompt
+    assert "bounded task that obtains the evidence" in prompt
+    assert "partial` or `failure" in prompt
+    assert "Do not repeat a failed or blocked approach" in prompt
+    assert "exactly one next task" in prompt
 
 
 def test_role_prompts_preserve_evidence_boundaries():

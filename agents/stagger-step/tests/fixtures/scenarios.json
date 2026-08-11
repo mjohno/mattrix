@@ -27,7 +27,7 @@
           "criteria": [
             "done"
           ],
-          "do": {
+          "work": {
             "summary": "worked",
             "evidence": [
               "file"
@@ -51,7 +51,7 @@
           "criteria": [
             "done"
           ],
-          "do": {
+          "work": {
             "summary": "worked",
             "evidence": [
               "file"
@@ -104,7 +104,7 @@
           "criteria": [
             "done"
           ],
-          "do": {
+          "work": {
             "summary": "worked",
             "evidence": [
               "file"
@@ -128,7 +128,7 @@
           "criteria": [
             "done"
           ],
-          "do": {
+          "work": {
             "summary": "worked",
             "evidence": [
               "file"

@@ -35,8 +35,8 @@ from stagger_step.state import StateError
         ),
         (
             "worker",
-            {"do": {"summary": "Ran checks", "evidence": ["pytest"]}},
-            {"do": {"summary": "Ran checks", "evidence": ["pytest"]}},
+            {"work": {"summary": "Ran checks", "evidence": ["pytest"]}},
+            {"work": {"summary": "Ran checks", "evidence": ["pytest"]}},
         ),
         (
             "validator",
@@ -99,7 +99,7 @@ def test_allows_proposal_slug_with_terminate_prefix():
 
 
 def test_rejects_wrong_role_packet():
-    with pytest.raises(StateError, match="worker.do must be a mapping"):
+    with pytest.raises(StateError, match="worker.work must be a mapping"):
         normalize_packet("worker", {"current_packet": {}})
 
 
@@ -109,14 +109,14 @@ def test_rejects_wrong_role_packet():
         (
             "worker",
             {
-                "do": {"summary": "implemented", "evidence": []},
+                "work": {"summary": "implemented", "evidence": []},
                 "validate": {
                     "result": "success",
                     "summary": "forbidden",
                     "evidence": [],
                 },
             },
-            "worker packet must contain only do",
+            "worker packet must contain only work",
         ),
         (
             "validator",
@@ -139,7 +139,7 @@ def test_rejects_cross_role_packet_fields(role, candidate, message):
 
 
 def test_rejects_worker_owned_fields_in_coordinator_proposals():
-    with pytest.raises(StateError, match="non-task fields: do, validate"):
+    with pytest.raises(StateError, match="non-task fields: validate, work"):
         normalize_packet(
             "coordinator",
             {
@@ -149,7 +149,7 @@ def test_rejects_worker_owned_fields_in_coordinator_proposals():
                         "slug": "validate-cli",
                         "intent": "Validate the CLI",
                         "criteria": ["all checks pass"],
-                        "do": {
+                        "work": {
                             "summary": "not coordinator work",
                             "evidence": [],
                         },

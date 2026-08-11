@@ -2,6 +2,18 @@
 
 `stagger-step` owns the STEP YAML schema, validation, legal transitions, atomic approval writes, Markdown user reviews, and self-contained role prompts under `src/stagger_step/prompts/`.
 
+## Deming cycle
+
+Stagger Step advances its goal through small, evidence-based Deming PDCA cycles with Owner control between tasks:
+
+- **Plan:** The Coordinator ranks proposals and recommends one next task.
+- **Owner gate:** The Owner approves that recommendation or supplies revision feedback before work begins.
+- **Do:** The Worker completes the approved task and records `work` summary and evidence.
+- **Check:** The Validator independently checks the approved criteria and records the result and evidence in `validate`.
+- **Act:** The Assessor records delivery learning in `retro`; the Coordinator uses it with the evidence and Owner feedback to plan the next task.
+
+This separation keeps task selection, execution, validation, and delivery assessment independent while the Owner remains responsible for approval.
+
 ## Build output
 
 All generated Stagger Step build artifacts belong in the repository-root `build/stagger-step/` directory. Run `python make.py build-stagger-step` to create its wheel there and `python make.py clean` to remove generated build, package, cache, and coverage artifacts. Build output is intentionally ignored by Git.
@@ -11,7 +23,7 @@ All generated Stagger Step build artifacts belong in the repository-root `build/
 ```bash
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli init --goal "Ship the change" --change artifacts --commit
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli validate
-printf '%s\n' 'packet: {do: {summary: Ran checks, evidence: []}}' | stagger-step normalize --role worker
+printf '%s\n' 'packet: {work: {summary: Ran checks, evidence: []}}' | stagger-step normalize --role worker
 printf '%s\n' 'packet: {validate: {result: success, summary: Checks passed, evidence: []}, clarification_request: null}' | stagger-step normalize --role validator
 # One-shot approval promotes work, runs its cycle, and prints the next gate.
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli gate approved
@@ -36,7 +48,7 @@ Intent:
 <intent>
 
 Done:
-<do.summary>
+<work.summary>
 
 Verified:
 <validate.summary>

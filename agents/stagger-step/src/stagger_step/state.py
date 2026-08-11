@@ -31,6 +31,8 @@ def validate_task(
 ) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise StateError(f"{label} must be a mapping")
+    if "do" in value:
+        raise StateError(f"{label}.do is retired; use {label}.work")
     if not isinstance(value.get("slug"), str) or not SLUG.fullmatch(
         value["slug"]
     ):
@@ -49,14 +51,14 @@ def validate_task(
         ):
             raise StateError(f"{label}.commit must be a Git SHA")
     if completed:
-        do, validation = value.get("do"), value.get("validate")
+        work, validation = value.get("work"), value.get("validate")
         if (
-            not isinstance(do, dict)
-            or not isinstance(do.get("summary"), str)
-            or not do["summary"].strip()
+            not isinstance(work, dict)
+            or not isinstance(work.get("summary"), str)
+            or not work["summary"].strip()
         ):
-            raise StateError(f"{label}.do.summary is required")
-        _strings(do.get("evidence"), f"{label}.do.evidence")
+            raise StateError(f"{label}.work.summary is required")
+        _strings(work.get("evidence"), f"{label}.work.evidence")
         if (
             not isinstance(validation, dict)
             or validation.get("result") not in RESULTS
@@ -72,7 +74,7 @@ def validate_task(
 
 
 def is_completed(step: dict[str, Any]) -> bool:
-    return "do" in step or "validate" in step
+    return "work" in step or "validate" in step
 
 
 def validate_state(state: Any) -> dict[str, Any]:

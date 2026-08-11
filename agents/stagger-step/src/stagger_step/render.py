@@ -39,7 +39,7 @@ def render_gate(gate: dict[str, Any]) -> str:
     if isinstance(current, dict):
         lines.extend([f"**Intent:** {current['intent']}", ""])
         _list(lines, "Acceptance Criteria", current["criteria"])
-        execution = current.get("do")
+        execution = current.get("work")
         if isinstance(execution, dict):
             lines.extend(
                 ["## Execution", "", f"**Summary:** {execution['summary']}", ""]

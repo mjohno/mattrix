@@ -30,7 +30,7 @@ def test_bootstrap_review_omits_task_sections():
 def test_completed_review_renders_task_retro_and_ranked_proposals():
     current = {
         **task("first"),
-        "do": {"summary": "Implemented it", "evidence": ["src/file.py"]},
+        "work": {"summary": "Implemented it", "evidence": ["src/file.py"]},
         "validate": {
             "result": "success",
             "summary": "Tests passed",
@@ -88,7 +88,7 @@ def test_final_signoff_has_terminal_next_task_and_recommendation():
             "lessons": [],
             "current": {
                 **task("first"),
-                "do": {"summary": "Implemented it", "evidence": []},
+                "work": {"summary": "Implemented it", "evidence": []},
                 "validate": {
                     "result": "success",
                     "summary": "Tests passed",

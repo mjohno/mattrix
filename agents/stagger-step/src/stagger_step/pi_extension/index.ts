@@ -61,7 +61,7 @@ function canonicalInput(role: Role, params: Record<string, unknown>): Record<str
   }
   if (role === "worker") {
     nonEmptyString(params.work_summary, "work_summary"); nonEmptyStrings(params.work_evidence, "work_evidence");
-    return { do: { summary: params.work_summary, evidence: params.work_evidence } };
+    return { work: { summary: params.work_summary, evidence: params.work_evidence } };
   }
   if (role === "validator") {
     nonEmptyString(params.validation_summary, "validation_summary"); nonEmptyStrings(params.validation_evidence, "validation_evidence");

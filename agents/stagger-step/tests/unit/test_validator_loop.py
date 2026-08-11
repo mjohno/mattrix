@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+import pytest
 from stagger_step.loop import StepLoop
 from stagger_step.state import create_state
 
@@ -50,7 +51,7 @@ def test_prepare_runs_independent_validator_before_assessor():
     harness = ScriptHarness(
         {
             "worker": [
-                {"do": {"summary": "implemented", "evidence": ["file"]}}
+                {"work": {"summary": "implemented", "evidence": ["file"]}}
             ],
             "validator": [
                 {
@@ -76,7 +77,7 @@ def test_prepare_runs_independent_validator_before_assessor():
         "assessor",
         "coordinator",
     ]
-    assert prepared["current"]["do"] == {
+    assert prepared["current"]["work"] == {
         "summary": "implemented",
         "evidence": ["file"],
     }
@@ -87,9 +88,9 @@ def test_validator_clarifies_in_its_same_role_session_then_rechecks():
     harness = ScriptHarness(
         {
             "worker": [
-                {"do": {"summary": "implemented", "evidence": ["file"]}},
+                {"work": {"summary": "implemented", "evidence": ["file"]}},
                 {
-                    "do": {
+                    "work": {
                         "summary": "more evidence",
                         "evidence": ["command output"],
                     }
@@ -121,7 +122,7 @@ def test_validator_clarifies_in_its_same_role_session_then_rechecks():
     prepared = StepLoop(harness).prepare(_state())
 
     assert harness.calls[3:5] == [("worker", True), ("validator", True)]
-    assert prepared["current"]["do"]["evidence"] == ["file", "command output"]
+    assert prepared["current"]["work"]["evidence"] == ["file", "command output"]
     assert prepared["current"]["validate"]["result"] == "success"
 
 
@@ -129,9 +130,9 @@ def test_assessor_records_conflicting_worker_and_validator_clarifications():
     harness = ScriptHarness(
         {
             "worker": [
-                {"do": {"summary": "implemented", "evidence": ["file"]}},
+                {"work": {"summary": "implemented", "evidence": ["file"]}},
                 {
-                    "do": {
+                    "work": {
                         "summary": "deployment evidence",
                         "evidence": ["release version v2 is active"],
                     }
@@ -200,3 +201,79 @@ def test_assessor_records_conflicting_worker_and_validator_clarifications():
     assessor_follow_up_prompt = harness.prompts[6][1]
     assert "release version v2 is active" in assessor_follow_up_prompt
     assert "release version v1 remains active" in assessor_follow_up_prompt
+
+
+@pytest.mark.parametrize(
+    ("result", "summary", "action", "slugs"),
+    (
+        (
+            "blocked",
+            "Cannot access deployment credentials",
+            "Remove the documented credential blocker",
+            ("restore-credentials",),
+        ),
+        (
+            "partial",
+            "The migration completed but the rollback check failed",
+            "Investigate the rollback mismatch",
+            ("investigate-rollback", "use-alternate-migration"),
+        ),
+        (
+            "failure",
+            "The selected API does not support the required operation",
+            "Investigate and replace the failed API approach",
+            ("investigate-api-limit", "use-supported-api"),
+        ),
+    ),
+)
+def test_coordinator_receives_recovery_evidence_and_persists_ranked_proposals(
+    result, summary, action, slugs
+):
+    proposals = [
+        {
+            "slug": slug,
+            "intent": f"Resolve {slug}",
+            "criteria": [f"{slug} evidence exists"],
+        }
+        for slug in slugs
+    ]
+    harness = ScriptHarness(
+        {
+            "worker": [
+                {
+                    "work": {
+                        "summary": "Attempted the approved task",
+                        "evidence": ["worker evidence"],
+                    }
+                }
+            ],
+            "validator": [
+                {
+                    "validate": {
+                        "result": result,
+                        "summary": summary,
+                        "evidence": ["validator evidence"],
+                    },
+                    "clarification_request": None,
+                }
+            ],
+            "assessor": [_retro(issues=[summary], actions=[action])],
+            "coordinator": [
+                {
+                    "lessons": [],
+                    "proposals": proposals,
+                    "recommendation": slugs[0],
+                }
+            ],
+        }
+    )
+
+    prepared = StepLoop(harness).prepare(_state())
+
+    coordinator_prompt = harness.prompts[-1][1]
+    assert harness.prompts[-1][0] == "coordinator"
+    assert f"result: {result}" in coordinator_prompt
+    assert summary in coordinator_prompt
+    assert action in coordinator_prompt
+    assert [proposal["slug"] for proposal in prepared["next"]] == list(slugs)
+    assert prepared["recommended"] == slugs[0]

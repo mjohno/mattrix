@@ -180,7 +180,7 @@ def test_invalid_worker_packet_is_corrected_in_its_persistent_session(cli):
         if '"role": "worker"' in line
     ]
     assert len(worker_calls) == 2
-    assert "worker.do must be a mapping" in worker_calls[1]["prompt"]
+    assert "worker.work must be a mapping" in worker_calls[1]["prompt"]
     assert "worker finalizer" in worker_calls[1]["prompt"]
     assert (
         worker_calls[0]["argv"][
@@ -447,7 +447,7 @@ def test_second_invalid_worker_packet_keeps_step_state_unchanged(cli):
         "gate", "approved", replies={"worker": [invalid, {"packet": "invalid"}]}
     )
     assert result.returncode == 2
-    assert "worker.do must be a mapping" in result.stderr
+    assert "worker.work must be a mapping" in result.stderr
     assert state(step)["current"] == {
         "slug": "first",
         "intent": "first",
@@ -575,7 +575,7 @@ def test_session_continues_through_work_cycle_to_final_signoff(cli):
                     "slug": "first",
                     "intent": "first",
                     "criteria": ["done"],
-                    "do": {"summary": "worked", "evidence": ["file"]},
+                    "work": {"summary": "worked", "evidence": ["file"]},
                     "validate": {
                         "result": "success",
                         "summary": "Ran tests",
@@ -590,7 +590,7 @@ def test_session_continues_through_work_cycle_to_final_signoff(cli):
                     "slug": "first",
                     "intent": "first",
                     "criteria": ["done"],
-                    "do": {"summary": "worked", "evidence": ["file"]},
+                    "work": {"summary": "worked", "evidence": ["file"]},
                     "validate": {
                         "result": "success",
                         "summary": "Ran tests",
@@ -641,7 +641,7 @@ def test_session_revision_keeps_running_then_breaks_without_promotion(cli):
                     "slug": "first",
                     "intent": "first",
                     "criteria": ["done"],
-                    "do": {"summary": "worked", "evidence": ["file"]},
+                    "work": {"summary": "worked", "evidence": ["file"]},
                     "validate": {
                         "result": "success",
                         "summary": "Ran tests",
@@ -656,7 +656,7 @@ def test_session_revision_keeps_running_then_breaks_without_promotion(cli):
                     "slug": "first",
                     "intent": "first",
                     "criteria": ["done"],
-                    "do": {"summary": "worked", "evidence": ["file"]},
+                    "work": {"summary": "worked", "evidence": ["file"]},
                     "validate": {
                         "result": "success",
                         "summary": "Ran tests",

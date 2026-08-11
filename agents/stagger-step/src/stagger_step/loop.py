@@ -91,9 +91,9 @@ class StepLoop:
             self._prompt("worker", {"task": active, "goal": state["goal"]}),
             task_slug=active["slug"],
         )
-        do = self._worker_packet(worker)
-        validation = self._validate(state, active, do)
-        packet = self._completed_packet(active, do, validation)
+        work = self._worker_packet(worker)
+        validation = self._validate(state, active, work)
+        packet = self._completed_packet(active, work, validation)
         assessor = self._assess(
             state, active, packet, clarification_used=False, clarifications=[]
         )
@@ -190,7 +190,10 @@ class StepLoop:
         return gate
 
     def _validate(
-        self, state: dict[str, Any], active: dict[str, Any], do: dict[str, Any]
+        self,
+        state: dict[str, Any],
+        active: dict[str, Any],
+        work: dict[str, Any],
     ) -> dict[str, Any]:
         validator = self.harness.invoke(
             "validator",
@@ -199,7 +202,7 @@ class StepLoop:
                 {
                     "task": active,
                     "goal": state["goal"],
-                    "worker_packet": {"do": do},
+                    "worker_packet": {"work": work},
                     "clarification_already_used": False,
                 },
             ),
@@ -221,7 +224,9 @@ class StepLoop:
             task_slug=active["slug"],
             follow_up=True,
         )
-        clarified_do = self._merge_do(do, self._worker_packet(clarification))
+        clarified_work = self._merge_work(
+            work, self._worker_packet(clarification)
+        )
         follow_up = self.harness.invoke(
             "validator",
             self._prompt(
@@ -229,7 +234,7 @@ class StepLoop:
                 {
                     "task": active,
                     "goal": state["goal"],
-                    "worker_packet": {"do": clarified_do},
+                    "worker_packet": {"work": clarified_work},
                     "clarification_already_used": True,
                 },
             ),
@@ -241,8 +246,8 @@ class StepLoop:
             raise TransitionError(
                 "validator requested more than one clarification"
             )
-        do.clear()
-        do.update(clarified_do)
+        work.clear()
+        work.update(clarified_work)
         return validation
 
     def _assessor_clarifications(
@@ -286,19 +291,22 @@ class StepLoop:
     @staticmethod
     def _worker_packet(worker: Any) -> dict[str, Any]:
         if not isinstance(worker, dict) or not isinstance(
-            worker.get("do"), dict
+            worker.get("work"), dict
         ):
-            raise StateError("worker response must contain do")
-        do = cast(dict[str, Any], deepcopy(worker["do"]))
-        if not isinstance(do.get("summary"), str) or not do["summary"].strip():
-            raise StateError("worker.do.summary is required")
-        if not isinstance(do.get("evidence"), list) or not all(
-            isinstance(item, str) and item.strip() for item in do["evidence"]
+            raise StateError("worker response must contain work")
+        work = cast(dict[str, Any], deepcopy(worker["work"]))
+        if (
+            not isinstance(work.get("summary"), str)
+            or not work["summary"].strip()
+        ):
+            raise StateError("worker.work.summary is required")
+        if not isinstance(work.get("evidence"), list) or not all(
+            isinstance(item, str) and item.strip() for item in work["evidence"]
         ):
             raise StateError(
-                "worker.do.evidence must be a list of non-empty strings"
+                "worker.work.evidence must be a list of non-empty strings"
             )
-        return do
+        return work
 
     @staticmethod
     def _validator_packet(validator: Any) -> tuple[dict[str, Any], str | None]:
@@ -312,7 +320,7 @@ class StepLoop:
             "slug": "packet",
             "intent": "packet",
             "criteria": ["packet"],
-            "do": {"summary": "packet", "evidence": []},
+            "work": {"summary": "packet", "evidence": []},
             "validate": validation,
         }
         validate_task(packet, "validator response", True)
@@ -325,7 +333,7 @@ class StepLoop:
         return validation, request
 
     @staticmethod
-    def _merge_do(
+    def _merge_work(
         original: dict[str, Any], clarification: dict[str, Any]
     ) -> dict[str, Any]:
         return {
@@ -337,12 +345,12 @@ class StepLoop:
 
     @staticmethod
     def _completed_packet(
-        active: dict[str, Any], do: dict[str, Any], validation: dict[str, Any]
+        active: dict[str, Any], work: dict[str, Any], validation: dict[str, Any]
     ) -> dict[str, Any]:
         return validate_task(
             {
                 **deepcopy(active),
-                "do": deepcopy(do),
+                "work": deepcopy(work),
                 "validate": deepcopy(validation),
             },
             "completed packet",
@@ -366,7 +374,7 @@ class StepLoop:
                     "goal": state["goal"],
                     "lessons": state["lessons"],
                     "task": active,
-                    "worker_packet": {"do": packet["do"]},
+                    "worker_packet": {"work": packet["work"]},
                     "validator_packet": {"validate": packet["validate"]},
                     "clarifications": clarifications,
                     "clarification_already_used": clarification_used,

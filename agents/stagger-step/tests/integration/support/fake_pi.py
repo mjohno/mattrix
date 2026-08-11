@@ -16,7 +16,7 @@ def _finalizer_response(role: str, reply: object) -> object:
     if not isinstance(reply, dict):
         return reply
     if role == "worker" and isinstance(reply.get("packet"), dict):
-        return {"do": reply["packet"].get("do")}
+        return {"work": reply["packet"].get("work")}
     if role == "assessor" and "current_packet" in reply:
         return {
             "retro": reply.get("retro"),
