@@ -189,16 +189,20 @@ def approve(
     return changed
 
 
-def _afk_failure(prepared: dict[str, Any], outcomes: list[str]) -> bool:
+def _afk_stop(prepared: dict[str, Any], outcomes: list[str]) -> str | None:
     current = prepared.get("current")
     validation = current.get("validate") if isinstance(current, dict) else None
     result = validation.get("result") if isinstance(validation, dict) else None
     if not isinstance(result, str):
-        return False
+        return None
+    if result == "blocked":
+        return "blocked result"
     outcomes.append(result)
     del outcomes[:-10]
-    failures = sum(outcome in {"failure", "blocked"} for outcome in outcomes)
-    return failures > max(1, len(outcomes) / 10)
+    failures = sum(outcome == "failure" for outcome in outcomes)
+    if failures > max(1, len(outcomes) / 10):
+        return "failure threshold"
+    return None
 
 
 def run_session(
@@ -219,10 +223,10 @@ def run_session(
                 write_atomic(path, prepared)
             _raise_if_interrupt_requested()
             emit_gate(loop.gate(prepared))
-            if afk and _afk_failure(prepared, outcomes):
+            if afk and (stop_reason := _afk_stop(prepared, outcomes)):
                 afk = False
                 logger.info(
-                    "AFK disabled by failure threshold; returning to manual mode"
+                    "AFK disabled by %s; returning to manual mode", stop_reason
                 )
             if afk:
                 _raise_if_interrupt_requested()

@@ -71,6 +71,38 @@ def test_ctrl_c_during_afk_returns_to_a_manual_unapproved_gate(cli):
     assert "AFK disabled by Ctrl+C; returning to manual mode" in result.stderr
 
 
+def test_afk_stops_at_the_first_blocked_gate(cli):
+    run, step, _ = cli
+    first = complete("first")
+    first["validate"]["result"] = "blocked"
+    first_assessed = assessor("first")
+    first_assessed["current_packet"] = first
+    replies = {
+        "coordinator": [coordinator("first"), coordinator(None)],
+        "worker": [{"packet": first}],
+        "assessor": [first_assessed],
+    }
+
+    result = run(
+        "--log-level",
+        "INFO",
+        "init",
+        "--goal",
+        "Goal",
+        "--session",
+        input="afk\nbreak\n",
+        replies=replies,
+    )
+
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["history"] == []
+    assert saved["current"]["slug"] == "first"
+    assert saved["current"]["validate"]["result"] == "blocked"
+    assert "AFK automatically approved the current gate" not in result.stderr
+    assert "AFK disabled by blocked result; returning to manual mode" in result.stderr
+
+
 def test_afk_allows_one_failure_then_returns_to_manual_break_gate(cli):
     run, step, _ = cli
     first = complete("first")
@@ -111,4 +143,4 @@ def test_afk_allows_one_failure_then_returns_to_manual_break_gate(cli):
     assert (
         result.stderr.count("AFK automatically approved the current gate") == 1
     )
-    assert "AFK disabled by failure threshold" in result.stderr
+    assert "AFK disabled by blocked result; returning to manual mode" in result.stderr

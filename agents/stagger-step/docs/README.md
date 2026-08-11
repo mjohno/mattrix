@@ -49,7 +49,7 @@ No-op packets advance without an empty commit. A commit failure leaves the packe
 
 ## AFK session mode
 
-In `session`, enter `afk` at a manual gate to approve that gate and automatically approve later gates in the same process. AFK is never written to STEP state. It returns to manual mode when more than one of the last ten completed tasks is `failure` or `blocked`; before ten tasks complete, one such result is allowed. `partial` does not stop it. Ctrl+C while AFK also returns to manual mode. From manual mode, `break` exits the session and Ctrl+C keeps the normal crash/debug behavior.
+In `session`, enter `afk` at a manual gate to approve that gate and automatically approve later gates in the same process. AFK is never written to STEP state. A `blocked` result returns AFK to manual mode at the next gate. It also returns to manual mode when more than one of the last ten completed tasks is `failure`; before ten tasks complete, one failure is allowed. `partial` does not stop it. Ctrl+C while AFK also returns to manual mode. From manual mode, `break` exits the session and Ctrl+C keeps the normal crash/debug behavior.
 
 ## State and gates
 
