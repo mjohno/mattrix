@@ -23,14 +23,14 @@ Use-When: Use when work will continue in a new session or by another agent.
 
 ## 2. Processes
 1. Use the supplied focus as `Next-Session Focus`. Otherwise, use the current goal.
-2. Infer a new short kebab-case slug from the focus or goal. If `handoff-<slug>.md` exists, append `-1` to the slug.
-3. Build a document titled `# Handoff - <slug>` with `Next-Session Focus`, `Goal`, `Current State`, `Completed`, `Next`, `Decisions`, `Open Questions`, `References`, and `Suggested Skills` sections.
-4. Capture only information needed to continue work. Reference existing artifacts by path or URL. Do not copy them. Remove secrets and personal data.
-5. If a change path exists, write `handoff-<slug>.md` there. Otherwise, return the document in chat only.
+2. Infer a new short kebab-case slug from the focus or goal. If `HANDOFF-<slug>.md` exists, append `-1` to the slug.
+3. Build a document titled `# Handoff: <Title>` with `HANDOFF_ID: HANDOFF-<slug>`, `Source`, and `Purpose` metadata. Add `Next-Session Focus`, `Goal`, `Current State`, `Completed`, `Next`, `Decisions`, `Open Questions`, `References`, and `Suggested Skills` sections.
+4. Capture only information needed to continue work. Reference existing artifacts by path, URL, or stable ID. Do not copy them. Remove secrets and personal data.
+5. If a change path exists, write `HANDOFF-<slug>.md` there. Otherwise, return the document in chat only.
 
 ## 3. Outputs
 - A handoff document with the required sections.
-- `<change-path>/handoff-<slug>.md` when a change path is supplied.
+- `<change-path>/HANDOFF-<slug>.md` when a change path is supplied.
 - Copy-ready handoff Markdown when no change path is supplied.
 
 ## 4. Next Steps
