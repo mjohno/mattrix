@@ -10,6 +10,14 @@ import yaml
 
 SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 RESULTS = {"success", "partial", "failure", "blocked"}
+ROLES = ("coordinator", "worker", "validator", "assessor")
+THINKING_LEVELS = ("off", "minimal", "low", "medium", "high", "xhigh", "max")
+DEFAULT_ROLE_SETTINGS = {
+    "coordinator": {"model": "gpt-5.6-terra", "thinking": "medium"},
+    "worker": {"model": "gpt-5.6-luna", "thinking": "medium"},
+    "validator": {"model": "gpt-5.6-luna", "thinking": "medium"},
+    "assessor": {"model": "gpt-5.6-luna", "thinking": "medium"},
+}
 
 
 class StateError(ValueError):
@@ -77,6 +85,36 @@ def is_completed(step: dict[str, Any]) -> bool:
     return "work" in step or "validate" in step
 
 
+def default_role_settings() -> dict[str, dict[str, str]]:
+    return {
+        role: settings.copy()
+        for role, settings in DEFAULT_ROLE_SETTINGS.items()
+    }
+
+
+def validate_role_settings(value: Any) -> dict[str, dict[str, str]]:
+    if not isinstance(value, dict) or set(value) != set(ROLES):
+        raise StateError("role_settings must contain each STEP role")
+    for role in ROLES:
+        settings = value[role]
+        if not isinstance(settings, dict):
+            raise StateError(f"role_settings.{role} must be a mapping")
+        if set(settings) != {"model", "thinking"}:
+            raise StateError(
+                f"role_settings.{role} must contain model and thinking"
+            )
+        if (
+            not isinstance(settings["model"], str)
+            or not settings["model"].strip()
+        ):
+            raise StateError(
+                f"role_settings.{role}.model must be a non-empty string"
+            )
+        if settings["thinking"] not in THINKING_LEVELS:
+            raise StateError(f"role_settings.{role}.thinking is invalid")
+    return value
+
+
 def validate_state(state: Any) -> dict[str, Any]:
     if not isinstance(state, dict):
         raise StateError("STEP file must be a mapping")
@@ -84,6 +122,7 @@ def validate_state(state: Any) -> dict[str, Any]:
         raise StateError("version must be 1")
     if not isinstance(state.get("goal"), str) or not state["goal"].strip():
         raise StateError("goal is required")
+    validate_role_settings(state.get("role_settings"))
     if "change_path" not in state:
         raise StateError("change_path is required")
     change_path = state["change_path"]
@@ -171,6 +210,7 @@ def create_state(
     return {
         "version": 1,
         "goal": goal,
+        "role_settings": default_role_settings(),
         "change_path": change_path,
         "commit_mode": commit_mode,
         "packet_history": packet_history,

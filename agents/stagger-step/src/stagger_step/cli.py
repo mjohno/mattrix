@@ -15,9 +15,17 @@ from .diagnostics import write_diagnostics
 from .git import CommitMode
 from .harness import PiRpcHarness
 from .loop import StepLoop, TransitionError
-from .normalizer import ROLES, normalize_packet
+from .normalizer import normalize_packet
 from .render import render_gate
-from .state import StateError, create_state, load_state, write_atomic
+from .state import (
+    ROLES,
+    THINKING_LEVELS,
+    StateError,
+    create_state,
+    load_state,
+    validate_role_settings,
+    write_atomic,
+)
 
 logger = logging.getLogger("stagger_step.cli")
 _INTERRUPT_REQUESTED = threading.Event()
@@ -76,6 +84,16 @@ def resolve_change_path(step_path: Path, value: str | None) -> str | None:
     return str(path)
 
 
+def role_settings_from(args: argparse.Namespace) -> dict[str, dict[str, str]]:
+    return {
+        role: {
+            "model": getattr(args, f"{role}_model"),
+            "thinking": getattr(args, f"{role}_thinking"),
+        }
+        for role in ROLES
+    }
+
+
 def select_commit_mode(
     state: dict[str, Any], step_path: Path, cwd: Path, commit_off: bool
 ) -> CommitMode | None:
@@ -110,6 +128,24 @@ def parser() -> argparse.ArgumentParser:
     init = sub.add_parser("init", help="create a new STEP state")
     init.add_argument("--goal", required=True)
     init.add_argument("--lesson", action="append", default=[])
+    defaults = {
+        "coordinator": "gpt-5.6-terra",
+        "worker": "gpt-5.6-luna",
+        "validator": "gpt-5.6-luna",
+        "assessor": "gpt-5.6-luna",
+    }
+    for role in ROLES:
+        init.add_argument(
+            f"--{role}-model",
+            default=defaults[role],
+            help=f"Pi model for the {role} role (default: {defaults[role]})",
+        )
+        init.add_argument(
+            f"--{role}-thinking",
+            choices=THINKING_LEVELS,
+            default="medium",
+            help=f"Pi thinking level for the {role} role (default: medium)",
+        )
     init.add_argument(
         "--packet_history",
         type=int,
@@ -315,25 +351,32 @@ def main(argv: list[str] | None = None) -> int:
             change_path = resolve_change_path(path, args.change)
             if args.packet_history <= 0:
                 raise StateError("packet_history must be a positive integer")
+            role_settings = role_settings_from(args)
+            validate_role_settings(role_settings)
             commit = CommitMode(path, Path.cwd()) if args.commit else None
             if commit is not None:
                 commit.begin()
+            state = create_state(
+                args.goal,
+                args.lesson,
+                change_path=args.change,
+                commit_mode=args.commit,
+                packet_history=args.packet_history,
+            )
+            state["role_settings"] = role_settings
+            logger.info(
+                "role settings initialized role_settings=%s",
+                state["role_settings"],
+            )
             loop = StepLoop(
                 PiRpcHarness(
                     session_enabled=args.harness_session == "on",
                     session_scope=str(path.resolve()),
+                    role_settings=state["role_settings"],
                 ),
                 change_path,
             )
-            state = loop.bootstrap(
-                create_state(
-                    args.goal,
-                    args.lesson,
-                    change_path=args.change,
-                    commit_mode=args.commit,
-                    packet_history=args.packet_history,
-                )
-            )
+            state = loop.bootstrap(state)
             write_atomic(path, state)
             if args.session:
                 return run_session(path, state, loop, commit)
@@ -358,6 +401,7 @@ def main(argv: list[str] | None = None) -> int:
             PiRpcHarness(
                 session_enabled=args.harness_session == "on",
                 session_scope=str(path.resolve()),
+                role_settings=state["role_settings"],
             ),
             change_path,
         )

@@ -4,6 +4,7 @@ import subprocess
 
 import pytest
 import yaml
+from stagger_step.state import default_role_settings
 
 from .conftest import assessor, calls, complete, coordinator, state
 
@@ -144,6 +145,7 @@ def test_session_commit_off_preserves_existing_packet_commit_state(git_cli):
     configured = {
         "version": 1,
         "goal": "Goal",
+        "role_settings": default_role_settings(),
         "change_path": None,
         "commit_mode": True,
         "packet_history": 5,

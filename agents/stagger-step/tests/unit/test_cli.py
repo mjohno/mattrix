@@ -39,6 +39,37 @@ def test_init_packet_history_defaults_to_three_and_accepts_a_positive_value():
     )
 
 
+def test_init_role_settings_default_and_accept_per_role_overrides():
+    defaults = parser().parse_args(["init", "--goal", "Goal"])
+
+    assert defaults.coordinator_model == "gpt-5.6-terra"
+    assert defaults.coordinator_thinking == "medium"
+    assert defaults.worker_model == "gpt-5.6-luna"
+    assert defaults.validator_thinking == "medium"
+    assert defaults.assessor_model == "gpt-5.6-luna"
+
+    selected = parser().parse_args(
+        [
+            "init",
+            "--goal",
+            "Goal",
+            "--coordinator-model",
+            "coordinator-model",
+            "--worker-thinking",
+            "high",
+            "--validator-model",
+            "validator-model",
+            "--assessor-thinking",
+            "low",
+        ]
+    )
+
+    assert selected.coordinator_model == "coordinator-model"
+    assert selected.worker_thinking == "high"
+    assert selected.validator_model == "validator-model"
+    assert selected.assessor_thinking == "low"
+
+
 def test_disabled_persisted_commit_mode_selects_no_commit_collaborator(
     tmp_path,
 ):

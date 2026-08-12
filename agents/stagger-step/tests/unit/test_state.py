@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 import pytest
-from stagger_step.state import StateError, create_state, validate_state
+from stagger_step.state import (
+    StateError,
+    create_state,
+    default_role_settings,
+    validate_state,
+)
 
 TASK = {"slug": "task", "intent": "Task", "criteria": ["done"]}
 DONE = {
@@ -15,6 +20,7 @@ def test_state_rejects_recommendation_not_in_next():
     state = {
         "version": 1,
         "goal": "Goal",
+        "role_settings": default_role_settings(),
         "change_path": None,
         "commit_mode": False,
         "packet_history": 5,
@@ -33,6 +39,7 @@ def test_state_rejects_retired_do_packet():
     state = {
         "version": 1,
         "goal": "Goal",
+        "role_settings": default_role_settings(),
         "change_path": None,
         "commit_mode": False,
         "packet_history": 5,
@@ -58,6 +65,7 @@ def test_state_accepts_final_signoff_and_rejects_ambiguous_terminal():
     signoff = {
         "version": 1,
         "goal": "Goal",
+        "role_settings": default_role_settings(),
         "change_path": None,
         "commit_mode": False,
         "packet_history": 5,
@@ -78,6 +86,7 @@ def test_state_rejects_null_terminal_recommendation():
     state = {
         "version": 1,
         "goal": "Goal",
+        "role_settings": default_role_settings(),
         "change_path": None,
         "commit_mode": False,
         "packet_history": 5,
@@ -96,12 +105,31 @@ def test_state_rejects_null_terminal_recommendation():
         validate_state(state)
 
 
+def test_state_requires_complete_valid_role_settings():
+    state = create_state("Goal")
+    del state["role_settings"]["worker"]
+
+    with pytest.raises(
+        StateError, match="role_settings must contain each STEP role"
+    ):
+        validate_state(state)
+
+    state = create_state("Goal")
+    state["role_settings"]["worker"]["thinking"] = "unsupported"
+
+    with pytest.raises(
+        StateError, match="role_settings.worker.thinking is invalid"
+    ):
+        validate_state(state)
+
+
 def test_fresh_state_has_root_change_commit_and_packet_history_fields():
     state = create_state("Goal", change_path="artifacts", commit_mode=True)
 
     assert state["change_path"] == "artifacts"
     assert state["commit_mode"] is True
     assert state["packet_history"] == 3
+    assert state["role_settings"] == default_role_settings()
 
 
 @pytest.mark.parametrize(

@@ -4,6 +4,7 @@ import json
 import re
 
 import pytest
+import yaml
 from stagger_step.harness import HarnessError, PiRpcHarness
 from stagger_step.state import load_state
 
@@ -31,6 +32,12 @@ def test_init_persists_ranked_next_and_recommendation(cli):
     saved = state(step)
     assert saved["history"] == [] and saved["current"] is None
     assert saved["packet_history"] == 3
+    assert saved["role_settings"] == {
+        "coordinator": {"model": "gpt-5.6-terra", "thinking": "medium"},
+        "worker": {"model": "gpt-5.6-luna", "thinking": "medium"},
+        "validator": {"model": "gpt-5.6-luna", "thinking": "medium"},
+        "assessor": {"model": "gpt-5.6-luna", "thinking": "medium"},
+    }
     assert (
         saved["next"][0]["slug"] == "first" and saved["recommended"] == "first"
     )
@@ -49,6 +56,120 @@ def test_init_persists_selected_packet_history(cli):
 
     assert result.returncode == 0, result.stderr
     assert state(step)["packet_history"] == 2
+
+
+def test_init_rejects_empty_role_model_before_pi_invocation(cli):
+    run, step, log = cli
+    result = run(
+        "init",
+        "--goal",
+        "Goal",
+        "--coordinator-model",
+        " ",
+        replies=scenario("fresh"),
+    )
+
+    assert result.returncode == 2
+    assert (
+        "role_settings.coordinator.model must be a non-empty string"
+        in result.stderr
+    )
+    assert not step.exists()
+    assert not log.exists()
+
+
+def test_role_settings_are_persisted_used_once_logged_and_not_repeated(cli):
+    run, step, log = cli
+    result = run(
+        "--log-level",
+        "INFO",
+        "init",
+        "--goal",
+        "Goal",
+        "--coordinator-model",
+        "coordinator-model",
+        "--worker-model",
+        "worker-model",
+        "--worker-thinking",
+        "high",
+        "--validator-model",
+        "validator-model",
+        "--validator-thinking",
+        "low",
+        "--assessor-model",
+        "assessor-model",
+        "--assessor-thinking",
+        "xhigh",
+        replies=scenario("fresh"),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stderr.count("role settings initialized") == 1
+    assert state(step)["role_settings"] == {
+        "coordinator": {"model": "coordinator-model", "thinking": "medium"},
+        "worker": {"model": "worker-model", "thinking": "high"},
+        "validator": {"model": "validator-model", "thinking": "low"},
+        "assessor": {"model": "assessor-model", "thinking": "xhigh"},
+    }
+
+    result = run(
+        "--log-level",
+        "INFO",
+        "gate",
+        "approved",
+        replies=scenario("complete_continue"),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "role settings initialized" not in result.stderr
+    settings = state(step)["role_settings"]
+    for call in calls(log):
+        role = call["role"]
+        argv = call["argv"]
+        assert argv[argv.index("--model") + 1] == settings[role]["model"]
+        assert argv[argv.index("--thinking") + 1] == settings[role]["thinking"]
+
+
+def test_pi_rpc_rejection_is_critical_and_leaves_no_initialized_step(cli):
+    run, step, _ = cli
+    result = run(
+        "init",
+        "--goal",
+        "Goal",
+        replies={"rpc_errors": {"coordinator": "Model not found: rejected"}},
+    )
+
+    assert result.returncode == 3
+    assert "CRITICAL" in result.stderr
+    assert "role=coordinator" in result.stderr
+    assert "model=gpt-5.6-terra" in result.stderr
+    assert "thinking=medium" in result.stderr
+    assert "Model not found: rejected" in result.stderr
+    assert not step.exists()
+
+
+def test_pi_thinking_rejection_preserves_persisted_step(cli):
+    run, step, _ = cli
+    init(run)
+    configured = state(step)
+    configured["current"] = configured["next"].pop(0)
+    configured["recommended"] = None
+    configured["role_settings"]["worker"]["thinking"] = "high"
+    step.write_text(yaml.safe_dump(configured, sort_keys=False))
+    before = step.read_bytes()
+
+    result = run(
+        "gate",
+        replies={"startup_errors": {"worker": "Thinking level rejected"}},
+    )
+
+    assert result.returncode == 3
+    assert "CRITICAL" in result.stderr
+    assert "role=worker" in result.stderr
+    assert "model=gpt-5.6-luna" in result.stderr
+    assert "thinking=high" in result.stderr
+    assert "Thinking level rejected" in result.stderr
+    assert step.read_bytes() == before
 
 
 def test_init_rejects_non_positive_packet_history(cli):

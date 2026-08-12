@@ -62,6 +62,19 @@ def main() -> int:
             + "\n"
         )
         stream.flush()
+    startup_error = scenario.get("startup_errors", {}).get(role)
+    if isinstance(startup_error, str):
+        print(startup_error, file=sys.stderr, flush=True)
+        return 2
+    rpc_error = scenario.get("rpc_errors", {}).get(role)
+    if isinstance(rpc_error, str):
+        print(
+            json.dumps(
+                {"type": "response", "success": False, "error": rpc_error}
+            ),
+            flush=True,
+        )
+        return 0
     replies = scenario.get(role)
     if replies is None and role == "validator":
         # Legacy scenarios predate the independent Validator phase. Preserve

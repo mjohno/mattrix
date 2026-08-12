@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 from stagger_step.loop import StepLoop
+from stagger_step.state import default_role_settings
 
 pytestmark = pytest.mark.integration
 
@@ -21,6 +22,7 @@ def test_approval_consumes_the_promoted_step_and_clears_recommendation():
     state = {
         "version": 1,
         "goal": "Goal",
+        "role_settings": default_role_settings(),
         "change_path": None,
         "commit_mode": False,
         "packet_history": 5,
@@ -49,6 +51,7 @@ def test_gate_exposes_next_steps_as_proposals():
     state = {
         "version": 1,
         "goal": "Goal",
+        "role_settings": default_role_settings(),
         "change_path": None,
         "commit_mode": False,
         "packet_history": 5,

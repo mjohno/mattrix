@@ -17,10 +17,14 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from .prompts import build_finalization_prompt
-from .state import StateError
+from .state import StateError, default_role_settings
 
 
 class HarnessError(RuntimeError):
+    pass
+
+
+class PiConfigurationError(HarnessError):
     pass
 
 
@@ -108,6 +112,9 @@ class PiRpcHarness:
         "-m",
         "stagger_step.cli",
     )
+    role_settings: dict[str, dict[str, str]] = field(
+        default_factory=default_role_settings
+    )
     _role_sessions: dict[str, RoleSession] = field(
         default_factory=dict, init=False
     )
@@ -188,6 +195,8 @@ class PiRpcHarness:
                     task_slug,
                     idle_timeout_seconds,
                 )
+            except PiConfigurationError:
+                raise
             except (PacketNormalizationError, FinalizerProtocolError) as exc:
                 if finalization_retried:
                     raise
@@ -350,6 +359,26 @@ class PiRpcHarness:
             )
         return _json_mapping(result.stdout)
 
+    def _settings_for(self, role: str) -> dict[str, str]:
+        try:
+            return self.role_settings[role]
+        except KeyError as exc:
+            raise HarnessError(f"missing role settings for {role}") from exc
+
+    @staticmethod
+    def _configuration_error(
+        role: str, settings: dict[str, str], stderr: str
+    ) -> PiConfigurationError | None:
+        detail = stderr.strip()
+        if not detail or not re.search(r"\b(model|thinking)\b", detail, re.I):
+            return None
+        return PiConfigurationError(
+            "Pi rejected role settings "
+            f"role={role} model={settings['model']} "
+            f"thinking={settings['thinking']}: {detail}. "
+            "Correct the Pi model configuration or create a new STEP workflow."
+        )
+
     def _invoke_once(
         self,
         role: str,
@@ -358,12 +387,17 @@ class PiRpcHarness:
         task_slug: str,
         idle_timeout_seconds: float,
     ) -> dict[str, Any]:
+        settings = self._settings_for(role)
         command = [
             *self.command,
             "--extension",
             str(self._extension_path()),
             "--step-role",
             role,
+            "--model",
+            settings["model"],
+            "--thinking",
+            settings["thinking"],
         ]
         session_id = session.session_id
         if self.session_enabled:
@@ -567,9 +601,13 @@ class PiRpcHarness:
                     settled = True
                     break
                 if event_type == "response" and event.get("success") is False:
-                    raise HarnessError(
-                        event.get("error", "RPC rejected request")
+                    error = str(event.get("error", "RPC rejected request"))
+                    configuration_error = self._configuration_error(
+                        role, settings, error
                     )
+                    if configuration_error is not None:
+                        raise configuration_error
+                    raise HarnessError(error)
                 if (
                     event_type == "tool_execution_end"
                     and event.get("toolName") == f"stagger_step_finalize_{role}"
@@ -624,6 +662,13 @@ class PiRpcHarness:
                 session_id,
             )
             return payload
+        except (OSError, HarnessError) as exc:
+            configuration_error = self._configuration_error(
+                role, settings, self._drain_pipe(stderr_lines)
+            )
+            if configuration_error is not None:
+                raise configuration_error from exc
+            raise
         finally:
             self._terminate_process(proc, stderr_lines)
 

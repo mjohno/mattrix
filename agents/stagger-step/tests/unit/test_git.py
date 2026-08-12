@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 from stagger_step.git import CommitMode
-from stagger_step.state import StateError
+from stagger_step.state import StateError, default_role_settings
 
 
 def git(path: Path, *args: str) -> str:
@@ -112,6 +112,7 @@ def test_cli_approval_commits_before_persisting_history(tmp_path):
             {
                 "version": 1,
                 "goal": "Commit the packet",
+                "role_settings": default_role_settings(),
                 "change_path": None,
                 "commit_mode": True,
                 "packet_history": 5,
