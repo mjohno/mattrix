@@ -69,13 +69,27 @@ class StepLoop:
         self.harness = harness
         self.change_path = change_path
 
+    def _with_transition_usage(self, state: dict[str, Any]) -> dict[str, Any]:
+        consume = getattr(self.harness, "consume_transition_usage", None)
+        if consume is None:
+            return state
+        usage = consume()
+        token_usage = state["token_usage"]
+        for key in ("input", "output", "cache_read", "cache_write", "cost"):
+            token_usage[key] += usage[key]
+        token_usage["total"] = sum(
+            token_usage[key]
+            for key in ("input", "output", "cache_read", "cache_write")
+        )
+        return state
+
     def bootstrap(self, state: dict[str, Any]) -> dict[str, Any]:
         self.harness.begin_transition()
         if state["current"] is not None or state["next"]:
             raise TransitionError("state is already bootstrapped")
         proposed = self._propose(state, revision=None)
         proposed["lessons"] = _dedupe([*state["lessons"], *proposed["lessons"]])
-        return validate_state(proposed)
+        return validate_state(self._with_transition_usage(proposed))
 
     def prepare(self, state: dict[str, Any]) -> dict[str, Any]:
         """Run Do, Check, Act, and Plan once for one owner gate."""
@@ -120,13 +134,19 @@ class StepLoop:
         current["retro"] = assessor["retro"]
         prepared = deepcopy(state)
         prepared["current"] = current
-        return self._propose(prepared, revision=None)
+        return validate_state(
+            self._with_transition_usage(self._propose(prepared, revision=None))
+        )
 
     def revise(self, state: dict[str, Any], feedback: str) -> dict[str, Any]:
         if feedback in {"approved", "break"}:
             raise TransitionError("feedback must not be approved or break")
         prepared = self.prepare(state)
-        return self._propose(prepared, revision=feedback)
+        return validate_state(
+            self._with_transition_usage(
+                self._propose(prepared, revision=feedback)
+            )
+        )
 
     def approve(self, state: dict[str, Any]) -> dict[str, Any]:
         validate_state(state)

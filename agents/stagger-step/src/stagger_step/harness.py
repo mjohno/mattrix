@@ -121,6 +121,20 @@ class PiRpcHarness:
     _last_finalizer_details: dict[str, Any] | None = field(
         default=None, init=False
     )
+    _session_usage: dict[str, dict[str, float]] = field(
+        default_factory=dict, init=False
+    )
+    _transition_usage: dict[str, float] = field(
+        default_factory=lambda: {
+            "input": 0,
+            "output": 0,
+            "cache_read": 0,
+            "cache_write": 0,
+            "total": 0,
+            "cost": 0.0,
+        },
+        init=False,
+    )
 
     @property
     def last_finalizer_details(self) -> dict[str, Any] | None:
@@ -133,6 +147,88 @@ class PiRpcHarness:
     def begin_transition(self) -> None:
         """Forget Pi conversations before beginning a new STEP transition."""
         self._role_sessions.clear()
+        self._session_usage.clear()
+        self._transition_usage = {
+            "input": 0,
+            "output": 0,
+            "cache_read": 0,
+            "cache_write": 0,
+            "total": 0,
+            "cost": 0.0,
+        }
+
+    def consume_transition_usage(self) -> dict[str, float]:
+        """Return and clear newly collected usage for the active transition."""
+        usage = self._transition_usage.copy()
+        self._transition_usage = {
+            "input": 0,
+            "output": 0,
+            "cache_read": 0,
+            "cache_write": 0,
+            "total": 0,
+            "cost": 0.0,
+        }
+        return usage
+
+    def _record_session_stats(
+        self, role: str, task_slug: str, session: RoleSession, data: Any
+    ) -> None:
+        if not isinstance(data, dict) or not isinstance(
+            data.get("tokens"), dict
+        ):
+            raise HarnessError("get_session_stats returned invalid token data")
+        tokens = data["tokens"]
+        values = {
+            "input": tokens.get("input"),
+            "output": tokens.get("output"),
+            "cache_read": tokens.get("cacheRead"),
+            "cache_write": tokens.get("cacheWrite"),
+            "total": tokens.get("total"),
+            "cost": data.get("cost"),
+        }
+        token_keys = ("input", "output", "cache_read", "cache_write", "total")
+        if any(
+            not isinstance(values[key], int)
+            or isinstance(values[key], bool)
+            or values[key] < 0
+            for key in token_keys
+        ) or (
+            not isinstance(values["cost"], (int, float))
+            or isinstance(values["cost"], bool)
+            or values["cost"] < 0
+        ):
+            raise HarnessError(
+                "get_session_stats returned invalid usage values"
+            )
+        if values["total"] != sum(values[key] for key in token_keys[:-1]):
+            raise HarnessError(
+                "get_session_stats total does not match token components"
+            )
+        previous = self._session_usage.get(session.session_id, {})
+        delta = {
+            key: value - previous.get(key, 0) for key, value in values.items()
+        }
+        if any(value < 0 for value in delta.values()):
+            raise HarnessError("get_session_stats totals decreased")
+        self._session_usage[session.session_id] = values
+        for key, value in delta.items():
+            self._transition_usage[key] += value
+        context = data.get("contextUsage")
+        cache_base = values["input"] + values["cache_read"]
+        cache_ratio = values["cache_read"] / cache_base if cache_base else 0
+        logger.info(
+            "pi usage role=%s task=%s input=%s output=%s cache_read=%s cache_write=%s total=%s cost=%s cache_hit_ratio=%.4f context_usage=%s",
+            role,
+            task_slug,
+            values["input"],
+            values["output"],
+            values["cache_read"],
+            values["cache_write"],
+            values["total"],
+            values["cost"],
+            cache_ratio,
+            context,
+        )
 
     def _step_slug(self) -> str:
         stem = os.path.splitext(os.path.basename(self.session_scope))[0]
@@ -221,10 +317,8 @@ class PiRpcHarness:
                             f"{role} harness failure: {exc}"
                         ) from exc
                     # _invoke_once has already terminated and reaped this process.
-                    # Discard its Pi session and replay the unpersisted task in a
-                    # fresh session rather than continuing a potentially stuck one.
-                    self._role_sessions.pop(role, None)
-                    session = self._role_session(role, task_slug)
+                    # Reconnect with the same role session and replay the unpersisted
+                    # task so Pi retains its cumulative session accounting.
                     retry_prompt = prompt
                 elif attempt == len(_IDLE_TIMEOUT_SCHEDULE) - 1:
                     raise HarnessError(
@@ -450,6 +544,7 @@ class PiRpcHarness:
             )
             streamed_blocks: dict[tuple[str, int], list[str]] = {}
             saw_streamed_content = False
+            awaiting_stats = False
             while True:
                 idle_remaining = idle_timeout_seconds - (
                     time.monotonic() - last_activity
@@ -598,6 +693,33 @@ class PiRpcHarness:
                         event.get("errorMessage", "unknown"),
                     )
                 if event_type == "agent_settled":
+                    if awaiting_stats:
+                        raise HarnessError(
+                            "RPC settled while session stats were pending"
+                        )
+                    proc.stdin.write(
+                        json.dumps(
+                            {
+                                "id": str(uuid.uuid4()),
+                                "type": "get_session_stats",
+                            }
+                        )
+                        + "\n"
+                    )
+                    proc.stdin.flush()
+                    awaiting_stats = True
+                    continue
+                if (
+                    event_type == "response"
+                    and event.get("command") == "get_session_stats"
+                ):
+                    if not event.get("success"):
+                        raise HarnessError(
+                            str(event.get("error", "get_session_stats failed"))
+                        )
+                    self._record_session_stats(
+                        role, task_slug, session, event.get("data")
+                    )
                     settled = True
                     break
                 if event_type == "response" and event.get("success") is False:

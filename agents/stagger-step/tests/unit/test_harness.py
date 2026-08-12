@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 from stagger_step import harness
-from stagger_step.harness import HarnessError, PiRpcHarness
+from stagger_step.harness import HarnessError, PiRpcHarness, RoleSession
 
 
 def test_default_harness_command_uses_windows_pi_shim(monkeypatch):
@@ -116,6 +116,71 @@ def test_harness_retains_finalizer_details_but_parses_text(
             "proposals": [],
             "recommendation": "terminate",
         }
+    }
+
+
+def test_harness_records_only_consistent_integer_token_statistics():
+    adapter = PiRpcHarness()
+    session = RoleSession("session", "STEP-default-bootstrap-worker")
+    adapter._record_session_stats(
+        "worker",
+        "task",
+        session,
+        {
+            "tokens": {
+                "input": 10,
+                "output": 2,
+                "cacheRead": 3,
+                "cacheWrite": 1,
+                "total": 16,
+            },
+            "cost": 0.5,
+        },
+    )
+
+    assert adapter.consume_transition_usage() == {
+        "input": 10,
+        "output": 2,
+        "cache_read": 3,
+        "cache_write": 1,
+        "total": 16,
+        "cost": 0.5,
+    }
+
+
+@pytest.mark.parametrize(
+    "tokens",
+    (
+        {
+            "input": 1.5,
+            "output": 2,
+            "cacheRead": 3,
+            "cacheWrite": 0,
+            "total": 6,
+        },
+        {"input": 1, "output": 2, "cacheRead": 3, "cacheWrite": 0, "total": 99},
+    ),
+)
+def test_harness_rejects_invalid_token_statistics(tokens):
+    adapter = PiRpcHarness()
+
+    with pytest.raises(
+        HarnessError, match="invalid usage values|total does not match"
+    ):
+        adapter._record_session_stats(
+            "worker",
+            "task",
+            RoleSession("session", "STEP-default-bootstrap-worker"),
+            {"tokens": tokens, "cost": 0.5},
+        )
+
+    assert adapter.consume_transition_usage() == {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0,
+        "total": 0,
+        "cost": 0.0,
     }
 
 

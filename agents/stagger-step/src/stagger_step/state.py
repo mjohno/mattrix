@@ -115,6 +115,44 @@ def validate_role_settings(value: Any) -> dict[str, dict[str, str]]:
     return value
 
 
+def validate_token_usage(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict) or set(value) != {
+        "input",
+        "output",
+        "cache_read",
+        "cache_write",
+        "total",
+        "cost",
+    }:
+        raise StateError("token_usage must contain token totals and cost")
+    for key in ("input", "output", "cache_read", "cache_write", "total"):
+        item = value[key]
+        if not isinstance(item, int) or isinstance(item, bool) or item < 0:
+            raise StateError(
+                f"token_usage.{key} must be a non-negative integer"
+            )
+    cost = value["cost"]
+    if not isinstance(cost, (int, float)) or isinstance(cost, bool) or cost < 0:
+        raise StateError("token_usage.cost must be a non-negative number")
+    expected = sum(
+        value[key] for key in ("input", "output", "cache_read", "cache_write")
+    )
+    if value["total"] != expected:
+        raise StateError("token_usage.total must equal its token components")
+    return value
+
+
+def default_token_usage() -> dict[str, int | float | str]:
+    return {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0,
+        "total": 0,
+        "cost": 0.0,
+    }
+
+
 def validate_state(state: Any) -> dict[str, Any]:
     if not isinstance(state, dict):
         raise StateError("STEP file must be a mapping")
@@ -123,6 +161,7 @@ def validate_state(state: Any) -> dict[str, Any]:
     if not isinstance(state.get("goal"), str) or not state["goal"].strip():
         raise StateError("goal is required")
     validate_role_settings(state.get("role_settings"))
+    validate_token_usage(state.get("token_usage"))
     if "change_path" not in state:
         raise StateError("change_path is required")
     change_path = state["change_path"]
@@ -211,6 +250,7 @@ def create_state(
         "version": 1,
         "goal": goal,
         "role_settings": default_role_settings(),
+        "token_usage": default_token_usage(),
         "change_path": change_path,
         "commit_mode": commit_mode,
         "packet_history": packet_history,

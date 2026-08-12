@@ -43,6 +43,56 @@ def test_init_persists_ranked_next_and_recommendation(cli):
     )
 
 
+def test_init_persists_bootstrap_usage_and_logs_it_before_review(cli):
+    run, step, _ = cli
+
+    result = run(
+        "--log-level",
+        "INFO",
+        "init",
+        "--goal",
+        "Goal",
+        replies=scenario("fresh"),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert state(step)["token_usage"] == {
+        "input": 100,
+        "output": 50,
+        "cache_read": 25,
+        "cache_write": 0,
+        "total": 175,
+        "cost": 0.001,
+    }
+    assert result.stderr.index(
+        "pi usage role=coordinator"
+    ) < result.stderr.index("STEP token usage")
+
+
+def test_missing_context_usage_does_not_block_bootstrap(cli):
+    run, step, _ = cli
+    replies = scenario("fresh")
+    replies["session_stats"] = {
+        "coordinator": {
+            "tokens": {
+                "input": 4,
+                "output": 3,
+                "cacheRead": 2,
+                "cacheWrite": 1,
+                "total": 10,
+            },
+            "cost": 0.01,
+            "contextUsage": None,
+        }
+    }
+
+    result = run("init", "--goal", "Goal", replies=replies)
+
+    assert result.returncode == 0, result.stderr
+    assert state(step)["token_usage"]["total"] == 10
+    assert state(step)["token_usage"]["cost"] == 0.01
+
+
 def test_init_persists_selected_packet_history(cli):
     run, step, _ = cli
     result = run(
@@ -516,7 +566,7 @@ def test_wrong_finalizer_is_rejected_without_step_state_mutation(cli):
     }
 
 
-def test_idle_timeout_restarts_the_session_and_replays_task(
+def test_idle_timeout_reuses_the_session_and_replays_task(
     tmp_path, monkeypatch
 ):
     scenario_path = tmp_path / "scenario.json"
@@ -547,7 +597,7 @@ def test_idle_timeout_restarts_the_session_and_replays_task(
         attempt["argv"][attempt["argv"].index("--session-id") + 1]
         for attempt in attempts
     ]
-    assert len(set(session_ids)) == 3
+    assert len(set(session_ids)) == 1
 
 
 def test_activity_resets_the_rpc_idle_timeout(tmp_path, monkeypatch):

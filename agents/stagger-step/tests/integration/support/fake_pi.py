@@ -212,6 +212,42 @@ def main() -> int:
     )
     if reply != "unsettled":
         print(json.dumps({"type": "agent_settled"}), flush=True)
+        stats_request = json.loads(sys.stdin.readline())
+        if stats_request.get("type") == "get_session_stats":
+            stats = scenario.get("session_stats", {}).get(role, {})
+            tokens = stats.get(
+                "tokens",
+                {
+                    "input": 100,
+                    "output": 50,
+                    "cacheRead": 25,
+                    "cacheWrite": 0,
+                    "total": 175,
+                },
+            )
+            print(
+                json.dumps(
+                    {
+                        "id": stats_request.get("id"),
+                        "type": "response",
+                        "command": "get_session_stats",
+                        "success": True,
+                        "data": {
+                            "tokens": tokens,
+                            "cost": stats.get("cost", 0.001),
+                            "contextUsage": stats.get(
+                                "contextUsage",
+                                {
+                                    "tokens": 175,
+                                    "contextWindow": 200000,
+                                    "percent": 0.0875,
+                                },
+                            ),
+                        },
+                    }
+                ),
+                flush=True,
+            )
     return 0
 
 

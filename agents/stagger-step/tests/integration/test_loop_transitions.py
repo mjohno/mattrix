@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from stagger_step.loop import StepLoop
-from stagger_step.state import default_role_settings
+from stagger_step.state import default_role_settings, default_token_usage
 
 pytestmark = pytest.mark.integration
 
@@ -23,6 +23,7 @@ def test_approval_consumes_the_promoted_step_and_clears_recommendation():
         "version": 1,
         "goal": "Goal",
         "role_settings": default_role_settings(),
+        "token_usage": default_token_usage(),
         "change_path": None,
         "commit_mode": False,
         "packet_history": 5,
@@ -52,6 +53,7 @@ def test_gate_exposes_next_steps_as_proposals():
         "version": 1,
         "goal": "Goal",
         "role_settings": default_role_settings(),
+        "token_usage": default_token_usage(),
         "change_path": None,
         "commit_mode": False,
         "packet_history": 5,

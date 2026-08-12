@@ -60,6 +60,20 @@ def emit_gate(gate: dict[str, Any]) -> None:
     print(render_gate(gate), end="")
 
 
+def emit_review(loop: StepLoop, state: dict[str, Any]) -> None:
+    usage = state["token_usage"]
+    logger.info(
+        "STEP token usage input=%s output=%s cache_read=%s cache_write=%s total=%s cost=%s",
+        usage["input"],
+        usage["output"],
+        usage["cache_read"],
+        usage["cache_write"],
+        usage["total"],
+        usage["cost"],
+    )
+    emit_gate(loop.gate(state))
+
+
 def emit_response(response: str) -> None:
     """Append the submitted response and a review separator to stdout."""
     print(f"{response}\n\n---")
@@ -262,7 +276,7 @@ def run_session(
             prepared = prepare(state, loop, commit)
             _raise_if_interrupt_requested()
             _raise_if_interrupt_requested()
-            emit_gate(loop.gate(prepared))
+            emit_review(loop, prepared)
             if afk and (stop_reason := _afk_stop(prepared, outcomes)):
                 afk = False
                 logger.info(
@@ -380,7 +394,7 @@ def main(argv: list[str] | None = None) -> int:
             write_atomic(path, state)
             if args.session:
                 return run_session(path, state, loop, commit)
-            emit_gate(loop.gate(state))
+            emit_review(loop, state)
             return 0
         path = path_from(args)
         state = load_state(path)
@@ -406,12 +420,12 @@ def main(argv: list[str] | None = None) -> int:
             change_path,
         )
         if args.command == "validate":
-            emit_gate(loop.gate(state))
+            emit_review(loop, state)
             return 0
         if args.command == "gate":
             prepared = prepare(state, loop, commit)
             if args.response is None:
-                emit_gate(loop.gate(prepared))
+                emit_review(loop, prepared)
                 return 0
             if args.response == "approved":
                 changed = approve(prepared, loop, commit)
@@ -422,12 +436,12 @@ def main(argv: list[str] | None = None) -> int:
                     else changed
                 )
             elif not is_revision_feedback(args.response):
-                emit_gate(loop.gate(prepared))
+                emit_review(loop, prepared)
                 return 0
             else:
                 changed = loop.revise(prepared, args.response)
                 displayed = changed
-            emit_gate(loop.gate(displayed))
+            emit_review(loop, displayed)
             return 0
         return run_session(path, state, loop, commit)
     except (StateError, TransitionError) as exc:
