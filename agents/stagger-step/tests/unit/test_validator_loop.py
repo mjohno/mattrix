@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 
 import pytest
+import yaml
 from stagger_step.loop import StepLoop
 from stagger_step.state import create_state
 
@@ -277,3 +278,71 @@ def test_coordinator_receives_recovery_evidence_and_persists_ranked_proposals(
     assert action in coordinator_prompt
     assert [proposal["slug"] for proposal in prepared["next"]] == list(slugs)
     assert prepared["recommended"] == slugs[0]
+
+
+def test_coordinator_context_partitions_history_and_retains_revision_gate():
+    history = [
+        {
+            "slug": f"task-{index}",
+            "intent": f"Task {index}",
+            "criteria": ["done"],
+            "work": {"summary": f"Worked {index}", "evidence": []},
+            "validate": {
+                "result": "success",
+                "summary": f"Validated {index}",
+                "evidence": [],
+            },
+        }
+        for index in range(4)
+    ]
+    state = create_state("Goal", packet_history=2)
+    state.update(
+        {
+            "history": history,
+            "next": [
+                {"slug": "proposed", "intent": "Proposed", "criteria": ["done"]}
+            ],
+            "recommended": "proposed",
+        }
+    )
+    harness = ScriptHarness(
+        {
+            "coordinator": [
+                {
+                    "lessons": ["lesson"],
+                    "proposals": [
+                        {
+                            "slug": "future",
+                            "intent": "Future",
+                            "criteria": ["done"],
+                        }
+                    ],
+                    "recommendation": "future",
+                }
+            ]
+        }
+    )
+
+    StepLoop(harness)._propose(state, revision="Change the direction")
+
+    prompt = harness.prompts[0][1]
+    context = yaml.safe_load(
+        prompt.split("## Invocation context\n\n```yaml\n", 1)[1].split(
+            "\n```", 1
+        )[0]
+    )
+    assert "history" not in context
+    assert "actions" not in context
+    assert [packet["slug"] for packet in context["recent_history"]] == [
+        "task-2",
+        "task-3",
+    ]
+    assert context["history_index"] == [
+        {"slug": "task-0", "result": "success", "summary": "Validated 0"},
+        {"slug": "task-1", "result": "success", "summary": "Validated 1"},
+    ]
+    assert context["current_gate"] is None
+    assert context["proposals"] == state["next"]
+    assert context["recommended"] == "proposed"
+    assert context["completed"] is False
+    assert context["revision"] == "Change the direction"

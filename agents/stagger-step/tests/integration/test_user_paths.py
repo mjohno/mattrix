@@ -30,9 +30,35 @@ def test_init_persists_ranked_next_and_recommendation(cli):
     init(run)
     saved = state(step)
     assert saved["history"] == [] and saved["current"] is None
+    assert saved["packet_history"] == 3
     assert (
         saved["next"][0]["slug"] == "first" and saved["recommended"] == "first"
     )
+
+
+def test_init_persists_selected_packet_history(cli):
+    run, step, _ = cli
+    result = run(
+        "init",
+        "--goal",
+        "Goal",
+        "--packet_history",
+        "2",
+        replies=scenario("fresh"),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert state(step)["packet_history"] == 2
+
+
+def test_init_rejects_non_positive_packet_history(cli):
+    run, step, log = cli
+    result = run("init", "--goal", "Goal", "--packet_history", "0")
+
+    assert result.returncode == 2
+    assert "packet_history must be a positive integer" in result.stderr
+    assert not step.exists()
+    assert not log.exists()
 
 
 def test_init_preserves_supplied_lessons_when_bootstrap_omits_them(cli):

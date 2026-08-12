@@ -146,6 +146,7 @@ def test_session_commit_off_preserves_existing_packet_commit_state(git_cli):
         "goal": "Goal",
         "change_path": None,
         "commit_mode": True,
+        "packet_history": 5,
         "lessons": [],
         "history": [],
         "current": {**complete("first"), "commit_base": base},

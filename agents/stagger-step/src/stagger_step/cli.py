@@ -111,6 +111,12 @@ def parser() -> argparse.ArgumentParser:
     init.add_argument("--goal", required=True)
     init.add_argument("--lesson", action="append", default=[])
     init.add_argument(
+        "--packet_history",
+        type=int,
+        default=3,
+        help="number of detailed completed packets sent to the Coordinator (default: 3)",
+    )
+    init.add_argument(
         "--change",
         help="existing artifact directory, resolved relative to the STEP file",
     )
@@ -307,6 +313,8 @@ def main(argv: list[str] | None = None) -> int:
             if path.exists():
                 raise StateError("refusing to replace an existing STEP file")
             change_path = resolve_change_path(path, args.change)
+            if args.packet_history <= 0:
+                raise StateError("packet_history must be a positive integer")
             commit = CommitMode(path, Path.cwd()) if args.commit else None
             if commit is not None:
                 commit.begin()
@@ -323,6 +331,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.lesson,
                     change_path=args.change,
                     commit_mode=args.commit,
+                    packet_history=args.packet_history,
                 )
             )
             write_atomic(path, state)

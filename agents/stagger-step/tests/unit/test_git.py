@@ -114,6 +114,7 @@ def test_cli_approval_commits_before_persisting_history(tmp_path):
                 "goal": "Commit the packet",
                 "change_path": None,
                 "commit_mode": True,
+                "packet_history": 5,
                 "lessons": [],
                 "history": [],
                 "current": {

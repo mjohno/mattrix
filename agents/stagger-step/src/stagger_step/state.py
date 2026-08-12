@@ -93,6 +93,12 @@ def validate_state(state: Any) -> dict[str, Any]:
         raise StateError("change_path must be a non-empty string or null")
     if "commit_mode" not in state or not isinstance(state["commit_mode"], bool):
         raise StateError("commit_mode must be boolean")
+    if (
+        not isinstance(state.get("packet_history"), int)
+        or isinstance(state["packet_history"], bool)
+        or state["packet_history"] <= 0
+    ):
+        raise StateError("packet_history must be a positive integer")
     _strings(state.get("lessons"), "lessons")
     history = state.get("history")
     if not isinstance(history, list):
@@ -160,12 +166,14 @@ def create_state(
     lessons: list[str] | None = None,
     change_path: str | None = None,
     commit_mode: bool = False,
+    packet_history: int = 3,
 ) -> dict[str, Any]:
     return {
         "version": 1,
         "goal": goal,
         "change_path": change_path,
         "commit_mode": commit_mode,
+        "packet_history": packet_history,
         "lessons": lessons or [],
         "history": [],
         "current": None,

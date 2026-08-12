@@ -17,6 +17,7 @@ def test_state_rejects_recommendation_not_in_next():
         "goal": "Goal",
         "change_path": None,
         "commit_mode": False,
+        "packet_history": 5,
         "lessons": [],
         "history": [],
         "current": None,
@@ -34,6 +35,7 @@ def test_state_rejects_retired_do_packet():
         "goal": "Goal",
         "change_path": None,
         "commit_mode": False,
+        "packet_history": 5,
         "lessons": [],
         "history": [],
         "current": {
@@ -58,6 +60,7 @@ def test_state_accepts_final_signoff_and_rejects_ambiguous_terminal():
         "goal": "Goal",
         "change_path": None,
         "commit_mode": False,
+        "packet_history": 5,
         "lessons": [],
         "history": [],
         "current": DONE,
@@ -77,6 +80,7 @@ def test_state_rejects_null_terminal_recommendation():
         "goal": "Goal",
         "change_path": None,
         "commit_mode": False,
+        "packet_history": 5,
         "lessons": [],
         "history": [],
         "current": DONE,
@@ -92,15 +96,17 @@ def test_state_rejects_null_terminal_recommendation():
         validate_state(state)
 
 
-def test_fresh_state_has_root_change_and_commit_fields():
+def test_fresh_state_has_root_change_commit_and_packet_history_fields():
     state = create_state("Goal", change_path="artifacts", commit_mode=True)
 
     assert state["change_path"] == "artifacts"
     assert state["commit_mode"] is True
+    assert state["packet_history"] == 3
 
 
 @pytest.mark.parametrize(
-    "field, value", (("change_path", ""), ("commit_mode", "enabled"))
+    "field, value",
+    (("change_path", ""), ("commit_mode", "enabled"), ("packet_history", 0)),
 )
 def test_state_rejects_invalid_change_configuration(field, value):
     state = create_state("Goal")

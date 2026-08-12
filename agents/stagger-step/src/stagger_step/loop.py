@@ -73,7 +73,7 @@ class StepLoop:
         self.harness.begin_transition()
         if state["current"] is not None or state["next"]:
             raise TransitionError("state is already bootstrapped")
-        proposed = self._propose(state, actions=[], revision=None)
+        proposed = self._propose(state, revision=None)
         proposed["lessons"] = _dedupe([*state["lessons"], *proposed["lessons"]])
         return validate_state(proposed)
 
@@ -120,20 +120,13 @@ class StepLoop:
         current["retro"] = assessor["retro"]
         prepared = deepcopy(state)
         prepared["current"] = current
-        return self._propose(
-            prepared, actions=assessor["retro"]["actions"], revision=None
-        )
+        return self._propose(prepared, revision=None)
 
     def revise(self, state: dict[str, Any], feedback: str) -> dict[str, Any]:
         if feedback in {"approved", "break"}:
             raise TransitionError("feedback must not be approved or break")
         prepared = self.prepare(state)
-        actions = (
-            prepared["current"].get("retro", {}).get("actions", [])
-            if prepared["current"]
-            else []
-        )
-        return self._propose(prepared, actions=actions, revision=feedback)
+        return self._propose(prepared, revision=feedback)
 
     def approve(self, state: dict[str, Any]) -> dict[str, Any]:
         validate_state(state)
@@ -409,20 +402,17 @@ class StepLoop:
         }
 
     def _propose(
-        self, state: dict[str, Any], *, actions: list[str], revision: str | None
+        self, state: dict[str, Any], *, revision: str | None
     ) -> dict[str, Any]:
-        prior_gate = {
-            key: deepcopy(state[key])
-            for key in (
-                "goal",
-                "lessons",
-                "history",
-                "current",
-                "next",
-                "recommended",
-                "completed",
-            )
-        }
+        recent_history = deepcopy(state["history"][-state["packet_history"] :])
+        history_index = [
+            {
+                "slug": packet["slug"],
+                "result": packet["validate"]["result"],
+                "summary": packet["validate"]["summary"],
+            }
+            for packet in state["history"][: -state["packet_history"]]
+        ]
         response = self.harness.invoke(
             "coordinator",
             self._prompt(
@@ -430,10 +420,13 @@ class StepLoop:
                 {
                     "goal": state["goal"],
                     "lessons": state["lessons"],
-                    "history": state["history"],
-                    "actions": actions,
+                    "recent_history": recent_history,
+                    "history_index": history_index,
                     "revision": revision,
-                    "prior_gate": prior_gate,
+                    "current_gate": deepcopy(state["current"]),
+                    "proposals": deepcopy(state["next"]),
+                    "recommended": deepcopy(state["recommended"]),
+                    "completed": deepcopy(state["completed"]),
                 },
             ),
             task_slug=(state["current"] or {}).get("slug", "bootstrap"),

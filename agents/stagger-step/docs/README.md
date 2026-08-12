@@ -21,7 +21,7 @@ All generated Stagger Step build artifacts belong in the repository-root `build/
 ## CLI
 
 ```bash
-STEP_FILE=STEP-example.yaml python -m stagger_step.cli init --goal "Ship the change" --change artifacts --commit
+STEP_FILE=STEP-example.yaml python -m stagger_step.cli init --goal "Ship the change" --change artifacts --commit --packet_history 3
 STEP_FILE=STEP-example.yaml python -m stagger_step.cli validate
 printf '%s\n' 'packet: {work: {summary: Ran checks, evidence: []}}' | stagger-step normalize --role worker
 printf '%s\n' 'packet: {validate: {result: success, summary: Checks passed, evidence: []}, clarification_request: null}' | stagger-step normalize --role validator
@@ -68,9 +68,9 @@ In `session`, enter `afk` at a manual gate to approve that gate and automaticall
 
 Owner gates render as Markdown on stdout. They show the goal, applicable lessons and current-task results, ranked next tasks, and the recommendation, then prompt with `**Response:**`. Submitted responses are echoed and followed by `---` before the next review. The recommended next task is marked `**RECOMMENDED**`. Empty sections are omitted. YAML remains the persisted STEP state format.
 
-Persisted state contains `version`, `goal`, optional `change_path`, `commit_mode`, `lessons`, completed `history`, the approved `current` task, and `completed`. Worker, Validator, Assessor, and Coordinator outputs are intentionally never persisted before owner approval. A gate contains `goal`, `lessons`, `history`, `current`, ranked `proposals`, `recommended`, and `completed`.
+Persisted state contains `version`, `goal`, optional `change_path`, `commit_mode`, `packet_history`, `lessons`, completed `history`, the approved `current` task, and `completed`. `packet_history` is a positive integer that limits detailed completed packets supplied to the Coordinator; `init --packet_history` sets it and defaults to `3`. Worker, Validator, Assessor, and Coordinator outputs are intentionally never persisted before owner approval. A gate contains `goal`, `lessons`, `history`, `current`, ranked `proposals`, `recommended`, and `completed`.
 
-The coordinator selects durable gate lessons from existing lessons, completed history, and assessor actions. Approval validates the displayed gate, then atomically commits its completed current packet, coordinator-selected lessons, and recommended next packet (or terminal completion). The next `session` runs an approved active task through Worker → Validator → Assessor → Coordinator before returning to the human.
+The Coordinator context contains the goal, lessons, Owner revision, `current_gate` for the completed packet awaiting approval and persistence with its Assessor retro actions, plus top-level proposals, recommendation, and completion state. It includes detailed `recent_history` for the newest `packet_history` completed packets and concise oldest-to-newest `history_index` entries for all older completed tasks. The coordinator selects durable gate lessons from this context. Approval validates the displayed gate, then atomically commits its completed current packet, coordinator-selected lessons, and recommended next packet (or terminal completion). The next `session` runs an approved active task through Worker → Validator → Assessor → Coordinator before returning to the human.
 
 ## Pi RPC adapter discovery
 
