@@ -1,7 +1,7 @@
 ---
-type: <Concept Type | default undefined>
-title: <Concept Title>
-description: <One-line description>
-# resource: <optional URI or path>
-tags: []
+type: <Concept Type>
+# title: <Optional display title>
+# description: <Optional one-line summary>
+# resource: <Optional canonical URI>
+# tags: []
 ---

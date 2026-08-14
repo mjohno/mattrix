@@ -1,30 +1,32 @@
 ---
 name: knowledge-base
-description: Use when lookup or record needs the passive MKF contract.
+description: Use when lookup or record needs the MKF and OKF v0.2 knowledge contract.
 metadata:
   type: interface
   category: interface
   capabilities:
     - knowledge
     - mkf
+    - okf
 ---
 # knowledge-base
 
-Goal: Define the passive MKF concept, bundle, and manual discovery contract for knowledge-base consumers.
+Goal: Define passive MKF and OKF v0.2 bundle and concept contracts for knowledge-base consumers.
 Non-Goals: Do not perform lookup, resolve bundles operationally, write concepts, rebuild indexes, rank matches, or synthesize answers.
-Use-When: `input/lookup`, `output/record`, or another skill needs the shared MKF contract before reading, checking, reviewing, or writing knowledge.
+Use-When: `input/lookup`, `output/record`, or another skill needs the shared knowledge contract before reading, checking, reviewing, or writing knowledge.
 
 ## Selection
 
-Default: load only the compact knowledge-base contract.
+Default: load only the compact MKF contract.
 
 Also select:
-- `concept_frontmatter_template.md` when the caller asks to record or draft a concept.
-- `knowledge_checklist.md` when the caller asks to check MKF conformance.
-- `knowledge_quality.md` when the caller asks to review MKF quality.
+- `okf_v0_2_contract.md` when the caller needs OKF interoperability, provenance, trust, lifecycle, attested computations, cross-linking, logs, or broader OKF validation.
+- `concept_frontmatter_template.md` when the caller asks to record or draft a baseline concept.
+- `advanced_okf_frontmatter_template.md` when the caller explicitly asks to author advanced OKF metadata.
+- `knowledge_checklist.md` when the caller asks to check conformance.
+- `knowledge_quality.md` when the caller asks to review knowledge quality.
 
-If caller intent is unclear, assume default contract only and state the assumption.
-If requested knowledge-base work falls outside this interface, state the unsupported need and hand off to `input/lookup` or `output/record`.
+If caller intent is unclear, assume the MKF contract only and state the assumption. If requested work falls outside this interface, state the unsupported need and hand off to `input/lookup` or `output/record`.
 
 ## Context Loading
 
@@ -33,21 +35,23 @@ Load each selected package-local reference or asset into context. Do not paste, 
 When invoked alone, respond only with `Loaded: <relative path(s)>.` When composed with another task, continue that task without an interface-only response.
 
 Default path:
-- `references/knowledge_contract.md`
+- `references/mkf_contract.md`
 
 Optional paths:
+- `references/okf_v0_2_contract.md`
 - `assets/concept_frontmatter_template.md`
+- `assets/advanced_okf_frontmatter_template.md`
 - `references/knowledge_checklist.md`
 - `references/knowledge_quality.md`
 
 ## Next Steps
 
-- `input/lookup` — resolve bundles operationally, search MKF metadata, and load selected concepts.
-- `output/record` — create or update MKF concepts and rebuild generated indexes.
-- `output/check` — check MKF conformance with `knowledge_checklist.md`.
-- `output/review` — review MKF quality with `knowledge_quality.md`.
+- `input/lookup` — resolve bundles, search concepts, and load selected concepts.
+- `output/record` — create or update concepts and explicitly rebuild indexes when requested.
+- `output/check` — check conformance with `knowledge_checklist.md`.
+- `output/review` — review quality with `knowledge_quality.md`.
 
 ## Minimal Example
 
-Prompt: "Use the knowledge-base interface before recording a new concept."
-Direct invocation response: `Loaded: references/knowledge_contract.md.`
+Prompt: "Use the knowledge-base interface before recording a concept."
+Direct invocation response: `Loaded: references/mkf_contract.md.`

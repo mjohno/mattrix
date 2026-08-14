@@ -2,47 +2,42 @@
 
 ## Purpose
 
-Create or update one MKF concept safely, enforce the shared contract programmatically, and rebuild generated indexes.
+Create or update one MKF concept safely and validate the shared contract programmatically.
 
 ## Write Flow
 
 1. Resolve exactly one target bundle root from an explicit filesystem path or an unambiguous configured `MKF_PATH` root basename.
-2. Determine the target concept path and concept ID.
-3. Check for likely duplicates by:
-   - exact path / concept ID
-   - same frontmatter `title`
-   - same frontmatter `resource`
-4. Ask for confirmation before overwriting, resolving a collision, or making a substantial replacement.
-5. Draft or update Markdown while preserving unknown frontmatter keys.
-6. Run `scripts/validate_frontmatter.py` on changed concept files.
-7. Write only valid MKF concepts.
-8. Run `scripts/rebuild_indexes.py` on the affected bundle root.
-9. Report changed concept and index paths.
+2. Determine the target concept path and concept ID; reject `index.md` and `log.md` targets.
+3. Check likely duplicates by exact path/concept ID and, when present, equal `title` or `resource`.
+4. Ask before overwriting, resolving a collision, or making a substantial replacement.
+5. Draft or update Markdown while preserving unknown frontmatter keys and existing body content.
+6. Add `sources`, trust, lifecycle, or computation metadata only for an explicit advanced-OKF request.
+7. Run `scripts/validate_frontmatter.py` on changed concept files.
+8. Write only valid concepts.
+9. Run `scripts/rebuild_indexes.py --write` only when the user explicitly requests index rebuilding.
+10. Report changed concept paths and any explicitly requested index results.
 
 ## Scripts
 
-### Frontmatter validation
+### Concept validation
 
 ```sh
 python scripts/validate_frontmatter.py path/to/concept.md
 ```
 
-Use before finalizing a concept and after generating indexes.
-
-### Index rebuilding
+### Explicit index rebuilding
 
 ```sh
-python scripts/rebuild_indexes.py path/to/bundle
+python scripts/rebuild_indexes.py --write path/to/bundle
 ```
 
-Use after successful record writes/updates.
+Without `--write`, index rebuilding is a dry run.
 
 ## Templates
 
 Record owns producer templates:
 
 - `assets/undefined_concept_template.md`
-- `assets/index_concept_template.md`
 - `assets/checklist_concept_template.md`
 - `assets/llm_template_concept_template.md`
 - `assets/adr_concept_template.md`
@@ -51,8 +46,8 @@ Record owns producer templates:
 ## Safety Rules
 
 - Require an unambiguous target bundle root; never infer one from a multi-root `MKF_PATH`.
-- Do not add or maintain `timestamp`.
-- Do not treat `log.md` specially.
-- Do not overwrite non-generated `index.md` without explicit confirmation or a force workflow.
-- Preserve source citations when updating.
+- Do not create or update `index.md` or `log.md` as concepts.
+- Do not add or maintain legacy `timestamp` or `# Citations` conventions.
+- Preserve unknown frontmatter fields and existing body content.
+- An explicitly requested index rebuild may replace any existing index.
 - Stop and ask when `MKF_PATH` is unset, a selector is absent, or a root basename is ambiguous.

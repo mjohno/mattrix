@@ -1,8 +1,8 @@
 ---
 type: adr
-title: ADR-<NNNN>: <Decision Title>
-description: <One-line decision summary>
-tags: [adr, <search tags>]
+# title: ADR-<NNNN>: <Decision Title>
+# description: <Optional decision summary>
+# tags: [adr]
 ---
 
 # ADR-<NNNN>: <Decision Title>
@@ -14,15 +14,3 @@ tags: [adr, <search tags>]
 ## Decision
 
 <Decision and scope.>
-
-## Alternatives Considered
-
-- <Alternative> — <Why it was not selected.>
-
-## Consequences
-
-- <Consequence>
-
-# Citations
-
-<Include citations only when needed. Remove this section if no citations exist.>
