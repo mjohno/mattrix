@@ -9,6 +9,7 @@ Mattrix is Matt's agentic operating engine: reusable skills, an MKF knowledge-ba
 | `skills/` | Reusable skill packages, documentation, and the passive MKF contract at `skills/src/interface/knowledge-base/`. |
 | `kb/` | MKF implementation and KB-specific documentation. |
 | `agents/` | Agent products. `stagger-step` is the first product; `agents/rfc/` is intentionally deferred. |
+| `editors/` | Editor configuration. The initial Neovim configuration is documented in [`editors/nvim/README.md`](editors/nvim/README.md). |
 
 Dependencies flow from `agents` and `kb` to `skills`. No skill or KB component depends on an individual agent.
 
