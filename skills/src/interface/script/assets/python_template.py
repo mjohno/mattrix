@@ -16,6 +16,21 @@ import argparse
 import logging
 import sys
 
+# Required third-party dependencies must declare their distribution name and
+# version constraint. Handle only that dependency's missing module, name the
+# required constraint, and provide an install command. For example:
+#
+# try:
+#     import <MODULE_NAME>
+# except ModuleNotFoundError as error:
+#     if error.name != "<MODULE_NAME>":
+#         raise
+#     raise SystemExit(
+#         "This script requires <DISTRIBUTION_NAME><VERSION_CONSTRAINT>. "
+#         "Install it with: python -m pip install "
+#         "'<DISTRIBUTION_NAME><VERSION_CONSTRAINT>'"
+#     ) from error
+
 log = logging.getLogger(__name__)
 
 

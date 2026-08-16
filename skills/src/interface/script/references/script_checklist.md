@@ -10,13 +10,14 @@ Use this for conformance checks. A script passes when every applicable critical 
 - [ ] Machine-readable output uses stdout.
 - [ ] Diagnostics, progress, warnings, errors, and logs use stderr.
 - [ ] Failure behavior and exit/status semantics are predictable.
-- [ ] Dependencies are minimal, justified, and documented.
+- [ ] Dependencies are minimal, justified, and documented with their version constraints.
 - [ ] Verification is runnable or clearly described.
 - [ ] Local integration tests cover the script's primary behavior across its local components when those interactions exist.
 - [ ] Unit tests target meaningful risks not adequately covered by integration tests, such as edge cases, invariants, isolated complexity, or critical regressions.
 
 ## Python Critical
 
+- [ ] Required third-party imports handle their specific `ModuleNotFoundError`, name the required version constraint, and give an install command.
 - [ ] `main()` owns orchestration and returns an integer exit code.
 - [ ] Reusable logic lives in typed helper functions.
 - [ ] `argparse` is used for CLI parsing when a CLI exists.
