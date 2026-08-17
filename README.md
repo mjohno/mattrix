@@ -1,6 +1,6 @@
 # Mattrix
 
-Mattrix is Matt's agentic operating engine: reusable skills, an MKF knowledge-base implementation, and deterministic agents.
+Mattrix is Matt's agentic operating engine: reusable skills, an OKF knowledge-base implementation, and deterministic agents.
 
 ## Domains
 
