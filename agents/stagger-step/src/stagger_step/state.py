@@ -85,6 +85,16 @@ def is_completed(step: dict[str, Any]) -> bool:
     return "work" in step or "validate" in step
 
 
+def is_unstarted(state: dict[str, Any]) -> bool:
+    """Return whether a valid workflow has not run Coordinator bootstrap."""
+    return (
+        state["current"] is None
+        and not state["next"]
+        and state["recommended"] is None
+        and not state["completed"]
+    )
+
+
 def default_role_settings() -> dict[str, dict[str, str]]:
     return {
         role: settings.copy()
@@ -217,8 +227,10 @@ def validate_state(state: Any) -> dict[str, Any]:
             raise StateError(
                 "terminal state requires no current or next step and a terminate recommendation"
             )
+    elif is_unstarted(state):
+        pass
     elif current is None and not next_steps:
-        raise StateError("non-terminal state requires current or next")
+        raise StateError("unstarted state requires no recommendation")
     elif current is None and recommended in {None, "terminate"}:
         raise StateError(
             "state without current requires a recommended next step"

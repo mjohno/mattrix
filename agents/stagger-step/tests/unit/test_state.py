@@ -17,6 +17,17 @@ DONE = {
 }
 
 
+def test_state_accepts_unstarted_and_rejects_ambiguous_empty_state():
+    state = create_state("Goal")
+    assert validate_state(state) == state
+
+    state["recommended"] = "terminate"
+    with pytest.raises(
+        StateError, match="unstarted state requires no recommendation"
+    ):
+        validate_state(state)
+
+
 def test_state_rejects_recommendation_not_in_next():
     state = {
         "version": 1,

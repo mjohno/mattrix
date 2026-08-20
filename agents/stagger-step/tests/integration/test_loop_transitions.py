@@ -1,10 +1,24 @@
 from __future__ import annotations
 
 import pytest
-from stagger_step.loop import StepLoop
-from stagger_step.state import default_role_settings, default_token_usage
+from stagger_step.loop import StepLoop, TransitionError
+from stagger_step.state import (
+    create_state,
+    default_role_settings,
+    default_token_usage,
+)
 
 pytestmark = pytest.mark.integration
+
+
+def test_approval_rejects_an_unstarted_workflow():
+    class NoHarness:
+        pass
+
+    with pytest.raises(
+        TransitionError, match="bootstrap state requires a recommended next step"
+    ):
+        StepLoop(NoHarness()).approve(create_state("Goal"))
 
 
 def test_approval_consumes_the_promoted_step_and_clears_recommendation():

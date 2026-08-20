@@ -22,38 +22,61 @@ pytestmark = pytest.mark.integration
 
 
 def init(run, replies=None):
-    result = run("init", "--goal", "Goal", replies=replies or scenario("fresh"))
+    result = run("init", "--goal", "Goal")
+    assert result.returncode == 0, result.stderr
+    result = run("gate", replies=replies or scenario("fresh"))
     assert result.returncode == 0, result.stderr
 
 
-def test_init_persists_ranked_next_and_recommendation(cli):
-    run, step, _ = cli
-    init(run)
+def test_init_persists_unstarted_state_without_coordinator_execution(cli):
+    run, step, log = cli
+    result = run("init", "--goal", "Goal")
+
+    assert result.returncode == 0, result.stderr
     saved = state(step)
     assert saved["history"] == [] and saved["current"] is None
-    assert saved["packet_history"] == 3
-    assert saved["role_settings"] == {
-        "coordinator": {"model": "gpt-5.6-terra", "thinking": "medium"},
-        "worker": {"model": "gpt-5.6-luna", "thinking": "medium"},
-        "validator": {"model": "gpt-5.6-luna", "thinking": "medium"},
-        "assessor": {"model": "gpt-5.6-luna", "thinking": "medium"},
-    }
-    assert (
-        saved["next"][0]["slug"] == "first" and saved["recommended"] == "first"
-    )
+    assert saved["next"] == [] and saved["recommended"] is None
+    assert saved["completed"] is False
+    assert saved["token_usage"]["total"] == 0
+    assert result.stdout == ""
+    assert not log.exists()
 
 
-def test_init_persists_bootstrap_usage_and_logs_it_before_review(cli):
-    run, step, _ = cli
+def test_session_bootstraps_persisted_unstarted_workflow(cli):
+    run, step, log = cli
+    assert run("init", "--goal", "Goal").returncode == 0
 
-    result = run(
-        "--log-level",
-        "INFO",
-        "init",
-        "--goal",
-        "Goal",
-        replies=scenario("fresh"),
-    )
+    result = run("session", input="break\n", replies=scenario("fresh"))
+
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["current"] is None
+    assert saved["next"][0]["slug"] == "first"
+    assert saved["recommended"] == "first"
+    assert [call["role"] for call in calls(log)] == ["coordinator"]
+    assert result.stdout.endswith("break\n\n---\n")
+
+
+def test_gate_does_not_accept_a_response_until_initial_bootstrap_is_rendered(cli):
+    run, step, log = cli
+    assert run("init", "--goal", "Goal").returncode == 0
+
+    result = run("gate", "approved", replies=scenario("fresh"))
+
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["current"] is None
+    assert saved["next"][0]["slug"] == "first"
+    assert saved["recommended"] == "first"
+    assert [call["role"] for call in calls(log)] == ["coordinator"]
+    assert result.stdout.startswith("# STEP Review - Initial Plan\n")
+
+
+def test_gate_persists_bootstrap_usage_and_logs_it_before_review(cli):
+    run, step, log = cli
+    result = run("init", "--goal", "Goal")
+    assert result.returncode == 0, result.stderr
+    result = run("--log-level", "INFO", "gate", replies=scenario("fresh"))
 
     assert result.returncode == 0, result.stderr
     assert state(step)["token_usage"] == {
@@ -67,6 +90,7 @@ def test_init_persists_bootstrap_usage_and_logs_it_before_review(cli):
     assert result.stderr.index(
         "pi usage role=coordinator"
     ) < result.stderr.index("STEP token usage")
+    assert [call["role"] for call in calls(log)] == ["coordinator"]
 
 
 def test_missing_context_usage_does_not_block_bootstrap(cli):
@@ -86,7 +110,9 @@ def test_missing_context_usage_does_not_block_bootstrap(cli):
         }
     }
 
-    result = run("init", "--goal", "Goal", replies=replies)
+    result = run("init", "--goal", "Goal")
+    assert result.returncode == 0, result.stderr
+    result = run("gate", replies=replies)
 
     assert result.returncode == 0, result.stderr
     assert state(step)["token_usage"]["total"] == 10
@@ -150,7 +176,6 @@ def test_role_settings_are_persisted_used_once_logged_and_not_repeated(cli):
         "assessor-model",
         "--assessor-thinking",
         "xhigh",
-        replies=scenario("fresh"),
     )
 
     assert result.returncode == 0, result.stderr
@@ -162,6 +187,8 @@ def test_role_settings_are_persisted_used_once_logged_and_not_repeated(cli):
         "assessor": {"model": "assessor-model", "thinking": "xhigh"},
     }
 
+    result = run("gate", replies=scenario("fresh"))
+    assert result.returncode == 0, result.stderr
     result = run(
         "--log-level",
         "INFO",
@@ -180,12 +207,13 @@ def test_role_settings_are_persisted_used_once_logged_and_not_repeated(cli):
         assert argv[argv.index("--thinking") + 1] == settings[role]["thinking"]
 
 
-def test_pi_rpc_rejection_is_critical_and_leaves_no_initialized_step(cli):
+def test_pi_rpc_rejection_preserves_unstarted_step(cli):
     run, step, _ = cli
+    result = run("init", "--goal", "Goal")
+    assert result.returncode == 0, result.stderr
+    before = step.read_bytes()
     result = run(
-        "init",
-        "--goal",
-        "Goal",
+        "gate",
         replies={"rpc_errors": {"coordinator": "Model not found: rejected"}},
     )
 
@@ -195,7 +223,7 @@ def test_pi_rpc_rejection_is_critical_and_leaves_no_initialized_step(cli):
     assert "model=gpt-5.6-terra" in result.stderr
     assert "thinking=medium" in result.stderr
     assert "Model not found: rejected" in result.stderr
-    assert not step.exists()
+    assert step.read_bytes() == before
 
 
 def test_pi_thinking_rejection_preserves_persisted_step(cli):
@@ -240,8 +268,9 @@ def test_init_preserves_supplied_lessons_when_bootstrap_omits_them(cli):
         "Goal",
         "--lesson",
         "Plan before implementing",
-        replies={"coordinator": [coordinator("first")]},
     )
+    assert result.returncode == 0, result.stderr
+    result = run("gate", replies={"coordinator": [coordinator("first")]})
 
     assert result.returncode == 0, result.stderr
     assert state(step)["lessons"] == ["Plan before implementing"]
@@ -249,14 +278,9 @@ def test_init_preserves_supplied_lessons_when_bootstrap_omits_them(cli):
 
 def test_default_harness_sessions_are_named_logged_and_keep_state_clean(cli):
     run, step, log = cli
-    result = run(
-        "--log-level",
-        "INFO",
-        "init",
-        "--goal",
-        "Goal",
-        replies=scenario("fresh"),
-    )
+    result = run("init", "--goal", "Goal")
+    assert result.returncode == 0, result.stderr
+    result = run("--log-level", "INFO", "gate", replies=scenario("fresh"))
     assert result.returncode == 0, result.stderr
     argv = json.loads(log.read_text().splitlines()[0])["argv"]
     assert "--no-session" not in argv
@@ -292,9 +316,9 @@ def test_debug_logs_buffer_thinking_without_raw_rpc_events(cli):
         ]
     }
 
-    result = run(
-        "--log-level", "DEBUG", "init", "--goal", "Goal", replies=replies
-    )
+    result = run("init", "--goal", "Goal")
+    assert result.returncode == 0, result.stderr
+    result = run("--log-level", "DEBUG", "gate", replies=replies)
 
     assert result.returncode == 0, result.stderr
     assert re.search(
@@ -310,14 +334,9 @@ def test_debug_logs_buffer_thinking_without_raw_rpc_events(cli):
 
 def test_harness_session_off_uses_no_session(cli):
     run, _, log = cli
-    result = run(
-        "--harness-session",
-        "off",
-        "init",
-        "--goal",
-        "Goal",
-        replies=scenario("fresh"),
-    )
+    result = run("--harness-session", "off", "init", "--goal", "Goal")
+    assert result.returncode == 0, result.stderr
+    result = run("--harness-session", "off", "gate", replies=scenario("fresh"))
     assert result.returncode == 0, result.stderr
     argv = json.loads(log.read_text().splitlines()[0])["argv"]
     assert "--no-session" in argv
@@ -450,11 +469,10 @@ def test_missing_coordinator_finalizer_is_repaired_in_the_same_role_session(
     cli,
 ):
     run, step, log = cli
+    result = run("init", "--goal", "Goal")
+    assert result.returncode == 0, result.stderr
     result = run(
-        "init",
-        "--goal",
-        "Goal",
-        replies={"coordinator": ["no_finalizer", coordinator("first")]},
+        "gate", replies={"coordinator": ["no_finalizer", coordinator("first")]}
     )
     assert result.returncode == 0, result.stderr
     coordinator_calls = [
@@ -896,13 +914,14 @@ def test_init_persists_change_path_and_supplies_it_to_each_role(cli):
         "Goal",
         "--change",
         "artifacts",
-        replies=scenario("fresh"),
     )
     assert result.returncode == 0, result.stderr
     saved = state(step)
     assert saved["change_path"] == "artifacts"
     assert saved["commit_mode"] is False
 
+    result = run("gate", replies=scenario("fresh"))
+    assert result.returncode == 0, result.stderr
     result = run("gate", "approved", replies=scenario("complete_continue"))
     assert result.returncode == 0, result.stderr
     role_calls = [

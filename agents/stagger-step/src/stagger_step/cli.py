@@ -22,6 +22,7 @@ from .state import (
     THINKING_LEVELS,
     StateError,
     create_state,
+    is_unstarted,
     load_state,
     validate_role_settings,
     write_atomic,
@@ -261,6 +262,17 @@ def _afk_stop(prepared: dict[str, Any], outcomes: list[str]) -> str | None:
     return None
 
 
+def enter_session(
+    path: Path, state: dict[str, Any], loop: StepLoop
+) -> dict[str, Any]:
+    """Persist the first Coordinator proposal for an unstarted workflow."""
+    if not is_unstarted(state):
+        return state
+    bootstrapped = loop.bootstrap(state)
+    write_atomic(path, bootstrapped)
+    return bootstrapped
+
+
 def run_session(
     path: Path,
     state: dict[str, Any],
@@ -270,7 +282,7 @@ def run_session(
     """Continuously apply the one-shot gate's prepare, revise, and approve flow."""
     afk = False
     outcomes: list[str] = []
-    state = load_state(path)
+    state = enter_session(path, state, loop)
     while True:
         try:
             prepared = prepare(state, loop, commit)
@@ -390,11 +402,9 @@ def main(argv: list[str] | None = None) -> int:
                 ),
                 change_path,
             )
-            state = loop.bootstrap(state)
             write_atomic(path, state)
             if args.session:
                 return run_session(path, state, loop, commit)
-            emit_review(loop, state)
             return 0
         path = path_from(args)
         state = load_state(path)
@@ -423,8 +433,10 @@ def main(argv: list[str] | None = None) -> int:
             emit_review(loop, state)
             return 0
         if args.command == "gate":
+            unstarted = is_unstarted(state)
+            state = enter_session(path, state, loop)
             prepared = prepare(state, loop, commit)
-            if args.response is None:
+            if unstarted or args.response is None:
                 emit_review(loop, prepared)
                 return 0
             if args.response == "approved":

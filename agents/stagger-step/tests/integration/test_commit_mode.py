@@ -31,13 +31,14 @@ def test_init_combines_relative_change_path_and_persisted_commit_mode(
         "--change",
         "artifacts",
         "--commit",
-        replies={"coordinator": [coordinator("first")]},
     )
 
     assert result.returncode == 0, result.stderr
     saved = state(step)
     assert saved["change_path"] == "artifacts"
     assert saved["commit_mode"] is True
+    result = run("gate", replies={"coordinator": [coordinator("first")]})
+    assert result.returncode == 0, result.stderr
     assert f"`{artifacts.resolve()}`" in calls(log)[0]["prompt"]
 
 
@@ -110,8 +111,9 @@ def test_commit_off_bypasses_persisted_commit_mode_without_state_mutation(
         "--goal",
         "Goal",
         "--commit",
-        replies={"coordinator": [coordinator("first")]},
     )
+    assert result.returncode == 0, result.stderr
+    result = run("gate", replies={"coordinator": [coordinator("first")]})
     assert result.returncode == 0, result.stderr
     initial = git(repository, "rev-parse", "HEAD")
     (repository / "unrelated.txt").write_text("dirty\n")
