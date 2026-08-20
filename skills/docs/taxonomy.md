@@ -40,7 +40,7 @@ Passive noun/domain contract packages that supply conventions, quality checks, t
 - Defines the desired state of a noun-like artifact, protocol, or domain
 - May select an applicable domain from context, such as a script language or storage backend
 - Loads the minimal selected reference/asset contents into context without emitting them in chat; when invoked alone, acknowledges only selected relative paths.
-- Domain- or intent-specific materials should be clearly named, e.g. `python_template.py`, `plan_quality.md`, `plan_checklist.md`, or `github_protocol.md`
+- Domain- or intent-specific materials should be clearly named, e.g. `python_template.py`, `plan_checklist.md`, or `github_protocol.md`
 - **Do NOT use if** the package performs artifact production, external retrieval, evaluation, persistence, or orchestration — it only supplies contract data for other skills to apply
 
 ### communications

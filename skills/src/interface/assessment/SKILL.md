@@ -10,7 +10,7 @@ metadata:
 
 Goal: Provide the contract shape and criteria for a scoped, category-based assessment.
 Non-Goals: Do not execute assessments, discover target resources or criteria, define domain-specific questions, produce severity reports, remediate findings, make completion decisions, or implement work.
-Use-When: Another skill needs the assessment contract, template, conformance checklist, or quality criteria before creating, checking, reviewing, or consuming an assessment.
+Use-When: Another skill needs the assessment contract, template, or checklist before creating, checking, reviewing, or consuming an assessment.
 
 ## Selection
 
@@ -20,8 +20,7 @@ If caller intent is unclear, assume the default reference only.
 |---|---|
 | `references/assessment_contract.md` | Default — all cases |
 | `assets/assessment_template.md` | Caller asks to outline or draft an assessment |
-| `references/assessment_checklist.md` | Caller asks to check assessment conformance |
-| `references/assessment_quality.md` | Caller asks to review assessment quality |
+| `references/assessment_checklist.md` | Caller asks to check assessment conformance or review assessment quality |
 
 If requested needs fall outside this interface, state the unsupported need and hand off.
 
@@ -34,7 +33,7 @@ When invoked alone, respond only with `Loaded: <relative path(s)>.` When compose
 ## Next Steps
 
 - `output/check` — validate an assessment or its target against assessment questions and report the status of each question.
-- `output/review` — use an assessment as the criteria source for a structured review.
+- `output/review` — use an assessment or its checklist as the criteria source for a structured review.
 - `interface/plan` — create gap-closing work from partial, failed, or insufficient-evidence answers.
 - `output/annotate` — add inline annotations for tracking findings and fixes.
 

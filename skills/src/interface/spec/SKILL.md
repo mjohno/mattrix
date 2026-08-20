@@ -18,8 +18,7 @@ Default: load only the compact spec contract.
 
 Also select:
 - `spec_template.md` when the caller asks to outline or draft a spec.
-- `spec_checklist.md` when the caller asks to check spec conformance.
-- `spec_quality.md` when the caller asks to review spec quality.
+- `spec_checklist.md` when the caller asks to check spec conformance or review spec quality.
 
 If caller intent is unclear, assume default contract only and state the assumption.
 If requested spec needs fall outside this interface, state the unsupported need and hand off to the appropriate skill.
@@ -36,7 +35,6 @@ Default path:
 Optional paths:
 - `assets/spec_template.md`
 - `references/spec_checklist.md`
-- `references/spec_quality.md`
 
 ## Next Steps
 
@@ -44,8 +42,8 @@ Optional paths:
 - `outline` — create a spec skeleton using `spec_template.md`.
 - `draft` — fill the spec from source material.
 - `modify` — revise a spec while preserving stable IDs.
-- `output/check` — check spec conformance with `spec_checklist.md`.
-- `output/review` — review spec quality with `spec_quality.md`.
+- `output/check` — check spec conformance and quality with `spec_checklist.md`.
+- `output/review` — review spec quality with `spec_checklist.md`.
 - `interface/plan` — create traceable gap-closing work from spec IDs.
 
 ## Minimal Example

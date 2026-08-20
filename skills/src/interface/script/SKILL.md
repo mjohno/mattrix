@@ -1,6 +1,6 @@
 ---
 name: script
-description: Use when output or map skills need script-domain conventions, quality checks, and templates.
+description: Use when output or map skills need script-domain conventions, checklists, and templates.
 metadata:
   type: interface
   category: interface
@@ -19,8 +19,7 @@ Default: load only the compact script contract.
 Also select:
 - `python_contract.md` when Python is selected from language, file extension, shebang, runtime clues, or unspecified language default.
 - `python_template.py` when the caller asks to outline or draft a Python script.
-- `script_checklist.md` when the caller asks to check script conformance.
-- `script_quality.md` when the caller asks to review script quality.
+- `script_checklist.md` when the caller asks to check script conformance or review script quality.
 
 If caller intent is unclear, assume default contract only and state the assumption.
 If the script domain is unsupported, return the generic contract, state unavailable domain-specific refs/assets, and hand off to `modify` to add a domain reference.
@@ -38,15 +37,14 @@ Optional paths:
 - `references/python_contract.md`
 - `assets/python_template.py`
 - `references/script_checklist.md`
-- `references/script_quality.md`
 
 ## Next Steps
 
 - `outline` — create a script skeleton using applicable template data.
 - `draft` — produce a first-pass script.
 - `modify` — update an existing script against the contract.
-- `output/check` — check script conformance with `script_checklist.md`.
-- `output/review` — review script quality with `script_quality.md`.
+- `output/check` — check script conformance and quality with `script_checklist.md`.
+- `output/review` — review script quality with `script_checklist.md`.
 - `map/step` — run a bounded implementation or verification step.
 
 ## Minimal Example

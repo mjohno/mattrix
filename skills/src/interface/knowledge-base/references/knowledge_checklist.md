@@ -28,3 +28,17 @@ Use this for MKF and OKF v0.2 conformance checks. A concept or bundle passes whe
 
 - [ ] Search and ranking are handled by `input/lookup`, not the knowledge interface.
 - [ ] Writes, validation, and explicitly requested index rebuilding are handled by `output/record`, not the knowledge interface.
+
+## Quality
+
+A failed Quality item produces a `Partial` result. It does not fail conformance.
+
+- [ ] Each concept focuses on one durable idea or reusable artifact.
+- [ ] Titles and descriptions, when present, are clear and specific.
+- [ ] Tags, when present, improve retrieval without becoming noisy.
+- [ ] Citations or keyed source footnotes are present where claims need attribution.
+- [ ] Indexes are clearly separate from authored concepts and useful for progressive disclosure.
+- [ ] Manual bundle discovery can be understood from visible environment or path information.
+- [ ] Lookup and search behaviors are kept out of passive knowledge contract material.
+- [ ] Write, update, and index-rebuild behaviors are kept in record tooling.
+- [ ] Advanced OKF fields, when present, provide provenance, trust, lifecycle, and attestation metadata that supports informed consumer judgment.

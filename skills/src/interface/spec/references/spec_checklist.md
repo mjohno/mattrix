@@ -17,3 +17,20 @@ Use this for conformance checks. A spec passes when every critical item passes.
 - [ ] Acceptance criteria are observable, reviewable, or measurable.
 - [ ] Decisions include status and rationale where useful.
 - [ ] Plan items can trace to relevant spec IDs without copying full spec text.
+
+## Quality
+
+A failed Quality item produces a `Partial` result. It does not fail conformance.
+
+- [ ] The spec explains why it exists without prematurely planning implementation.
+- [ ] Current-state claims are separate from assumptions.
+- [ ] The future state is concrete enough for a plan to target.
+- [ ] In-scope and out-of-scope boundaries are clear.
+- [ ] Requirements are testable, reviewable, or otherwise judgeable.
+- [ ] Requirements do not duplicate scope or acceptance criteria.
+- [ ] Acceptance defines observable judgment signals.
+- [ ] Acceptance does not prematurely mandate implementation artifacts.
+- [ ] Constraints are separate from priorities.
+- [ ] Risks, questions, assumptions, and pre-work are visibly separate.
+- [ ] Settled decisions are distinct from assumptions and open questions.
+- [ ] Downstream work can trace to stable IDs without copying large sections.

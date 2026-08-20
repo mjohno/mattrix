@@ -17,8 +17,7 @@ Use-When: Another skill needs the `plan` interface contract before drafting, mod
 Default: load only the compact plan contract.
 
 Also select:
-- `plan_checklist.md` when the caller asks to check plan conformance.
-- `plan_quality.md` when the caller asks to review plan quality.
+- `plan_checklist.md` when the caller asks to check plan conformance or review plan quality.
 
 If caller intent is unclear, assume default contract only and state the assumption.
 If requested plan needs fall outside this interface, state the unsupported need and hand off to the appropriate skill.
@@ -34,14 +33,13 @@ Default path:
 
 Optional paths:
 - `references/plan_checklist.md`
-- `references/plan_quality.md`
 
 ## Next Steps
 
 - `draft` — create a first-pass plan from source context.
 - `modify` — revise an existing plan while preserving stable IDs.
-- `output/check` — check plan conformance with `plan_checklist.md`.
-- `output/review` — review plan quality with `plan_quality.md`.
+- `output/check` — check plan conformance and quality with `plan_checklist.md`.
+- `output/review` — review plan quality with `plan_checklist.md`.
 - `map/step` — execute one plan item or approved task statement.
 
 ## Minimal Example

@@ -21,3 +21,18 @@ Use this for conformance checks. An assessment contract passes when every critic
 - [ ] Every category heading uses the canonical Title Case name and prefix.
 - [ ] Follow-ups are concrete when the status is Partial, Fail, or Insufficient evidence.
 - [ ] The assessment uses `assessment` for the complete artifact and `question` for an individual evaluation unit.
+
+## Quality
+
+A failed Quality item produces a `Partial` result. It does not fail conformance.
+
+- [ ] The in-scope and out-of-scope resource lists define clear evaluation boundaries.
+- [ ] Each question identifies the in-scope resource group it evaluates.
+- [ ] Selected categories are relevant to the declared scope, with no material relevant category omitted.
+- [ ] Each question invites a specific, grounded answer rather than a vague or purely binary response.
+- [ ] Pass, Partial, and Fail answers cite permitted evidence references rather than `None`, while Insufficient evidence answers explicitly identify missing evidence.
+- [ ] Statuses are consistent with the answer and evidence.
+- [ ] Impact and confidence are calibrated to the consequence and strength of evidence.
+- [ ] Follow-ups are concrete and useful for Partial, Fail, and Insufficient evidence answers.
+- [ ] The status-grouped summary is accurate and its next follow-up prioritizes the highest-value unresolved work.
+- [ ] The assessment is concise and free of lenses, role framing, stop conditions, and completion-goal logic.

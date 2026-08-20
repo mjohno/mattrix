@@ -22,3 +22,20 @@ Use this for conformance checks. A plan passes when every critical item passes.
 - [ ] Dependencies are present where sequencing matters.
 - [ ] Deliverables are present where the expected artifact/output could be ambiguous.
 - [ ] Done criteria are present where completion boundaries could be ambiguous.
+
+## Quality
+
+A failed Quality item produces a `Partial` result. It does not fail conformance.
+
+- [ ] The plan is readable end to end without loading the full source artifact.
+- [ ] Gaps are real differences between the current problem and target state.
+- [ ] The work plan makes the path to the target state obvious.
+- [ ] Items are split at useful boundaries without becoming tiny checklist fragments.
+- [ ] Related gaps are grouped when coupling is real and separated when work can proceed independently.
+- [ ] IDs are stable, traceable, and easy to reference in follow-up work.
+- [ ] Dependencies, deliverables, and done criteria are included only where they reduce ambiguity.
+- [ ] The plan does not present status as execution evidence.
+- [ ] Each task statement is a concise, bounded paragraph that improves implementation readiness.
+- [ ] Each scenario describes a meaningful vertical behavior from a relevant starting state through an action or event to an observable outcome.
+- [ ] Scenarios avoid combinatorial input matrices, lower-level invariants, and edge-case catalogues that are not distinct, meaningful plan behaviors.
+- [ ] The plan is concise enough to maintain, review, and update.
