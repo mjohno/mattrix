@@ -4,9 +4,14 @@
 Usage:
     WORK_ROOT=/workspace python ensure_git_project.py --project team/app \
         [--branch master] [--from master] [--checkout app-master]
+    WORK_ROOT=/workspace python ensure_git_project.py --project team/app \
+        --remote URL --branch feature-name [--from master]
+    python ensure_git_project.py --test
 
-Stdout is one JSON result. Diagnostics are written to stderr. Exit status is
-zero for a completed operation and one for invalid or blocked state.
+Remote mode clones `--from` and creates a new local `--branch` without
+pushing it. Stdout is one JSON result. Diagnostics are written to stderr.
+Exit status is zero for a completed operation and one for invalid or blocked
+state.
 """
 
 from __future__ import annotations
@@ -36,7 +41,10 @@ class GitLaunchError(BlockedError):
 
     def __init__(self, error: OSError) -> None:
         self.error = error
-        super().__init__(f"Could not start Git: {error}")
+        super().__init__(
+            "Git is required but could not start. Install Git from "
+            f"https://git-scm.com/downloads and ensure `git` is on PATH: {error}"
+        )
 
 
 @dataclass(frozen=True)
@@ -46,6 +54,7 @@ class Request:
     branch: str
     source: str
     checkout_name: str
+    source_remote: str | None
 
     @property
     def remote(self) -> Path:
@@ -73,16 +82,22 @@ def configure_logging(level: str) -> None:
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     """Parse command inputs."""
     parser = argparse.ArgumentParser(
-        description="Create or safely synchronize one local Git branch clone."
+        description=(
+            "Create or synchronize a local Git branch clone, or clone a "
+            "remote and create a new local branch."
+        )
     )
-    parser.add_argument(
-        "--project", required=True, help="relative project path"
-    )
+    parser.add_argument("--project", help="relative project path")
     parser.add_argument("--branch", default="master", help="target branch")
     parser.add_argument(
         "--from", dest="source", default="master", help="source branch"
     )
     parser.add_argument("--checkout", help="direct child clone directory")
+    parser.add_argument(
+        "--remote",
+        dest="source_remote",
+        help="remote URL to clone before creating the local branch",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -177,14 +192,24 @@ def request_from(args: argparse.Namespace) -> Request:
     root = Path(root_value).expanduser().resolve()
     if not root.is_dir():
         raise BlockedError("WORK_ROOT must name an existing directory")
+    if not args.project:
+        raise BlockedError("--project is required")
     branch = valid_branch(args.branch, "branch")
     source = valid_branch(args.source, "from")
+    if args.source_remote is not None:
+        if not args.source_remote.strip() or args.source_remote.startswith("-"):
+            raise BlockedError("remote must be a non-empty URL or path")
+        if args.checkout is not None:
+            raise BlockedError("--checkout cannot be used with --remote")
+        if branch == source:
+            raise BlockedError("--branch must differ from --from in remote mode")
     return Request(
         root,
         valid_project(args.project),
         branch,
         source,
         checkout_name(branch, args.checkout),
+        args.source_remote,
     )
 
 
@@ -251,6 +276,34 @@ def identity() -> dict[str, str]:
         "username": git_output(None, "config", "--get", "user.name") or "unset",
         "email": git_output(None, "config", "--get", "user.email") or "unset",
     }
+
+
+def inspect_remote_clone(request: Request) -> None:
+    """Validate a remote-clone request before creating any paths."""
+    assert request.source_remote is not None
+    project = request.project_directory
+    checkout = request.checkout
+    projects = request.root / "projects"
+    if projects.exists() and (not projects.is_dir() or projects.is_symlink()):
+        raise BlockedError(f"workspace path is not a directory: {projects}")
+    if project.exists() and (not project.is_dir() or project.is_symlink()):
+        raise BlockedError(f"project is not a directory: {project}")
+    if checkout.exists():
+        raise BlockedError(f"checkout already exists: {checkout}")
+    if (
+        git(
+            None,
+            "ls-remote",
+            "--exit-code",
+            "--heads",
+            request.source_remote,
+            f"refs/heads/{request.source}",
+        ).returncode
+        != 0
+    ):
+        raise BlockedError(
+            f"source branch does not exist in remote: {request.source}"
+        )
 
 
 def inspect_existing(request: Request) -> bool:
@@ -353,6 +406,30 @@ def clone_if_missing(request: Request, unborn: bool) -> bool:
     return True
 
 
+def clone_remote_branch(request: Request) -> None:
+    """Clone the source branch and create the requested local branch."""
+    assert request.source_remote is not None
+    (request.root / "projects").mkdir(parents=True, exist_ok=True)
+    request.project_directory.mkdir(parents=True, exist_ok=True)
+    require_git(
+        request.project_directory,
+        "clone",
+        "--origin",
+        "origin",
+        "--branch",
+        request.source,
+        request.source_remote,
+        str(request.checkout),
+    )
+    require_git(
+        request.checkout,
+        "switch",
+        "--create",
+        request.branch,
+        f"origin/{request.source}",
+    )
+
+
 def synchronize(request: Request, unborn: bool) -> str:
     """Fetch and fast-forward an existing branch, or report unborn state."""
     if unborn:
@@ -407,12 +484,45 @@ def planned_actions(request: Request, unborn: bool) -> list[str]:
 
 def execute(request: Request, dry_run: bool = False) -> dict[str, object]:
     """Perform the validated operation and return machine-readable data."""
+    if request.source_remote is not None:
+        inspect_remote_clone(request)
+        actions = [
+            f"clone branch {request.source} from {request.source_remote}: "
+            f"{request.checkout}",
+            f"create local branch {request.branch}: {request.checkout}",
+        ]
+        if dry_run:
+            return {
+                "status": "planned",
+                "dry_run": True,
+                "actions": actions,
+                "branch": request.branch,
+                "checkout_name": request.checkout_name,
+                "checkout": str(request.checkout),
+                "remote": request.source_remote,
+                "identity": identity(),
+            }
+        clone_remote_branch(request)
+        return {
+            "status": "cloned",
+            "project": request.project.as_posix(),
+            "branch": request.branch,
+            "checkout_name": request.checkout_name,
+            "checkout": str(request.checkout),
+            "remote": request.source_remote,
+            "identity": identity(),
+        }
+
     unborn = inspect_existing(request)
     if dry_run:
         return {
             "status": "planned",
             "dry_run": True,
             "actions": planned_actions(request, unborn),
+            "branch": request.branch,
+            "checkout_name": request.checkout_name,
+            "checkout": str(request.checkout),
+            "remote": str(request.remote),
             "identity": identity(),
         }
     ensure_directories(request)
@@ -426,6 +536,7 @@ def execute(request: Request, dry_run: bool = False) -> dict[str, object]:
         "status": status,
         "project": request.project.as_posix(),
         "branch": request.branch,
+        "checkout_name": request.checkout_name,
         "checkout": str(request.checkout),
         "remote": str(request.remote),
         "remote_created": remote_created,
@@ -579,6 +690,88 @@ class GitProjectTests(unittest.TestCase):
             self.assertEqual(result["status"], "synchronized")
             self.assertTrue(has_ref(root / "remotes/team/app.git", "foo"))
             self.assertTrue(branch_is_tracked(checkout, "foo"))
+
+    def test_remote_clone_creates_normalized_unpushed_branch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            remote_root = Path(temporary) / "remote"
+            seed_master(remote_root, "team/app")
+            remote = remote_root / "remotes/team/app.git"
+            code, result = run_command(
+                root,
+                "--project",
+                "team/app",
+                "--remote",
+                str(remote),
+                "--branch",
+                "feature/idea",
+            )
+            checkout = root / "projects/team/app/feature-idea"
+            self.assertEqual(code, 0)
+            self.assertEqual(result["status"], "cloned")
+            self.assertEqual(result["checkout_name"], "feature-idea")
+            self.assertEqual(
+                git_output(checkout, "branch", "--show-current"), "feature/idea"
+            )
+            self.assertFalse(has_ref(remote, "feature/idea"))
+
+    def test_remote_dry_run_does_not_create_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            remote_root = root / "remote"
+            seed_master(remote_root, "team/app")
+            remote = remote_root / "remotes/team/app.git"
+            code, result = run_command(
+                root,
+                "--project",
+                "team/app",
+                "--remote",
+                str(remote),
+                "--branch",
+                "feature/idea",
+                "--dry-run",
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(result["status"], "planned")
+            self.assertEqual(result["checkout_name"], "feature-idea")
+            self.assertFalse((root / "projects/team/app/feature-idea").exists())
+
+    def test_test_option_does_not_require_project(self) -> None:
+        self.assertIsNone(parse_args(["--test"]).project)
+
+    def test_remote_clone_rejects_empty_remote(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            code, result = run_command(
+                root,
+                "--project",
+                "team/app",
+                "--remote",
+                "",
+                "--branch",
+                "foo",
+            )
+            self.assertEqual(code, 1)
+            self.assertEqual(result["status"], "blocked")
+            self.assertIn("non-empty", str(result["reason"]))
+
+    def test_remote_clone_rejects_checkout_override(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            code, result = run_command(
+                root,
+                "--project",
+                "team/app",
+                "--remote",
+                "https://example.invalid/team/app.git",
+                "--branch",
+                "foo",
+                "--checkout",
+                "bar",
+            )
+            self.assertEqual(code, 1)
+            self.assertEqual(result["status"], "blocked")
+            self.assertIn("--checkout", str(result["reason"]))
 
     def test_fast_forwards_existing_clone(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
