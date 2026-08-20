@@ -27,18 +27,18 @@ Use-When: Use when you need to validate whether an object, solution, result, out
 4. Check if delivery is complete
 5. When checking factual claims or sourced outputs, compare each claim against the provided sources and classify provenance as `supported`, `unsupported`, `contradicted`, or `insufficient evidence`.
 6. Cite source references for provenance-sensitive checks when sources are provided or required by the criteria.
-7. Capture any partial successes or failures, and document confidence (high, medium, low) and impact (high, medium, low) for each requirement
+7. Assign a short, numbered `CHK-##` reference to each result, and capture any partial successes or failures with confidence (high, medium, low) and impact (high, medium, low) for each requirement
 8. Capture if there are blockers or dependencies which indicate an error in the requirements, acceptance criteria or target outcomes themselves
 
 ## 3. Outputs
-- Pass/Partial/Fail status for each requirement, acceptance criteria or target outcome
+- A short, numbered `CHK-##` reference and Pass/Partial/Fail status for each requirement, acceptance criteria or target outcome
 - Provenance status (`supported`, `unsupported`, `contradicted`, or `insufficient evidence`) for claim/source checks
 - Severity and impact documentation for any partial successes or failures
 - List the blockers or dependencies identified, and whether they indicate an error in the requirements, acceptance criteria or target outcomes themselves
 - If user specifies an output file, write to that path instead
 
 ## 4. Next Steps
-- Suggest how to address any failures or partial success to meet the requirements, acceptance criteria or target outcomes
+- Suggest how to address any failures or partial success by their `CHK-##` reference to meet the requirements, acceptance criteria or target outcomes
 - Offer to create or update a plan or task list to address any failures or partial successes
 - When there are blockers or dependencies, suggest how to address those.
 
