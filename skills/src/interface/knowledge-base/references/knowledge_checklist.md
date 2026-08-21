@@ -34,6 +34,7 @@ Use this for MKF and OKF v0.2 conformance checks. A concept or bundle passes whe
 A failed Quality item produces a `Partial` result. It does not fail conformance.
 
 - [ ] Each concept focuses on one durable idea or reusable artifact.
+- [ ] Each concept has a non-empty description that supports selection during lookup.
 - [ ] Titles and descriptions, when present, are clear and specific.
 - [ ] Tags, when present, improve retrieval without becoming noisy.
 - [ ] Citations or keyed source footnotes are present where claims need attribution.
