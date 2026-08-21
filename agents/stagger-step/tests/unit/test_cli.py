@@ -39,6 +39,25 @@ def test_init_packet_history_defaults_to_three_and_accepts_a_positive_value():
     )
 
 
+def test_init_reference_is_repeatable():
+    args = parser().parse_args(
+        [
+            "init",
+            "--goal",
+            "Goal",
+            "--reference",
+            "Specification: docs/spec.md",
+            "--reference",
+            "lookup testing conventions",
+        ]
+    )
+
+    assert args.reference == [
+        "Specification: docs/spec.md",
+        "lookup testing conventions",
+    ]
+
+
 def test_init_role_settings_default_and_accept_per_role_overrides():
     defaults = parser().parse_args(["init", "--goal", "Goal"])
 

@@ -9,6 +9,7 @@ def test_bootstrap_review_omits_task_sections():
     output = render_gate(
         {
             "goal": "Ship it",
+            "references": ["Specification: docs/spec.md"],
             "lessons": ["Keep scope small"],
             "current": None,
             "proposals": [task("first")],
@@ -19,6 +20,7 @@ def test_bootstrap_review_omits_task_sections():
 
     assert output.startswith("# STEP Review - Initial Plan\n")
     assert "**Goal:** Ship it" in output
+    assert "**References:**\n- Specification: docs/spec.md" in output
     assert "**Lessons:**\n- Keep scope small" in output
     assert "## Execution" not in output
     assert "## Validation" not in output

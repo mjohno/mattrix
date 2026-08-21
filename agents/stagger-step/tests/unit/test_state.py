@@ -156,6 +156,22 @@ def test_fresh_state_has_root_change_commit_and_packet_history_fields():
     }
 
 
+def test_state_persists_references_and_accepts_legacy_state_without_them():
+    state = create_state("Goal")
+    state["references"] = ["Specification: docs/spec.md"]
+
+    assert state["references"] == ["Specification: docs/spec.md"]
+    assert validate_state(state) == state
+
+    legacy = create_state("Goal")
+    del legacy["references"]
+    assert validate_state(legacy)["references"] == []
+
+    state["references"] = [""]
+    with pytest.raises(StateError, match="references"):
+        validate_state(state)
+
+
 def test_state_rejects_missing_token_usage():
     state = create_state("Goal")
     del state["token_usage"]

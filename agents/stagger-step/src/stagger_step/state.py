@@ -188,6 +188,10 @@ def validate_state(state: Any) -> dict[str, Any]:
     ):
         raise StateError("packet_history must be a positive integer")
     _strings(state.get("lessons"), "lessons")
+    # Version 1 states created before references remain valid. Normalize them
+    # when loaded so all later workflow paths receive the same shared context.
+    references = state.setdefault("references", [])
+    _strings(references, "references")
     history = state.get("history")
     if not isinstance(history, list):
         raise StateError("history must be a list")
@@ -266,6 +270,7 @@ def create_state(
         "change_path": change_path,
         "commit_mode": commit_mode,
         "packet_history": packet_history,
+        "references": [],
         "lessons": lessons or [],
         "history": [],
         "current": None,

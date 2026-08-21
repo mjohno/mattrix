@@ -55,6 +55,21 @@ def test_role_prompt_includes_active_change_path_only_when_supplied():
     assert "CHANGE.md" not in with_path
 
 
+def test_role_prompt_directs_roles_to_use_opaque_references():
+    prompt = build_prompt(
+        "assessor",
+        {
+            "goal": "Ship the change",
+            "references": ["Specification: docs/spec.md"],
+        },
+    )
+
+    assert "ordered, opaque Owner-provided shared context" in prompt
+    assert "Stagger Step does not resolve or validate it" in prompt
+    assert "reference is unavailable or unsuitable" in prompt
+    assert "Specification: docs/spec.md" in prompt
+
+
 def test_coordinator_embeds_bounded_task_guidance():
     prompt = build_prompt("coordinator", {"goal": "Ship the change"})
 

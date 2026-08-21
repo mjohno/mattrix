@@ -146,6 +146,12 @@ def parser() -> argparse.ArgumentParser:
     init = sub.add_parser("init", help="create a new STEP state")
     init.add_argument("--goal", required=True)
     init.add_argument("--lesson", action="append", default=[])
+    init.add_argument(
+        "--reference",
+        action="append",
+        default=[],
+        help="opaque shared context supplied to every STEP role; repeatable",
+    )
     defaults = {
         "coordinator": "gpt-5.6-terra",
         "worker": "gpt-5.6-luna",
@@ -391,6 +397,7 @@ def main(argv: list[str] | None = None) -> int:
                 commit_mode=args.commit,
                 packet_history=args.packet_history,
             )
+            state["references"] = args.reference
             state["role_settings"] = role_settings
             logger.info(
                 "role settings initialized role_settings=%s",

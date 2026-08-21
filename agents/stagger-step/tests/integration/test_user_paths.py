@@ -137,6 +137,46 @@ def test_init_persists_selected_packet_history(cli):
     assert state(step)["packet_history"] == 2
 
 
+def test_references_are_persisted_rendered_and_supplied_to_every_role(cli):
+    run, step, log = cli
+    references = ["Specification: docs/spec.md", "lookup testing conventions"]
+    result = run(
+        "init",
+        "--goal",
+        "Goal",
+        "--reference",
+        references[0],
+        "--reference",
+        references[1],
+    )
+    assert result.returncode == 0, result.stderr
+    assert state(step)["references"] == references
+
+    result = run("gate", replies=scenario("fresh"))
+    assert result.returncode == 0, result.stderr
+    assert (
+        "**References:**\n- Specification: docs/spec.md\n- lookup testing conventions"
+        in result.stdout
+    )
+
+    result = run("gate", "approved", replies=scenario("complete_continue"))
+    assert result.returncode == 0, result.stderr
+    role_calls = calls(log)
+    assert {call["role"] for call in role_calls} == {
+        "coordinator",
+        "worker",
+        "validator",
+        "assessor",
+    }
+    for call in role_calls:
+        context = yaml.safe_load(
+            call["prompt"]
+            .split("## Invocation context\n\n```yaml\n", 1)[1]
+            .split("\n```", 1)[0]
+        )
+        assert context["references"] == references
+
+
 def test_init_rejects_empty_role_model_before_pi_invocation(cli):
     run, step, log = cli
     result = run(

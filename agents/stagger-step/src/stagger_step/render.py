@@ -34,6 +34,7 @@ def render_gate(gate: dict[str, Any]) -> str:
     )
     title = current["slug"] if isinstance(current, dict) else "Initial Plan"
     lines = [f"# STEP Review - {title}", "", f"**Goal:** {gate['goal']}", ""]
+    _list(lines, "References", gate.get("references"))
     _list(lines, "Lessons", gate["lessons"])
 
     if isinstance(current, dict):

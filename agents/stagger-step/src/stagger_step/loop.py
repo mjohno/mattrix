@@ -102,7 +102,9 @@ class StepLoop:
         active = deepcopy(state["current"])
         worker = self.harness.invoke(
             "worker",
-            self._prompt("worker", {"task": active, "goal": state["goal"]}),
+            self._prompt(
+                "worker", state, {"task": active, "goal": state["goal"]}
+            ),
             task_slug=active["slug"],
         )
         work = self._worker_packet(worker)
@@ -192,6 +194,7 @@ class StepLoop:
             key: deepcopy(state[key])
             for key in (
                 "goal",
+                "references",
                 "lessons",
                 "history",
                 "current",
@@ -212,6 +215,7 @@ class StepLoop:
             "validator",
             self._prompt(
                 "validator",
+                state,
                 {
                     "task": active,
                     "goal": state["goal"],
@@ -228,6 +232,7 @@ class StepLoop:
             "worker",
             self._prompt(
                 "worker",
+                state,
                 {
                     "task": active,
                     "goal": state["goal"],
@@ -244,6 +249,7 @@ class StepLoop:
             "validator",
             self._prompt(
                 "validator",
+                state,
                 {
                     "task": active,
                     "goal": state["goal"],
@@ -277,6 +283,7 @@ class StepLoop:
                 target,
                 self._prompt(
                     target,
+                    state,
                     {
                         "task": active,
                         "goal": state["goal"],
@@ -383,6 +390,7 @@ class StepLoop:
             "assessor",
             self._prompt(
                 "assessor",
+                state,
                 {
                     "goal": state["goal"],
                     "lessons": state["lessons"],
@@ -437,6 +445,7 @@ class StepLoop:
             "coordinator",
             self._prompt(
                 "coordinator",
+                state,
                 {
                     "goal": state["goal"],
                     "lessons": state["lessons"],
@@ -470,5 +479,11 @@ class StepLoop:
         candidate["recommended"] = recommendation
         return validate_state(candidate)
 
-    def _prompt(self, role: str, context: dict[str, Any]) -> str:
-        return build_prompt(role, context, self.change_path)
+    def _prompt(
+        self, role: str, state: dict[str, Any], context: dict[str, Any]
+    ) -> str:
+        return build_prompt(
+            role,
+            {"references": deepcopy(state["references"]), **context},
+            self.change_path,
+        )
