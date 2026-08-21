@@ -37,7 +37,6 @@ def test_role_prompt_is_self_contained_and_role_specific(
     assert role_title in prompt
     assert finalizer in prompt
     assert "skills/" not in prompt
-    assert "/skill:" not in prompt
     assert "## Invocation context" in prompt
     assert "with its required typed arguments" in prompt
     assert "For example:" in prompt
@@ -78,7 +77,9 @@ def test_role_prompts_preserve_evidence_boundaries():
     validator = build_prompt("validator", {"goal": "Ship the change"})
     assessor = build_prompt("assessor", {"goal": "Ship the change"})
 
-    assert "Do not validate the task" in worker
+    assert "## Self-verification" in worker
+    assert "Do not report a validation result" in worker
+    assert "/skill:check" in validator
     assert "Report evidence of both success and failure" in validator
     assert "credible failure evidence as delivery learning" in assessor
 
