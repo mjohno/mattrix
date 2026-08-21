@@ -17,3 +17,14 @@ vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
   },
   command = 'setfiletype yaml.ansible',
 })
+
+vim.api.nvim_create_autocmd('FileType', {
+  group = group,
+  pattern = 'markdown',
+  callback = function()
+    vim.opt_local.wrap = true
+    vim.opt_local.linebreak = true
+    vim.opt_local.textwidth = 80
+    vim.opt_local.colorcolumn = '81'
+  end,
+})
