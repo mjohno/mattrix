@@ -35,6 +35,23 @@ STEP_FILE=STEP-example.yaml python -m stagger_step.cli session
 
 `init` writes an unstarted STEP state. It does not invoke the Coordinator or render an Owner review. An unstarted state has no current task, next tasks, or recommendation. `session`, `init --session`, and `gate` run the shared bootstrap transition for that state, persist the Coordinator proposals and recommendation, and then render the initial Owner gate. A `gate` response is applied only after that initial review has been rendered. `init` accepts `--<role>-model` and `--<role>-thinking` for each Coordinator, Worker, Validator, and Assessor role. Coordinator defaults to `gpt-5.6-terra` and `medium`; all other roles default to `gpt-5.6-luna` and `medium`. `init` logs the initialized settings once at INFO level. Only the exact input `approved` promotes the recommendation. Revision feedback must contain a letter and more than three non-whitespace characters; empty, whitespace-only, numeric, and punctuation-only input is ignored. `break` is read-only. `session` keeps the pending role output in process memory, so an arbitrary edited YAML gate can never be submitted as an approval. A manually edited state is accepted only through `validate_state`.
 
+## Logging
+
+Stagger Step writes logs to stderr. Every record starts with this form:
+
+```text
+stagger_step.<file>.<function>:<line> [<UTC time>] <LEVEL>: <summary>
+<body>
+```
+
+A record can have a raw multiline body after its header. Bodies have no continuation prefix. At DEBUG level, each prompt written to Pi has a `harness_prompt` summary with `role`, `task`, `session_name`, `session_id`, `request_id`, and `attempt` fields; its body is the exact prompt sent to Pi. Configure log forwarders to identify record starts with:
+
+```regex
+^stagger_step\.[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*:\d+ \[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\] (DEBUG|INFO|WARNING|ERROR|CRITICAL): \x20
+```
+
+Prompt bodies are not truncated or redacted.
+
 ## Change path and commit mode
 
 `init --change PATH` stores an optional root-level `change_path`. Relative paths are resolved from the STEP file, must name an existing directory, and are supplied to every role as its shared artifact location. The STEP file is the change record; no `CHANGE.md` is required.

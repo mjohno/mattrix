@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from .conftest import assessor, complete, coordinator, state
@@ -63,7 +65,12 @@ def test_ctrl_c_during_afk_returns_to_a_manual_unapproved_gate(cli):
     assert saved["history"] == []
     assert saved["current"]["slug"] == "first"
     assert "validate" not in saved["current"]
-    assert "INFO " in result.stderr
+    assert re.search(
+        r"^stagger_step\.[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_]"
+        r"[A-Za-z0-9_]*:\d+ \[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\] INFO: ",
+        result.stderr,
+        re.MULTILINE,
+    )
     assert (
         "SIGINT received; interrupt requested at the next STEP boundary"
         in result.stderr

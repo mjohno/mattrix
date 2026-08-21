@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-import logging
 import re
 import subprocess
 import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 
+from .logging import StructuredLogger
 from .state import StateError
 
-logger = logging.getLogger("stagger_step.git")
+logger = StructuredLogger("stagger_step.git")
 SHA = re.compile(r"^[0-9a-f]{40,64}$")
 
 

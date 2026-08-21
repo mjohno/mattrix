@@ -7,13 +7,13 @@ import os
 import signal
 import sys
 import threading
-import time
 from pathlib import Path
 from typing import Any
 
 from .diagnostics import write_diagnostics
 from .git import CommitMode
 from .harness import PiRpcHarness
+from .logging import StructuredFormatter, StructuredLogger
 from .loop import StepLoop, TransitionError
 from .normalizer import normalize_packet
 from .render import render_gate
@@ -28,7 +28,7 @@ from .state import (
     write_atomic,
 )
 
-logger = logging.getLogger("stagger_step.cli")
+logger = StructuredLogger("stagger_step.cli")
 _INTERRUPT_REQUESTED = threading.Event()
 
 
@@ -340,11 +340,10 @@ def run_session(
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
-    logging.Formatter.converter = time.gmtime
+    handler = logging.StreamHandler()
+    handler.setFormatter(StructuredFormatter(datefmt="%Y-%m-%dT%H:%M:%SZ"))
     logging.basicConfig(
-        level=getattr(logging, args.log_level),
-        format="%(levelname)s [%(asctime)s] %(name)s: %(message)s",
-        datefmt="%Y-%m-%dT%H:%M:%SZ",
+        level=getattr(logging, args.log_level), handlers=[handler]
     )
     raw_path = args.file or os.getenv("STEP_FILE")
     diagnostic_path = Path(raw_path) if raw_path else None
@@ -466,7 +465,7 @@ def main(argv: list[str] | None = None) -> int:
         logger.critical(
             "STEP harness error: %s",
             exc,
-            exc_info=logger.isEnabledFor(logging.DEBUG),
+            exc_info=logger.is_enabled_for(logging.DEBUG),
         )
         return 3
     finally:

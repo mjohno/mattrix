@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 
 import pytest
@@ -57,7 +58,9 @@ def test_session_bootstraps_persisted_unstarted_workflow(cli):
     assert result.stdout.endswith("break\n\n---\n")
 
 
-def test_gate_does_not_accept_a_response_until_initial_bootstrap_is_rendered(cli):
+def test_gate_does_not_accept_a_response_until_initial_bootstrap_is_rendered(
+    cli,
+):
     run, step, log = cli
     assert run("init", "--goal", "Goal").returncode == 0
 
@@ -295,8 +298,9 @@ def test_default_harness_sessions_are_named_logged_and_keep_state_clean(cli):
         in json.loads(log.read_text().splitlines()[0])["prompt"]
     )
     assert re.search(
-        r"^INFO \[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\] "
-        r"stagger_step\.harness: pi role session started",
+        r"^stagger_step\.harness\._role_session:\d+ "
+        r"\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\] INFO: "
+        r"pi role session started",
         result.stderr,
         re.MULTILINE,
     )
@@ -305,8 +309,8 @@ def test_default_harness_sessions_are_named_logged_and_keep_state_clean(cli):
     assert "session" not in step.read_text()
 
 
-def test_debug_logs_buffer_thinking_without_raw_rpc_events(cli):
-    run, _, _ = cli
+def test_debug_logs_prompt_body_and_buffered_thinking(cli):
+    run, _, log = cli
     replies = {
         "coordinator": [
             {
@@ -321,10 +325,25 @@ def test_debug_logs_buffer_thinking_without_raw_rpc_events(cli):
     result = run("--log-level", "DEBUG", "gate", replies=replies)
 
     assert result.returncode == 0, result.stderr
+    header = (
+        r"^stagger_step\.[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_]"
+        r"[A-Za-z0-9_]*:\d+ \[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\] "
+        r"(DEBUG|INFO|WARNING|ERROR|CRITICAL): "
+    )
+    prompt = calls(log)[0]["prompt"]
     assert re.search(
-        r"^DEBUG \[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\] "
-        r"stagger_step\.harness: pi thinking end role=coordinator "
-        r"task=bootstrap content_index=0 output=Inspecting the current state\.$",
+        header
+        + r"harness_prompt role=coordinator task=bootstrap "
+        + r"session_name=\S+ session_id=\S+ request_id=\S+ attempt=1\n"
+        + re.escape(prompt)
+        + r"\n(?=stagger_step\.)",
+        result.stderr,
+        re.MULTILINE,
+    )
+    assert re.search(
+        header
+        + r"pi thinking end role=coordinator task=bootstrap "
+        + r"content_index=0 output=Inspecting the current state\.$",
         result.stderr,
         re.MULTILINE,
     )
@@ -585,7 +604,7 @@ def test_wrong_finalizer_is_rejected_without_step_state_mutation(cli):
 
 
 def test_idle_timeout_reuses_the_session_and_replays_task(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, caplog
 ):
     scenario_path = tmp_path / "scenario.json"
     log_path = tmp_path / "pi.log"
@@ -599,11 +618,24 @@ def test_idle_timeout_reuses_the_session_and_replays_task(
     )
     harness = PiRpcHarness(command=(str(FAKE),), session_enabled=True)
 
+    caplog.set_level(logging.DEBUG, logger="stagger_step.harness")
     with pytest.raises(
         HarnessError,
         match="worker harness failure: RPC idle timed out before settlement",
     ):
         harness.invoke("worker", "test timeout")
+
+    prompt_records = [
+        record
+        for record in caplog.records
+        if record.getMessage().startswith("harness_prompt ")
+    ]
+    assert len(prompt_records) == 3
+    assert [record.body for record in prompt_records] == ["test timeout"] * 3
+    assert [
+        f"attempt={attempt}" in record.getMessage()
+        for attempt, record in enumerate(prompt_records, 1)
+    ] == [True] * 3
 
     attempts = calls(log_path)
     assert [attempt["prompt"] for attempt in attempts] == [
@@ -638,13 +670,25 @@ def test_activity_resets_the_rpc_idle_timeout(tmp_path, monkeypatch):
 
 
 def test_second_missing_finalizer_keeps_step_state_unchanged(cli):
-    run, step, _ = cli
+    run, step, log = cli
     init(run)
     result = run(
-        "gate", "approved", replies={"worker": ["no_finalizer", "no_finalizer"]}
+        "--log-level",
+        "DEBUG",
+        "gate",
+        "approved",
+        replies={"worker": ["no_finalizer", "no_finalizer"]},
     )
     assert result.returncode == 3
     assert "without stagger_step_finalize_worker" in result.stderr
+    worker_prompts = [
+        call["prompt"] for call in calls(log) if call["role"] == "worker"
+    ]
+    assert len(worker_prompts) == 2
+    assert worker_prompts[1].startswith("Finalize the current STEP role result")
+    for prompt in worker_prompts:
+        assert prompt in result.stderr
+    assert result.stderr.count("DEBUG: harness_prompt role=worker") == 2
     assert state(step)["current"] == {
         "slug": "first",
         "intent": "first",

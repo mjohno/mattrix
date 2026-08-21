@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 import queue
 import re
@@ -16,6 +15,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any, Protocol
 
+from .logging import StructuredLogger
 from .prompts import build_finalization_prompt
 from .state import StateError, default_role_settings
 
@@ -36,7 +36,7 @@ class FinalizerProtocolError(HarnessError):
     pass
 
 
-logger = logging.getLogger("stagger_step.harness")
+logger = StructuredLogger("stagger_step.harness")
 _IDLE_TIMEOUT_SCHEDULE = (30.0, 60.0, 120.0)
 # Set a positive character limit here to truncate individual DEBUG values; None is unlimited.
 _DEBUG_VALUE_LIMIT: int | None = None
@@ -289,7 +289,7 @@ class PiRpcHarness:
                     retry_prompt,
                     session,
                     task_slug,
-                    idle_timeout_seconds,
+                    (attempt + 1, idle_timeout_seconds),
                 )
             except PiConfigurationError:
                 raise
@@ -479,8 +479,9 @@ class PiRpcHarness:
         prompt: str,
         session: RoleSession,
         task_slug: str,
-        idle_timeout_seconds: float,
+        retry: tuple[int, float],
     ) -> dict[str, Any]:
+        attempt, idle_timeout_seconds = retry
         settings = self._settings_for(role)
         command = [
             *self.command,
@@ -530,6 +531,16 @@ class PiRpcHarness:
             stderr_lines = self._start_pipe_reader(proc.stderr)
             proc.stdin.write(json.dumps(request) + "\n")
             proc.stdin.flush()
+            logger.debug(
+                "harness_prompt role=%s task=%s session_name=%s session_id=%s request_id=%s attempt=%s",
+                role,
+                task_slug,
+                session.name,
+                session_id,
+                request["id"],
+                attempt,
+                body=prompt,
+            )
             started = last_activity = time.monotonic()
             maximum_deadline = (
                 started + self.max_invocation_seconds
