@@ -10,6 +10,7 @@ from .state import StateError, validate_task
 ROLES = ("coordinator", "worker", "validator", "assessor")
 RESULTS = {"success", "partial", "failure", "blocked"}
 CLARIFICATION_TARGETS = {"worker", "validator"}
+MAX_CLARIFICATION_REQUESTS = 2
 
 
 def _mapping(value: Any, label: str) -> dict[str, Any]:
@@ -40,7 +41,7 @@ def _validate_packet(value: Any, label: str) -> dict[str, Any]:
 
 
 def _clarification_requests(value: Any) -> list[dict[str, str]]:
-    if not isinstance(value, list) or len(value) > 2:
+    if not isinstance(value, list) or len(value) > MAX_CLARIFICATION_REQUESTS:
         raise StateError(
             "assessor.clarification_requests must contain at most two items"
         )

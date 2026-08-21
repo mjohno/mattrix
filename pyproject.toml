@@ -10,74 +10,45 @@ requires-python = ">=3.11"
 
 [project.optional-dependencies]
 quality = [
-  "black>=25.1.0",
-  "mypy>=1.14.0",
+  "basedpyright>=1.0",
   "PyYAML>=6.0",
-  "pylint>=3.3.0",
   "pytest>=8.0.0",
   "ruff>=0.9.0",
-  "types-PyYAML>=6.0.12",
-  "PyYAML>=6.0",
   "types-PyYAML>=6.0",
 ]
 
 [tool.setuptools]
 packages = []
 
-[tool.black]
-line-length = 80
-target-version = ["py311"]
-exclude = '''
-/(\.git|\.mypy_cache|\.pytest_cache|\.ruff_cache|\.venv|build|dist|tmp)/
-'''
-
 [tool.ruff]
 line-length = 80
 target-version = "py311"
-exclude = [".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".venv", "build", "dist", "tmp"]
+exclude = [".git", ".pytest_cache", ".ruff_cache", ".venv", "build", "dist", "tmp"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP"]
-# Black owns Python layout; its valid long strings and comments need not be
-# duplicated as Ruff E501 violations.
+select = ["E", "F", "I", "UP", "B", "PL"]
 ignore = ["E501"]
 
-[tool.mypy]
-python_version = "3.11"
-strict = true
-warn_unused_configs = true
-exclude = '''(?x)(^\.venv/|^tmp/|^agents/stagger-step/tests/|/build/|/dist/)'''
+[tool.ruff.lint.per-file-ignores]
+# Tests use literal expected values. Their scenario-oriented control flow does not
+# benefit from production-function complexity limits.
+"agents/stagger-step/tests/**/*.py" = ["PLR0911", "PLR0912", "PLR0915", "PLR2004"]
+# These deterministic command and validation functions have intentionally dense
+# control flow. Keep all other Pylint-family checks enabled in these files.
+"agents/stagger-step/src/stagger_step/cli.py" = ["PLR0911", "PLR0912", "PLR0915"]
+"agents/stagger-step/src/stagger_step/harness.py" = ["PLR0912", "PLR0915"]
+"agents/stagger-step/src/stagger_step/normalizer.py" = ["PLR0912"]
+"agents/stagger-step/src/stagger_step/render.py" = ["PLR0912"]
+"agents/stagger-step/src/stagger_step/state.py" = ["PLR0912", "PLR0915"]
+"make.py" = ["PLR0911"]
+"skills/src/interface/workspace/scripts/validate_workspace.py" = ["PLR0912"]
+"skills/src/map/git-project/scripts/ensure_git_project.py" = ["PLR0912"]
 
-[tool.pylint.main]
-py-version = "3.11"
-recursive = true
-ignore-paths = ['^\.venv/', '^tmp/', '^agents/stagger-step/tests/', '/build/', '/dist/']
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 
-[tool.pylint.format]
-max-line-length = 80
-
-[tool.pylint.messages_control]
-# Keep Pylint focused on correctness. Existing command handlers and bundled scripts
-# deliberately use terse CLI functions and dense validation/control-flow code.
-disable = [
-  "broad-exception-caught",
-  "consider-using-with",
-  "duplicate-code",
-  "import-outside-toplevel",
-  "missing-class-docstring",
-  "missing-function-docstring",
-  "missing-module-docstring",
-  "redefined-builtin",
-  "redefined-outer-name",
-  "subprocess-run-check",
-  "too-few-public-methods",
-  "too-many-branches",
-  "too-many-locals",
-  "too-many-nested-blocks",
-  "too-many-return-statements",
-  "too-many-statements",
-  "too-many-instance-attributes",
-  "line-too-long",
-  "fixme",
-  "unnecessary-lambda",
-]
+[tool.basedpyright]
+pythonVersion = "3.11"
+typeCheckingMode = "standard"
+exclude = [".venv", "tmp", "build", "dist", "agents/stagger-step/tests"]

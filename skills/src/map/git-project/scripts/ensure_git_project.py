@@ -25,7 +25,9 @@ import sys
 import tempfile
 import unittest
 from collections.abc import Sequence
+from contextlib import redirect_stdout
 from dataclasses import dataclass
+from io import StringIO
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from unittest import mock
 
@@ -202,7 +204,9 @@ def request_from(args: argparse.Namespace) -> Request:
         if args.checkout is not None:
             raise BlockedError("--checkout cannot be used with --remote")
         if branch == source:
-            raise BlockedError("--branch must differ from --from in remote mode")
+            raise BlockedError(
+                "--branch must differ from --from in remote mode"
+            )
     return Request(
         root,
         valid_project(args.project),
@@ -586,9 +590,6 @@ def run_command(root: Path, *arguments: str) -> tuple[int, dict[str, object]]:
     previous = os.environ.get("WORK_ROOT")
     os.environ["WORK_ROOT"] = str(root)
     try:
-        from contextlib import redirect_stdout
-        from io import StringIO
-
         output = StringIO()
         with redirect_stdout(output):
             code = main(list(arguments))

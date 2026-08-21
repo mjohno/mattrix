@@ -16,7 +16,8 @@ def test_approval_rejects_an_unstarted_workflow():
         pass
 
     with pytest.raises(
-        TransitionError, match="bootstrap state requires a recommended next step"
+        TransitionError,
+        match="bootstrap state requires a recommended next step",
     ):
         StepLoop(NoHarness()).approve(create_state("Goal"))
 

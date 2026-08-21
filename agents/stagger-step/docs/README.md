@@ -114,10 +114,9 @@ For interactive extension development, symlink its directory to `~/.pi/agent/ext
 From the repository root, run the following order before considering a change verified:
 
 ```bash
-python make.py format-check  # Black formatting check
+python make.py format-check  # Ruff formatting check
 python make.py ruff
-python make.py pylint
-python make.py mypy
+python make.py basedpyright
 pytest agents/stagger-step/tests/unit
 pytest agents/stagger-step/tests/integration
 PI_RPC_INTEGRATION=1 pytest agents/stagger-step/tests/integration/test_pi_rpc_live.py
@@ -125,4 +124,4 @@ python make.py build-stagger-step
 python make.py docker-build
 ```
 
-`python make.py quality` runs the Black, Ruff, Pylint, and mypy checks together. The live Pi test is opt-in and follows deterministic unit and local integration coverage; no live Pi service is required for the normal suite. The Python wheel and Docker builds verify their respective packaging paths.
+`python make.py quality` runs the Ruff format, Ruff lint, and basedpyright checks together. The live Pi test is opt-in and follows deterministic unit and local integration coverage; no live Pi service is required for the normal suite. The Python wheel and Docker builds verify their respective packaging paths.

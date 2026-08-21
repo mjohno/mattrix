@@ -39,8 +39,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "format",
             "format-check",
             "ruff",
-            "pylint",
-            "mypy",
+            "basedpyright",
             "quality",
         ],
         help="Command to run",
@@ -65,9 +64,11 @@ def quality_targets() -> list[str]:
 def run_command(command: list[str], quiet: bool) -> int:
     """Run a command, suppressing successful output when requested."""
     if not quiet:
-        return subprocess.run(command, cwd=ROOT).returncode
+        return subprocess.run(command, cwd=ROOT, check=False).returncode
 
-    result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+    result = subprocess.run(
+        command, cwd=ROOT, capture_output=True, text=True, check=False
+    )
     if result.returncode:
         sys.stderr.write(result.stdout)
         sys.stderr.write(result.stderr)
@@ -78,11 +79,17 @@ def quality_command(command: str) -> list[str]:
     """Build the command line for one configured quality tool."""
     targets = quality_targets()
     tool_commands = {
-        "format": [sys.executable, "-m", "black", *targets],
-        "format-check": [sys.executable, "-m", "black", "--check", *targets],
+        "format": [sys.executable, "-m", "ruff", "format", *targets],
+        "format-check": [
+            sys.executable,
+            "-m",
+            "ruff",
+            "format",
+            "--check",
+            *targets,
+        ],
         "ruff": [sys.executable, "-m", "ruff", "check", *targets],
-        "pylint": [sys.executable, "-m", "pylint", *targets],
-        "mypy": [sys.executable, "-m", "mypy", *targets],
+        "basedpyright": [sys.executable, "-m", "basedpyright", *targets],
     }
     return tool_commands[command]
 
@@ -112,9 +119,9 @@ def build_stagger_step(quiet: bool) -> int:
             str(STAGGER_STEP_BUILD),
         ]
         if not quiet:
-            return subprocess.run(command, cwd=source).returncode
+            return subprocess.run(command, cwd=source, check=False).returncode
         result = subprocess.run(
-            command, cwd=source, capture_output=True, text=True
+            command, cwd=source, capture_output=True, text=True, check=False
         )
         if result.returncode:
             sys.stderr.write(result.stdout)
@@ -128,7 +135,6 @@ def clean(quiet: bool) -> int:
         "build",
         "dist",
         "__pycache__",
-        ".mypy_cache",
         ".pytest_cache",
         ".ruff_cache",
         "htmlcov",
@@ -204,7 +210,7 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     if args.command == "quality":
-        for command in ("format-check", "ruff", "pylint", "mypy"):
+        for command in ("format-check", "ruff", "basedpyright"):
             result = run_command(quality_command(command), args.quiet)
             if result:
                 return result

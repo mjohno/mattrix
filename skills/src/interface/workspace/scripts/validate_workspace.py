@@ -16,6 +16,7 @@ import os
 import re
 import subprocess
 import sys
+import unittest
 from collections.abc import Sequence
 from pathlib import Path, PureWindowsPath
 
@@ -117,7 +118,7 @@ def find_remotes(remotes_root: Path) -> list[Path]:
     """Return all directories ending in ``.git`` beneath the remotes tree."""
     return sorted(
         (path for path in remotes_root.rglob("*.git") if path.is_dir()),
-        key=lambda path: str(path),
+        key=str,
     )
 
 
@@ -129,7 +130,7 @@ def child_directories(directory: Path) -> list[Path]:
             for path in directory.iterdir()
             if path.is_dir() and not path.is_symlink()
         ),
-        key=lambda path: str(path),
+        key=str,
     )
 
 
@@ -174,7 +175,7 @@ def validate_workspace(root: Path) -> list[str]:
                     f"{candidate} (project: {project})"
                 )
 
-    for project in sorted(expected_projects, key=lambda path: str(path)):
+    for project in sorted(expected_projects, key=str):
         if not project.is_dir():
             continue
         checkouts = child_directories(project)
@@ -253,7 +254,6 @@ def main(_args: argparse.Namespace) -> int:
 
 def run_tests() -> int:
     """Run lightweight unit tests for path interpretation helpers."""
-    import unittest
 
     class ValidatorTests(unittest.TestCase):
         def test_relative_git_paths(self) -> None:

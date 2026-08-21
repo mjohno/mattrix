@@ -88,7 +88,8 @@ Nightly Neovim releases are not supported. A Nerd Font is optional.
 The leader key is Space. The configuration preserves line numbers, incremental
 search, highlighted search results, no wrapping, an 80-column marker, two-space
 default indentation, persistent undo, true-color support, disabled navigation
-keys, and Jenkinsfile Groovy detection.
+keys, and Jenkinsfile Groovy detection. Python buffers also use an 80-character
+text width and an 81-column guide.
 
 ## Tool management
 
@@ -118,7 +119,9 @@ Use native toolchains where they are the better owner:
 
 Do not install both `pyright` and `basedpyright`. This configuration uses
 `basedpyright` for type analysis. It uses `ruff` for linting, import actions,
-and formatting.
+and formatting. Python projects use discovered `pyproject.toml` configuration.
+Standalone Python files use 80-character Ruff settings and basedpyright
+standard type checking.
 
 ## Language support
 

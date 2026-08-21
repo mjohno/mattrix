@@ -29,6 +29,7 @@ from .state import (
 )
 
 logger = StructuredLogger("stagger_step.cli")
+MINIMUM_REVISION_FEEDBACK_LENGTH = 3
 _INTERRUPT_REQUESTED = threading.Event()
 
 
@@ -83,7 +84,9 @@ def emit_response(response: str) -> None:
 def is_revision_feedback(value: str) -> bool:
     """Accept meaningful revision feedback, not accidental keystrokes."""
     normalized = value.strip()
-    return len(normalized) > 3 and any(char.isalpha() for char in normalized)
+    return len(normalized) > MINIMUM_REVISION_FEEDBACK_LENGTH and any(
+        char.isalpha() for char in normalized
+    )
 
 
 def resolve_change_path(step_path: Path, value: str | None) -> str | None:
