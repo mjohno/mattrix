@@ -22,25 +22,26 @@ Use-When: Use when a user wants to start a Stagger Step workflow for a goal.
 
 - Goal, or enough context for `goal` to propose one.
 - Optional new STEP-file path and change directory.
-- Optional lessons, commit mode, packet history, and role model or thinking settings.
+- Optional ordered references and lessons, commit mode, packet history, and role model or thinking settings.
 - Approval to use inferred paths.
 
 ## 2. Processes
 
 1. If no goal is supplied, use `goal`; show its proposed SMART goal and wait for approval.
-2. If paths are absent, derive a lower-case kebab-case `<goal-slug>` from the approved goal and propose `tmp/CHANGE-<goal-slug>/STEP-<goal-slug>.yaml` from the checked-out project root.
-3. If the change directory is absent, use `tmp/CHANGE-<goal-slug>/`.
-4. Show inferred paths and wait for approval before initialization.
-5. Stop if the STEP file exists. Do not replace it.
-6. Create missing parent directories for the STEP file and change directory with `mkdir -p`.
-7. Validate packet history and commit-mode requirements.
-8. Run `init` from the checked-out project root. If the STEP file is in the change directory, pass `--change .`; otherwise pass the resolved change directory.
-9. Return the rendered initial owner gate. Do not approve it or start a session.
+2. Ask the user whether the workflow needs references or lessons. Let them provide free-form text or existing artifacts, such as a SPEC, PLAN, or RUBRIC. Collect supplied values in order.
+3. If paths are absent, derive a lower-case kebab-case `<goal-slug>` from the approved goal and propose `tmp/CHANGE-<goal-slug>/STEP-<goal-slug>.yaml` from the checked-out project root.
+4. If the change directory is absent, use `tmp/CHANGE-<goal-slug>/`.
+5. Show inferred paths and wait for approval before initialization.
+6. Stop if the STEP file exists. Do not replace it.
+7. Create missing parent directories for the STEP file and change directory with `mkdir -p`.
+8. Validate packet history and commit-mode requirements.
+9. Run `init` from the checked-out project root. Pass each supplied reference as `--reference <text>` and each supplied lesson as `--lesson <text>`. If the STEP file is in the change directory, pass `--change .`; otherwise pass the resolved change directory.
+10. Return the rendered initial owner gate. Do not approve it or start a session.
 
 ## 3. Outputs
 
 - One new STEP YAML state file and its initial owner gate.
-- The selected initialization settings.
+- The selected initialization settings, references, and lessons.
 - Derived paths and the user approval that authorized them, when paths were inferred.
 - A shell-escaped, copyable continuation command: `STEP_FILE=<path> python -m stagger_step.cli session`.
 
