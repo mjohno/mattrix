@@ -1,55 +1,52 @@
 ---
 name: rfc
-description: Review explicitly named files through a reviewer lens, annotate prioritized findings inline, and write a connecting summary. Use when the user explicitly asks to run RFC or request-for-comment feedback.
-disable-model-invocation: true
+description: Use when a request for comment needs independent lens-based review, assessed findings, and governed follow-up.
 metadata:
-  type: skill
+  type: protocol
   category: map
 ---
 
 # rfc
 
-Goal: Orchestrate lens-based review of target files, add concise inline annotations, and produce a summary that connects the annotations into one coherent RFC response.
-Non-Goals: Remediating the findings, rewriting unrelated content, inventing criteria not supplied by the reviewer lens, or replacing a full formal `output/review` report.
-Use-When: The user explicitly asks to run RFC, rfc, or request-for-comment feedback. Do not invoke automatically for generic review requests.
+Goal: Govern an RFC from scoped independent review through finding assessment, follow-up, validation, and closure.
+Non-Goals: Implementing annotated fixes, discovering criteria or lenses, reviewing unspecified sources, or changing sources without approval.
+Use-When: The user explicitly asks to run RFC, rfc, or request-for-comment feedback.
 
 ## 0. Prerequisites
-- Explicit target file path(s) or pasted content to review; write annotations only to specifically named files
-- Reviewer lens: a loaded persona skill, explicit criteria, or a named perspective from the prompt that resolves to concrete criteria
-- Permission to edit the specifically named target files with inline annotations; if missing, ask before writing
+- Explicit sources or pasted content, criteria, and at least one reviewer lens
+- A change path (`interface/change` skill) when a persistent RFC document is required; otherwise, use the prompt as the RFC record
+- Permission to edit each named source when an Annotate action is selected
+- `output/review`, `output/annotate`, `output/check`, and `interface/plan` available when their stages apply
 
-## 1. Inputs
-- Specifically named target files, ranges, or content from the prompt
-- Reviewer lens and review criteria, resolved from persona skills when named; if a named lens cannot be resolved to concrete criteria, ask for clarification before reviewing
-- Optional focus area, severity threshold using `output/review` P1-P5 semantics, output path for the summary, or annotation ID/prefix convention
+## 1. Protocol Interface
+- Authoritative interface: `RFC-<slug>.md` at the supplied change root, using [assets/rfc_template.md](assets/rfc_template.md); without a change root, the prompt record is authoritative.
+- Primary stages: Scope, Create RFC, Blind Review, Merge, Assess, Action, Validate, Close.
+- The coordinator reads the interface to derive ready tasks. All role results, dispositions, action evidence, and validation results are recorded there.
+- `use_subagents` is false by default. When explicitly true, one clean subagent performs each source/lens Blind Review.
 
-## 2. Processes
-1. **Scope**: Confirm the specifically named files, lens, and whether annotations should be written in-place. If the target set is ambiguous, includes only directories/globs, or write permission is absent, ask before editing.
-2. **Review**: Use `output/review` semantics to produce prioritized findings from the resolved criteria and lens. Prefer findings that are specific, actionable, severity-scored, and tied to exact locations.
-3. **Annotate**: Use `output/annotate` to add annotations near each accepted finding using native comment syntax. Each annotation must include a stable ID and lens in the form `REVEW(<ID>, <LENS>)`; include severity from the review finding and keep each note locally understandable.
-4. **Summarize**: Write a concise RFC summary that glues the annotations together: overall judgment, themes, key risks, file-by-file note index, and suggested next action.
-5. **Verify**: Re-read changed regions to ensure annotations landed near the right context, preserve formatting, and the summary references every written annotation by ID.
+## 2. Invariants
+- A source/lens review is blind: before it finishes, its reviewer must not read the RFC record, prior reports, findings, assessments, actions, or validation results.
+- A blind reviewer receives only its source, resolved criteria, lens, and `output/review` report format. It must not edit a source or the RFC record.
+- Only the serialized Merge stage reads both an independent review result and the current RFC record. It preserves each report, adds new findings, links duplicates, and adds insights to related findings.
+- Each finding has a stable ID, one lifecycle status (`Open`, `Assessed`, `Actioning`, `Validating`, or `Closed`), and one disposition: `Accept`, `Annotate`, or `Plan`.
+- `Accept` records a decision-maker and no-action rationale, then closes the finding. It creates no source change.
+- `Annotate` uses `output/annotate`; a corrective annotation uses the formal `FIX` kind. `Plan` uses `draft` with `interface/plan`.
+- Annotate and Plan results require `output/check` against their declared criteria. A failed check returns only to the related Action stage.
+- Close only when every scoped source/lens review is complete and every finding is closed. Do not mutate protocol state outside the authoritative interface.
 
 ## 3. Outputs
-- Inline `REVEW(<ID>, <LENS>)` annotations in each specifically named target file when editing is approved
-- RFC summary in the prompt by default, or written to the requested output path, with every written annotation referenced by ID
-- Brief verification note listing edited files and annotation count
+- An RFC record in the supplied change root (`interface/change` skill), or an equivalent prompt record
+- Embedded independent review reports, a merged finding register, dispositions, action evidence, and validation results
+- Inline annotations or plan artifacts only for findings routed to those actions
+- A closure decision with the decision-maker and unresolved risks or deferred decisions
 
 ## 4. Next Steps
-- `modify` — apply accepted changes from RFC annotations
-- `output/review` — produce a formal severity-scored review report
-- `draft` with `interface/plan` — turn the RFC summary into a fix plan
-- `step` — implement one accepted annotation at a time
-- `annotate` — update, remove, or mark annotations after resolution
+- `modify` — perform a selected `FIX` or `TODO` annotation as a separate task
+- `output/review` — re-review an action result when the RFC requires additional evidence
 
 ## 5. Examples
 
 ### Example 1
 
-**Prompt:** "Run RFC on `docs/auth.md` using the security persona and write the summary to `docs/auth-rfc.md`."
-**Outcome:** Adds security-focused `REVEW(<ID>, security)` annotations in `docs/auth.md`, writes `docs/auth-rfc.md` with themes and an annotation index, and reports edited files plus count.
-
-### Example 2
-
-**Prompt:** "RFC these three design docs from a system-architect lens; don't edit, just show proposed annotations and summary."
-**Outcome:** Returns proposed inline `REVEW(<ID>, system-architect)` notes grouped by file and a cross-file architecture summary without modifying files.
+**Prompt:** "Run RFC for the supplied change path on `docs/auth.md` with security and system-architect lenses. Use subagents."
+**Outcome:** The protocol creates `RFC-auth.md`, runs clean independent reviews, merges the reports, assesses every finding, validates routed annotations or plans, and closes only resolved findings.

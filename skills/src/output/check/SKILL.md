@@ -8,16 +8,16 @@ metadata:
 
 # check
 
-Goal: Determine pass/partial/fail status of an object, result, outcome, or factual claim against defined target criteria, acceptance criteria, requirements, or source evidence.
+Goal: Determine pass/partial/fail status of an object, result, outcome, or factual claim against defined target criteria, acceptance criteria, requirements, quality checklist or source evidence.
 Non-Goals: Fixing failures, implementing solutions, making final go/no-go decisions, or performing broad discovery of missing sources.
 Use-When: Use when you need to validate whether an object, solution, result, outcome, or claim meets its target or acceptance criteria.
 
 ## 0. Prerequisites
-- Prompt, context or files with the object, solution, result or outcome to evaluate (e.g. prototype, PoC, test results)
-- Prompt, context or files with the requirements, acceptance criteria, target outcomes, or source evidence to evaluate against (e.g. Specifications, Plans, Documentation, Hypotheses, cited sources)
+- Prompt, context or files with the object, solution, result or outcome to evaluate (e.g. drafted files, modified files, execution results, review findings, test results)
+- Prompt, context or files with the requirements, acceptance criteria, target outcomes, or source evidence to evaluate against (e.g. Specifications, Plans, Documentation, Quality Checklists, Hypotheses, cited sources)
 
 ## 1. Inputs
-- Object, solution, result or outcome to evaluate (e.g. prototype, PoC, test results)
+- Object, solution, result or outcome to evaluate (e.g. drafted files, modified files, execution results, review findings, test results)
 - Requirements, acceptance criteria, target outcomes, or source evidence to evaluate against (e.g. project documentation, plan done criteria, cited files, URLs, tool output, or user-provided sources)
 
 ## 2. Processes

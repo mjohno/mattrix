@@ -4,7 +4,7 @@ description: [concise overview with "Use when..." triggers]
 metadata:
   type: protocol
   category: map
-disable_model_invocation: true
+# Optional: disable-model-invocation: true
 ---
 
 <!-- Resolve every relative path in this SKILL.md from this file's directory. -->

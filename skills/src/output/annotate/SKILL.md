@@ -2,6 +2,7 @@
 name: annotate
 description: Use when you need to add, update, remove, or normalize structured inline annotations in a file.
 metadata:
+  type: skill
   category: output
 ---
 
@@ -9,20 +10,20 @@ metadata:
 
 Goal: Add, update, remove, or normalize structured inline annotations in existing files.
 Non-Goals: Executing the work described by annotations, managing external task statements, or modifying unrelated file content.
-Use-When: You need to add TODOs, NOTEs, CHECKs, REVIEWs, or DONE marks directly into source files.
+Use-When: You need to add TODOs, FIXes, NOTEs, CHECKs, REVIEWs, or DONE marks directly into source files.
 
 ## 0. Prerequisites
 - Target file and local context for the annotation
 
 ## 1. Inputs
 - Target file path and local context from prompt
-- Annotation kind: NOTE, TODO, CHECK, REVIEW, or DONE
+- Annotation kind: NOTE, TODO, FIX, CHECK, REVIEW, or DONE
 - Message content and any refs (optional)
 
 ## 2. Processes
 1. **Add Annotation**: Identify the target file type and local context. Choose the annotation kind. Generate a stable ID. Choose the native comment syntax for the file type. Add the annotation as close as possible to the relevant line or section. Include `refs:` when the annotation links to source material. Preserve indentation, formatting, and surrounding content.
 2. **Update or Remove Annotation**: Locate the exact annotation by ID, text, or nearby context. Change only the targeted annotation block. Preserve unrelated code and prose.
-3. **Extract Annotation**: Read the annotation and its message. For TODO/CHECK/REVIEW kinds, the annotation itself is actionable context that can be used as input to a task statement. For NOTE/DONE kinds, the annotation is informational or completion-marked.
+3. **Extract Annotation**: Read the annotation and its message. For TODO/FIX/CHECK/REVIEW kinds, the annotation itself is actionable context that can be used as input to a task statement. A FIX identifies a targeted corrective change. For NOTE/DONE kinds, the annotation is informational or completion-marked.
 4. **Normalize Annotation**: Keep the message concise and implementation-oriented. Use a stable ID that can be referenced later. Preserve the kind when the purpose stays the same; change the kind when the purpose changes, but keep the ID stable. Include refs when the annotation links to source material.
 
 ## 3. Outputs
@@ -30,7 +31,7 @@ Use-When: You need to add TODOs, NOTEs, CHECKs, REVIEWs, or DONE marks directly 
 - If editing is requested, the target file updated only at the annotation location
 
 ## 4. Next Steps
-- `step` — execute the work indicated by a TODO/CHECK/REVIEW annotation
+- `step` — execute the work indicated by a TODO/FIX/CHECK/REVIEW annotation
 - `modify` — make the code or prose change described by an annotation
 - `task` — turn a pending annotation into a concise INVEST task statement
 - `annotate` — update, remove, or mark an existing annotation as DONE
@@ -52,7 +53,21 @@ Use-When: You need to add TODOs, NOTEs, CHECKs, REVIEWs, or DONE marks directly 
 TOKEN_WINDOW = 300
 ```
 
-### Example 2: Mark completion with DONE
+### Example 2: Add a FIX annotation
+**Prompt:**
+> Add a FIX annotation to reject expired refresh tokens.
+**Decisions:**
+- Kind: FIX (targeted corrective change)
+- ID: AUTH-SESSION-2
+- Syntax: `//` (TypeScript)
+- Refs: [RFC-auth.md#AUTH-42]
+**Outcome:**
+```ts
+// FIX(AUTH-SESSION-2): Reject expired refresh tokens.
+// refs: [RFC-auth.md#AUTH-42]
+```
+
+### Example 3: Mark completion with DONE
 **Prompt:**
 > Mark the token refresh TODO as complete.
 **Decisions:**

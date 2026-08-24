@@ -26,7 +26,7 @@ Valid pairs:
 - `type: interface`, `category: interface`
 - `type: communications`, `category: interface`
 - `type: skill`, `category: input|output|map`
-- `type: protocol`, `category: map`, with top-level `disable_model_invocation: true`
+- `type: protocol`, `category: map`
 - `type: persona`, `category: persona`
 
 ## Categories
@@ -79,12 +79,12 @@ Workflow composition skills and protocols that orchestrate multiple steps.
 
 ### protocol
 Map-category packages that define governed interaction contracts rather than ordinary invocable behavior.
-- Declares `metadata.type: protocol`, `metadata.category: map`, and top-level `disable_model_invocation: true`
+- Declares `metadata.type: protocol` and `metadata.category: map`
 - Defines safe transitions between agent, user, tools, and persistent or derived state
 - May be mediated by a CLI, API, or compact instruction surface; CLIs are optional, not required by the type
-- Uses its authoritative interface to expose workflow stages and legal operations when one exists
-- Is not directly invocable by the model; it is loaded by a human/orchestrator as protocol context
-- Examples: `map/step`
+- Uses its authoritative interface to expose workflow stages and legal operations when one exists; a protocol may use a working artifact as that interface and state record
+- May be directly invoked by the model. Set top-level `disable-model-invocation: true` only when a human or orchestrator must load it as protocol context.
+- Examples: `map/step`, `map/rfc`
 - **Do NOT use if** the package only performs a normal one-shot task — use `type: skill` instead
 
 ### persona

@@ -8,7 +8,7 @@ Inherits all items from [base_checklist.md](base_checklist.md). Apply base items
 
 - [ ] **CRITICAL** `metadata.type: protocol`
 - [ ] **CRITICAL** `metadata.category: map`
-- [ ] **CRITICAL** `disable_model_invocation: true` is present in frontmatter
+- [ ] **CRITICAL** If `disable-model-invocation` is present, it is a top-level boolean
 - [ ] **CRITICAL** Under `# [Name]`: Goal (mandatory), Non-Goals (mandatory), Use-When (mandatory)
 - [ ] **CRITICAL** Section 0: Prerequisites present
 - [ ] **CRITICAL** Section 1: Protocol Interface present and identifies the authoritative interface for operating the protocol
@@ -25,7 +25,7 @@ Inherits all items from [base_checklist.md](base_checklist.md). Apply base items
 - [ ] **QUALITY** Skill prose is an adapter to the protocol interface, not a duplicate implementation manual
 - [ ] **QUALITY** State ownership is explicit and avoids sidecar state unless necessary
 - [ ] **QUALITY** Human decision gates and agent action boundaries are unambiguous
-- [ ] **QUALITY** Protocol package is human/orchestrator-loaded and does not rely on direct model invocation
+- [ ] **QUALITY** Invocation mode is explicit: use `disable-model-invocation: true` only when direct model invocation is prohibited
 - [ ] **QUALITY** Escape hatches, if any, are clearly secondary to the primary protocol path
 
 ## Definition of Done

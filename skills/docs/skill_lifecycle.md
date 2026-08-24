@@ -29,7 +29,7 @@ Create or update a skill package that is structurally valid and beautifully simp
    - `interface` type → `interface` category
    - `communications` type → `interface` category
    - `skill` type → `input`, `output`, or `map`
-   - `protocol` type → `map` category, with top-level `disable_model_invocation: true`
+   - `protocol` type → `map` category
    - `persona` type → `persona` category
 5. **Determine Interface Role**: If the package is an interface, ensure it defines artifact shape, schema, protocol, conventions, or quality criteria without performing operational work. It must select a minimal default contract reference, select optional references/assets only from explicit caller intent or domain clues, and load selected content silently into context. If the package is communications, ensure it defines compact user-loaded LLM communication controls, has `disable_model_invocations: true`, and contains no operational sections.
 6. **Place the Package**:
@@ -82,7 +82,7 @@ Create or update a skill package that is structurally valid and beautifully simp
 #### Protocol packages
 
 - Define one governed interaction pattern with explicit transition, approval, ordering, state, or safety invariants.
-- Set `disable_model_invocation: true` in frontmatter; protocol packages are loaded by humans/orchestrators rather than directly invoked by the model.
+- Set `disable-model-invocation: true` only when direct model invocation is prohibited; otherwise, a model may invoke the protocol.
 - Keep skill prose compact; if an authoritative interface exists, make the skill an adapter to that interface.
 - CLIs, APIs, and scripts are optional for protocol packages, but when present they should expose the primary workflow and enforce state rules.
 - Do not require agents to mutate protocol state outside the authoritative interface.
@@ -131,7 +131,7 @@ Assert a pass/fail test over an existing skill package against the appropriate c
    - Both are required. Missing or invalid → Critical failure.
    - Valid pairs: `interface/interface`, `communications/interface`, `skill/input`, `skill/output`, `skill/map`, `protocol/map`, `persona/persona`.
    - `communications/interface` requires top-level `disable_model_invocations: true`.
-   - `protocol/map` also requires top-level `disable_model_invocation: true`.
+   - `protocol/map` may declare top-level `disable-model-invocation: true` when direct model invocation is prohibited.
 2. **Check Interface Contracts**: If `metadata.type: interface`, verify it exposes contract data only, selects a minimal default contract plus optional references/assets only when intent/domain requires them, and loads selected contents without emitting them in chat. If `metadata.type: communications`, verify it is user-loaded context-only communication control, has `disable_model_invocations: true`, and does not overlap existing skill names or skill descriptions.
 3. **Load Checklist**:
    - `metadata.type: interface` → [interface_checklist.md](interface_checklist.md)
