@@ -1,6 +1,6 @@
 ---
 name: review
-description: Review any artifact against its criteria using one or more persona skills as evaluation perspectives.
+description: Review an artifact against applicable criteria and produce a structured severity-scored report. Use when you need a traceable review report.
 metadata:
   type: skill
   category: output
@@ -8,76 +8,69 @@ metadata:
 
 # review
 
-Goal: Compare a target artifact against pre-discovered criteria sources and persona skills, then produce a structured severity-scored report.
-Non-Goals: Discover criteria or personas (that is the orchestrator's job), remediate artifacts, manage tasks, or rewrite the target.
-Use-When: You need to review any artifact against its criteria using one or more evaluation perspectives.
+Goal: Compare a target artifact against applicable criteria and produce a structured severity-scored report.
+Non-Goals: Do not do broad external criteria research, remediate the target, manage tasks, or rewrite the target.
+Use-When: You need to review an artifact against its criteria.
 
 ## 0. Prerequisites
-
-Discovery of criteria and personas is **not** the responsibility of this skill — it is assumed done by the calling agent/orchestrator (e.g. via `investigate` or `lookup`).
-
-Before executing, confirm:
-- **Criteria source(s)**: At least one set of evaluation criteria defining correctness for the artifact type (a canonical skill's SKILL.md, a rubric contract, a plan, quality rules, or other agreed-upon criterion). If none exist, **ask the user for them**.
-- **Persona skill(s)**: At least one persona skill encoding an evaluation perspective. If none exist, **ask the user which persona to use**. The default is the base criteria below (equivalent to a generic reviewer).
-
-You may accept both from the same prompt or request them separately if missing.
+- A target artifact.
+- An applicable criteria source, resolved from user-provided sources or local contracts. Ask the user only when no applicable source can be determined.
 
 ## 1. Inputs
-| Input | Required | Example |
-|---|---|---|
-| Target artifact | Yes | `SPEC-001.md` or pasted content |
-| Criteria source(s) | Yes | RFC skill's SKILL.md, rubric contract, plan, quality rules, or file path |
-| Persona skill(s) | No | `security`, `adversarial`, `system_architect` (discovered and resolved by orchestrator) |
-| Diff refs | No | "main to HEAD" for diff review |
+- Target artifact, such as a file path or pasted content.
+- Criteria sources named by the user, when provided.
+- Diff references, when the target is a diff.
 
 ## 2. Processes
+1. Resolve criteria sources: use user-named sources; identify the target type; select the smallest applicable local specification, contract, checklist, rubric, plan, quality rule, or acceptance criteria; and ask the user only when no applicable source can be determined or the target type is ambiguous enough to change the review result.
+2. Apply the base criteria:
+   - **Internal Consistency**: The artifact has no contradictions and uses terms consistently.
+   - **Clarity**: The language is precise and the reader can understand the intent without guessing.
+3. Compare the target against the combined criteria. Identify matches, deviations, and omissions.
+4. Categorize findings by severity (P1–P5 per `assets/severity.md`).
+5. Produce a report using `assets/template_report.md`.
 
-### Evaluation criteria (always applied)
-- **Internal Consistency**: No contradictions within the artifact; terminology used consistently.
-- **Clarity**: Language is precise and unambiguous; reader understands intent without guessing.
-
-### Step-by-step Workflow
-1. **Load criteria** from pre-discovered sources
-2. **Apply base criteria** (internal consistency, clarity)
-3. **For each persona skill**, apply its evaluation criteria on top of loaded criteria + base
-4. **Compare target** against combined criteria — note where it matches, deviates, or omits
-5. **Categorize findings** by severity (P1–P5 per `assets/severity.md`)
-6. **Report via template** (`assets/template_report.md`) with findings and recommended changes
+Include an applicable specification as criteria when one exists, whether or not the user named it. Do not create requirements that are not present in the selected criteria sources.
 
 ## 3. Outputs
-Structured review report using `assets/template_report.md` with findings categorized P1–P5 per `assets/severity.md`. Default: output to prompt. Write to file when an output path is provided.
+- A structured review report using `assets/template_report.md`.
+- The target artifact and review scope.
+- The selected criteria sources.
+- Findings grouped by severity, with a concrete recommended change for each finding.
+- Review limits or unresolved scope uncertainty, when material.
+
+Output to chat by default. Write the report to a file when the user provides an output path.
 
 ## 4. Next Steps
-- `output/check` — run a check on the artifact against requirements, checklists, acceptance or target criteria
-- `output/review` — re-review after fixes are applied
-- `output/annotate` — add inline annotations for tracking findings (NOTE) and fixes (TODO)
-- `draft` with `interface/plan` — create a plan to address findings
+- `output/check` — Validate the artifact against requirements or acceptance criteria.
+- `output/review` — Re-review the artifact after changes.
+- `output/annotate` — Add inline annotations for findings and fixes.
+- `draft` with `interface/plan` — Draft a plan to address findings.
 
-### Constraints
-1. Cite exact criteria sources for every finding
-2. Every finding suggests a concrete change
-3. Never introduce requirements beyond the loaded criteria
-4. Findings are numbered sequentially within each severity heading; restart at 1 in each section (P1, P2, etc.)
-5. Report both missing AND incorrect elements
-6. No remediation — only comparison and reporting
+## 5. Constraints
+1. Cite an exact selected criteria source for every finding.
+2. Give a concrete recommended change for every finding.
+3. Do not introduce requirements beyond the selected criteria.
+4. Number findings sequentially within each severity heading. Restart at 1 for each heading.
+5. Report missing and incorrect elements.
+6. Do not remediate the target. Only compare and report.
 
-## 5. Examples
+## 6. Examples
 
-### Example 1: Single persona review
-**Prompt:** "Review RFC-001.md using the `security` persona."  
-→ Orchestrator has resolved criteria (RFC skill's SKILL.md) and persona (`security`) → review runs base criteria + security evaluation → P1-P5 report.
+### Example 1: Review with named criteria
 
-### Example 2: Multi-persona review
-**Prompt:** "Review this diff from main to HEAD with both `adversarial` and `system_architect` perspectives."  
-→ Orchestrator provides persona skills, target is the diff content → review runs base criteria + adversarial + system_architect evaluation → scoped P1-P5 report.
+**Prompt:** Review `RUBRIC-001.md` against `interface/rubric`.
 
-### Example 3: Missing prerequisites
-**Prompt:** "Review SPEC-012.md."
-→ No criteria provided, no persona provided → SKILL.md asks user to supply them before proceeding.
+**Outcome:** Load the rubric contract, apply the base criteria, and produce a P1–P5 review report.
 
-### Example 4: Report structure
-**Prompt:** "Review the rubric contract against RFC-005 with `security` lens."
-→ Orchestrator provides criteria (RFC-005) + persona (`security`) → review produces:
-   - Findings numbered 1–3 under P1, restart at 1 for P2, restart at 1 for P3
-   - Sections skip severity tiers with zero findings (e.g., no P4/P5 heading if none exist)
-   - Recommended Changes listed separately after all findings
+### Example 2: Review with an unlisted specification
+
+**Prompt:** Review `SPEC-012.md`.
+
+**Outcome:** Identify `SPEC-012.md` as a specification, load the applicable local specification contract, apply the base criteria, and produce a review report.
+
+### Example 3: Missing criteria
+
+**Prompt:** Review this document.
+
+**Outcome:** Identify the document type when possible. If no applicable local criteria source can be determined, ask the user to provide criteria or clarify the target type.
