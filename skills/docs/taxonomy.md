@@ -67,7 +67,7 @@ Verb-shaped production skills that turn working context into a communicated, der
 - Produces reports, validation results, rankings, decisions, revisions, records, logs, or artifacts
 - May return its result in chat or write it to a requested destination
 - Consumes interface-defined artifact nouns and storage contracts when structure matters
-- Examples: `output/task`, `output/goal`, `output/check`, `output/rank`, `output/review`, `output/record`, `output/annotate`, `output/handoff`
+- Examples: `output/task`, `output/goal`, `output/check`, `output/decide`, `output/review`, `output/record`, `output/annotate`, `output/handoff`
 - **Do NOT use if** the package only defines an artifact schema or canonical form — use an interface skill for nouns; if it primarily coordinates multiple skills or approvals, use map
 
 ### map

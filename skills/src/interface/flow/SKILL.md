@@ -39,7 +39,7 @@ Optional path:
 - `draft` — create a first-pass flow.
 - `modify` — change a flow.
 - `check` — validate a flow.
-- `navigate` — select a next-best task that follows a flow.
+- `decide` — suggest a next step that follows a flow.
 
 ## Minimal Example
 
