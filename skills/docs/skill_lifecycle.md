@@ -27,13 +27,14 @@ Create or update a skill package that is structurally valid and beautifully simp
    - `persona` — composable perspective lens
 4. **Determine Category**: Choose the valid category for the selected type:
    - `interface` type → `interface` category
-   - `communications` type → `interface` category
+   - `communications` type → `persona` category
    - `skill` type → `input`, `output`, or `map`
    - `protocol` type → `map` category
    - `persona` type → `persona` category
 5. **Determine Interface Role**: If the package is an interface, ensure it defines artifact shape, schema, protocol, conventions, or quality criteria without performing operational work. It must select a minimal default contract reference, select optional references/assets only from explicit caller intent or domain clues, and load selected content silently into context. If the package is communications, ensure it defines compact user-loaded LLM communication controls, has `disable_model_invocations: true`, and contains no operational sections.
 6. **Place the Package**:
-   - Interface nouns and communications packages live under `../src/interface/<name>/SKILL.md`.
+   - Interface nouns live under `../src/interface/<name>/SKILL.md`.
+   - Communications packages and persona lenses live under `../src/persona/<name>/SKILL.md`.
    - Invocable verb skills live under their data-flow category.
    - Protocol packages live under `../src/map/<name>/SKILL.md`.
    - Persona lenses live under `../src/persona/<name>/SKILL.md`.
@@ -67,9 +68,9 @@ Create or update a skill package that is structurally valid and beautifully simp
 
 - Define compact, user-loaded LLM communication controls before or during a session.
 - Set `disable_model_invocations: true` in frontmatter.
-- Use `metadata.type: communications` and `metadata.category: interface`.
+- Use `metadata.type: communications` and `metadata.category: persona`.
 - State user activation, the communication scope, applicable exact-text exclusions, and higher-priority instruction precedence.
-- Use package-specific sections such as `Terms` for `vocab` or `Language Rules` for `simplified-technical-english` when they improve clarity.
+- Use package-specific sections such as `Terms` or `Language Rules` when they improve clarity.
 - Do not include terms that match existing skill names or meanings already defined by skill descriptions. Keep domain-local terminology in the relevant knowledge-base glossary.
 - Avoid Selection, Return, Inputs, Processes, Outputs, Next Steps, Examples, artifact schemas, verification, and tool-specific procedures.
 
@@ -129,8 +130,8 @@ Assert a pass/fail test over an existing skill package against the appropriate c
 
 1. **Read Frontmatter**: Extract `metadata.type` and `metadata.category` from SKILL.md.
    - Both are required. Missing or invalid → Critical failure.
-   - Valid pairs: `interface/interface`, `communications/interface`, `skill/input`, `skill/output`, `skill/map`, `protocol/map`, `persona/persona`.
-   - `communications/interface` requires top-level `disable_model_invocations: true`.
+   - Valid pairs: `interface/interface`, `communications/persona`, `skill/input`, `skill/output`, `skill/map`, `protocol/map`, `persona/persona`.
+   - `communications/persona` requires top-level `disable_model_invocations: true`.
    - `protocol/map` may declare top-level `disable-model-invocation: true` when direct model invocation is prohibited.
 2. **Check Interface Contracts**: If `metadata.type: interface`, verify it exposes contract data only, selects a minimal default contract plus optional references/assets only when intent/domain requires them, and loads selected contents without emitting them in chat. If `metadata.type: communications`, verify it is user-loaded context-only communication control, has `disable_model_invocations: true`, and does not overlap existing skill names or skill descriptions.
 3. **Load Checklist**:

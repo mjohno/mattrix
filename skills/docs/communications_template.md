@@ -4,7 +4,7 @@ description: Use when a user loads [communication control] for LLM interpretatio
 disable_model_invocations: true
 metadata:
   type: communications
-  category: interface
+  category: persona
 ---
 
 <!-- Resolve every relative path in this SKILL.md from this file's directory. -->

@@ -14,7 +14,7 @@ Use the pattern **"Run [operation] on [skill]"**.
 | Operation | What it does | Trigger | Exit Criteria |
 |-----------|--------------|---------|---------------|
 | `create` | Scaffolds a new skill using the template and taxonomy | New capability or gap identified | Skill directory exists with valid SKILL.md |
-| `comply` | Checks a skill against the appropriate checklist (data-flow → `skill_checklist.md`, persona → `persona_checklist.md`) | Before deploy, or after edits | All CRITICAL items pass |
+| `comply` | Checks a package against the appropriate checklist (interface → `interface_checklist.md`, communications → `communications_checklist.md`, data-flow → `skill_checklist.md`, persona lens → `persona_checklist.md`) | Before deploy, or after edits | All CRITICAL items pass |
 | `deploy` | Syncs a skill to a target directory (with compliance gate) | After compliance passes | Files verified at target |
 | `review` | Audits quality — delegates to the external review skill | When you need an outside perspective | Review report received |
 

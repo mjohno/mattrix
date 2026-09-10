@@ -2,12 +2,12 @@
 
 ## Base Checklist
 
-Inherits applicable items from [base_checklist.md](base_checklist.md). Use this checklist only for `metadata.type: communications` with `metadata.category: interface`.
+Inherits applicable items from [base_checklist.md](base_checklist.md). Use this checklist only for `metadata.type: communications` with `metadata.category: persona`.
 
 ## Communications-Specific CRITICAL
 
 - [ ] **CRITICAL** `metadata.type: communications`
-- [ ] **CRITICAL** `metadata.category: interface`
+- [ ] **CRITICAL** `metadata.category: persona`
 - [ ] **CRITICAL** `disable_model_invocations: true` is present in frontmatter
 - [ ] **CRITICAL** Description includes a "Use when..." trigger for user-loaded communication control
 - [ ] **CRITICAL** Under `# [Name]`: Goal, Non-Goals, Application, and Controls sections are present

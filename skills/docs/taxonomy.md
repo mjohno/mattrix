@@ -8,7 +8,7 @@ This repository uses a role-based skill taxonomy. Each category defines the skil
 - **Communications are context** — human-loaded controls that shape LLM interpretation or generated communication without model invocation.
 - **Specialized verbs are invocable skills** — skills that retrieve, produce, persist, or orchestrate work through a dedicated contract.
 - **Protocols are governed interaction contracts** — stateful or approval-sensitive flows that agents follow through an authoritative interface.
-- **Personas are lenses** — perspectives that modify how another skill evaluates or presents information.
+- **Personas shape agent behavior** — user-loaded communication contexts and composable lenses that modify agent interpretation, evaluation, or presentation.
 
 ## Metadata Model
 
@@ -24,7 +24,7 @@ Every package declares both type and category:
 
 Valid pairs:
 - `type: interface`, `category: interface`
-- `type: communications`, `category: interface`
+- `type: communications`, `category: persona`
 - `type: skill`, `category: input|output|map`
 - `type: protocol`, `category: map`
 - `type: persona`, `category: persona`
@@ -44,14 +44,15 @@ Passive noun/domain contract packages that supply conventions, quality checks, t
 - **Do NOT use if** the package performs artifact production, external retrieval, evaluation, persistence, or orchestration — it only supplies contract data for other skills to apply
 
 ### communications
-Special interface-category packages that define human-loaded LLM communication controls.
-- Declares `metadata.type: communications` and `metadata.category: interface`
+Persona-category packages that define human-loaded LLM communication controls.
+- Declares `metadata.type: communications` and `metadata.category: persona`
+- Lives as a direct package under `../src/persona/<name>/SKILL.md`
 - Requires top-level `disable_model_invocations: true`
 - Is loaded directly by a user at the start of, or during, a session; the model must not invoke or route to it
-- Defines compact communication terms, language standards, or other declarative communication controls
+- Defines compact communication terms, language standards, or other declarative behavior controls
 - States its activation, scope, applicable exact-text exclusions, and higher-priority instruction precedence
 - May include package-specific sections such as `Terms` or `Language Rules`, but contains no formal inputs, processes, outputs, return contract, verification, or next-step behavior
-- Project `vocab` defines operational terms; `simplified-technical-english` defines generated-prose language rules; knowledge-base `glossary` content is domain-local terminology
+- Project `comms` defines operational terms and generated-prose language rules; knowledge-base `glossary` content is domain-local terminology
 - **Do NOT use if** the package needs an artifact schema, structured inputs, formal outputs, verification criteria, tool procedures, or a multi-step process — create or update an interface or verb skill instead
 
 ### input
@@ -88,12 +89,19 @@ Map-category packages that define governed interaction contracts rather than ord
 - **Do NOT use if** the package only performs a normal one-shot task — use `type: skill` instead
 
 ### persona
-Skills that encode a consistent perspective, tradeoff-awareness, or output style across any pipeline stage.
-- Applies priorities, tradeoffs, voice, and evaluation emphasis to another skill's work
-- Provides perspective or evaluation criteria independent of data flow
-- Composes with any invocable skill
-- Reduces total skill count by letting one production skill work across multiple viewpoints
-- **Do NOT use if** the package's primary role is retrieval, production, persistence, orchestration, or contract definition — it only changes how another skill interprets or presents information
+The `persona` category contains two types that shape agent behavior.
+
+**Lens personas** use `metadata.type: persona` and `metadata.category: persona`.
+- Encode a consistent perspective, tradeoff-awareness, or output style across any pipeline stage
+- Apply priorities, tradeoffs, voice, and evaluation emphasis to another skill's work
+- Provide perspective or evaluation criteria independent of data flow
+- Compose with any invocable skill
+
+**Communications personas** use `metadata.type: communications` and `metadata.category: persona`.
+- Define user-loaded controls for request interpretation or generated communication
+- Are not model-invocable
+
+- **Do NOT use this category** if the package's primary role is retrieval, production, persistence, orchestration, or contract definition.
 
 ## Classification Test
 
@@ -103,8 +111,8 @@ Classify a skill by its dominant state transition:
 - Working context → constrained by a reusable contract: **interface**
 - Working context → communicated, derived, or durable result: **output**
 - Goal or context → ordered multi-step execution: **map**
-- User-loaded communication controls → LLM interpretation or generated communication: **communications**
-- Neutral processing → perspective-shaped processing: **persona**
+- User-loaded communication controls → LLM interpretation or generated communication: **communications/persona**
+- Neutral processing → perspective-shaped processing: **persona/persona**
 
 A skill may touch adjacent concerns, but its category follows the primary result it owns. Reusable criteria belong in an interface; a skill that applies those criteria and reports findings is output.
 
@@ -123,11 +131,9 @@ Interfaces define contract data that invocable skills consume:
 
 ### Communications context
 
-A user loads communications packages as session context. Their location under `interface/` does not make them model-invocable.
+A user loads communications personas as session context. Their location under `persona/` does not make them model-invocable.
 
-- **interface/vocab** — User-load project terms such as `study`, `outline`, `draft`, `modify`, `simplify`, or `lean`. These terms control user-request interpretation and generated responses; reserve dedicated skills for verbs that need a specialized contract or workflow.
-- **interface/simplified-technical-english** — User-load ASD-STE100 rules for generated chat prose only.
-- **vocab + simplified-technical-english** — A user can load both packages. Apply vocab to request interpretation and response behavior, and apply STE only to generated chat prose. Keep exact text unchanged when either package excludes it, and follow higher-priority instructions if rules conflict.
+- **persona/comms** — User-load project terms such as `study`, `outline`, `draft`, `modify`, `simplify`, or `lean`, and ASD-STE100 rules for generated chat prose. Keep exact text unchanged when the package excludes it, and follow higher-priority instructions if rules conflict.
 
 Personas modify how information is evaluated at any pipeline stage:
 
@@ -140,6 +146,6 @@ Personas modify how information is evaluated at any pipeline stage:
 - `metadata.type` describes how the package is used at runtime; `metadata.category` describes role and placement.
 - Categories describe primary role. Packages may touch adjacent concerns, but their category reflects the dominant behavior.
 - `interface` packages define shared contracts and are discoverable for model use. They load applicable conventions, checks, templates, schemas, or protocol rules into context without emitting their contents, but do not operate on the artifact themselves.
-- `communications` packages are not model-invocable; they are compact context controls loaded by a user.
+- `communications/persona` packages are not model-invocable; they are compact context controls loaded by a user.
 - Loading package-local interface references/assets is part of exposing contract data, not external retrieval.
 - Refer to [interface_template.md](interface_template.md), [communications_template.md](communications_template.md), [skill_template.md](skill_template.md), [protocol_template.md](protocol_template.md), and [persona_template.md](persona_template.md) for frontmatter format.

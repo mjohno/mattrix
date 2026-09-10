@@ -6,7 +6,7 @@ Shared compliance items for all skills — personas and data-flow skills alike. 
 
 - [ ] **CRITICAL** `metadata.type` is present and is `interface`, `communications`, `skill`, `protocol`, or `persona`
 - [ ] **CRITICAL** `metadata.category` is present and matches a category in `taxonomy.md`
-- [ ] **CRITICAL** `metadata.type` and `metadata.category` form a valid pair: `interface/interface`, `communications/interface`, `skill/input`, `skill/output`, `skill/map`, `protocol/map`, or `persona/persona`
+- [ ] **CRITICAL** `metadata.type` and `metadata.category` form a valid pair: `interface/interface`, `communications/persona`, `skill/input`, `skill/output`, `skill/map`, `protocol/map`, or `persona/persona`
 - [ ] **CRITICAL** Description includes "Use when..." triggers
 - [ ] **CRITICAL** SKILL.md is under 100 lines
 - [ ] **CRITICAL** All relative paths that reference skill-package files are resolved from the directory containing that `SKILL.md`; repository-root-relative package paths are prohibited.
