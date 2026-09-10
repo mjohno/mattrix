@@ -28,7 +28,7 @@ The graph must:
 
 - include one start state: `[*]`
 - include one end state: `[*]`
-- use a short, stable ID for each activity node
+- use a stable `NODE-###` ID for each activity node
 - show allowed transitions with arrows
 - label a transition when its condition is not clear
 - show return paths when rework is allowed
@@ -42,7 +42,7 @@ Add `## Nodes` after the graph.
 Describe every activity node with a level-three heading that uses its graph ID.
 
 ```md
-### `review`
+### `NODE-001`
 Check the delivered result against the goal. Complete the flow only when available evidence shows that the goal is met.
 ```
 

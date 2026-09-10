@@ -11,14 +11,14 @@ A rubric is a reusable quality standard. It defines concise, referenceable crite
 
 ### <Domain>
 
-- <PREFIX>-001: <observable quality criterion>
+- <RPREFIX>-001: <observable quality criterion>
 ```
 
 ## Rules
 
 - The title starts with `RUBRIC-<slug>`.
 - `slug` is lowercase kebab-case and identifies the rubric.
-- Each criterion has a stable, unique ID in the form `<PREFIX>-<three-digit sequence>`.
+- Each criterion has a stable, unique ID in the form `<RPREFIX>-<three-digit sequence>`.
 - Numbering starts at `001` independently for each prefix.
 - A criterion states one clear quality condition that a reviewer can evaluate without guessing.
 - Use only domains relevant to the rubric purpose.
@@ -32,19 +32,19 @@ Select only applicable domains. Use the assigned prefix for each domain.
 
 | Domain | Prefix | Focus |
 | --- | --- | --- |
-| Correctness | `COR` | Required behavior and intended outcomes. |
-| Completeness | `CMP` | Required outcomes, paths, and deliverables. |
-| Clarity | `CLR` | Clear intent, behavior, and terminology. |
-| Conciseness | `CON` | No unnecessary content or repetition. |
-| Simplicity | `SIM` | No unnecessary complexity. |
-| Maintainability | `MNT` | Safe understanding, change, and support over time. |
-| Security | `SEC` | Protection of confidentiality, integrity, and availability. |
-| Performance | `PER` | Responsiveness, throughput, and resource use. |
-| Reliability | `REL` | Predictable behavior and safe failure recovery. |
-| Compatibility | `COM` | Required interfaces, environments, versions, and consumers. |
-| Accessibility | `ACC` | Use by people with relevant access needs. |
-| Observability | `OBS` | Signals for understanding, diagnosis, and operation. |
-| Testability | `TST` | Efficient, reliable verification. |
+| Correctness | `RCOR` | Required behavior and intended outcomes. |
+| Completeness | `RCMP` | Required outcomes, paths, and deliverables. |
+| Clarity | `RCLR` | Clear intent, behavior, and terminology. |
+| Conciseness | `RCON` | No unnecessary content or repetition. |
+| Simplicity | `RSIM` | No unnecessary complexity. |
+| Maintainability | `RMNT` | Safe understanding, change, and support over time. |
+| Security | `RSEC` | Protection of confidentiality, integrity, and availability. |
+| Performance | `RPER` | Responsiveness, throughput, and resource use. |
+| Reliability | `RREL` | Predictable behavior and safe failure recovery. |
+| Compatibility | `RCOM` | Required interfaces, environments, versions, and consumers. |
+| Accessibility | `RACC` | Use by people with relevant access needs. |
+| Observability | `ROBS` | Signals for understanding, diagnosis, and operation. |
+| Testability | `RTST` | Efficient, reliable verification. |
 
 ## Consumer Rules
 
@@ -61,9 +61,9 @@ Select only applicable domains. Use the assigned prefix for each domain.
 
 ### Clarity
 
-- CLR-001: Each login failure message states a clear recovery action.
+- RCLR-001: Each login failure message states a clear recovery action.
 
 ### Correctness
 
-- COR-001: Each known login failure maps to one consistent user-facing message.
+- RCOR-001: Each known login failure maps to one consistent user-facing message.
 ```

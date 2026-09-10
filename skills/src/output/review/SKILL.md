@@ -51,7 +51,7 @@ Output to chat by default. Write the report to a file when the user provides an 
 1. Cite an exact selected criteria source for every finding.
 2. Give a concrete recommended change for every finding.
 3. Do not introduce requirements beyond the selected criteria.
-4. Number findings sequentially within each severity heading. Restart at 1 for each heading.
+4. Identify findings as `P1.1`, `P1.2`, and so on. Restart the number at `1` for each severity.
 5. Report missing and incorrect elements.
 6. Do not remediate the target. Only compare and report.
 

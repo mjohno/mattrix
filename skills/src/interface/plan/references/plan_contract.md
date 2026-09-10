@@ -17,12 +17,12 @@ Purpose: <target outcome>
 ## Gap Map
 | Gap ID | Source Summary | Current Problem | Target State |
 | --- | --- | --- | --- |
-| GAP-1 | <source ref/topic> | <problem> | <target> |
+| PGAP-001 | <source ref/topic> | <problem> | <target> |
 
 ## Work Plan
 
-### <PLAN_ID>-1 — <item title>
-Closes: GAP-1
+### PITEM-001 — <item title>
+Closes: PGAP-001
 Source refs: <refs/topics or none>
 Status: todo
 Depends on: none
@@ -32,7 +32,7 @@ Deliverables:
 - <deliverable>
 
 Scenarios:
-- SCN-<PLAN_ID>-<N>: <short behavioural name>
+- PSCN-001: <short behavioural name>
   Given <relevant starting state>
   When <meaningful action or event>
   Then <observable outcome>
@@ -47,7 +47,7 @@ Done when:
 - Include enough source summary to review the plan without reloading the full source artifact.
 - Every gap has at least one closing item.
 - Every item names the gap or source it serves.
-- Preserve stable gap and item IDs across revisions unless explicitly renamed.
+- Preserve stable `PGAP`, `PITEM`, and `PSCN` IDs across revisions unless explicitly renamed.
 - Items may close multiple gaps when the coupling is real.
 - Dependencies, deliverables, and done criteria are included when they reduce ambiguity.
 - Every work item includes one bounded `Task` paragraph that states the intended outcome without duplicating `Deliverables`, `Scenarios`, or `Done when`.
@@ -86,12 +86,12 @@ Purpose: Make login failures clear and actionable.
 ## Gap Map
 | Gap ID | Source Summary | Current Problem | Target State |
 | --- | --- | --- | --- |
-| GAP-1 | Auth review: inconsistent errors | Users see vague or conflicting login errors. | Login failures use clear, consistent recovery guidance. |
+| PGAP-001 | Auth review: inconsistent errors | Users see vague or conflicting login errors. | Login failures use clear, consistent recovery guidance. |
 
 ## Work Plan
 
-### PLAN-login-errors-1 — Normalize login failure messages
-Closes: GAP-1
+### PITEM-001 — Normalize login failure messages
+Closes: PGAP-001
 Source refs: Auth review
 Status: todo
 Depends on: none
@@ -101,7 +101,7 @@ Deliverables:
 - Updated login error message table.
 
 Scenarios:
-- SCN-PLAN-login-errors-1: Invalid credentials return recovery guidance
+- PSCN-001: Invalid credentials return recovery guidance
   Given a user attempts to sign in to an existing account
   When authentication fails because the credentials are invalid
   Then the user receives the approved invalid-credentials message

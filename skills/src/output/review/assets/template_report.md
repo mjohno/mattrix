@@ -14,15 +14,15 @@
 ## Findings
 
 ### P1
-1. [Finding 1: what's wrong, source reference, suggested fix]
-2. [Finding 2]
+- P1.1: [Finding: what's wrong, source reference, suggested fix]
+- P1.2: [Finding]
 
 ### P2
-1. [Finding 1: what could be better, source reference, suggested fix]
-2. [Finding 2]
+- P2.1: [Finding: what could be better, source reference, suggested fix]
+- P2.2: [Finding]
 
 ### P3
-1. [Finding 1]
+- P3.1: [Finding]
 
 ## Recommended Changes
 1. [Change 1]

@@ -8,47 +8,47 @@ A spec is a traceable future-state artifact. It defines what should be true, why
 # SPEC-<slug>: <Title>
 
 ## 1. Purpose
-- PUR-001: <problem, objective, opportunity, or threat>
+- SPUR-001: <problem, objective, opportunity, or threat>
 
 ## 2. Current State Summary
-- CUR-001: <relevant current fact or assumption>
+- SCUR-001: <relevant current fact or assumption>
 
 ## 3. Future State
-- FUT-001: <desired end condition>
+- SFUT-001: <desired end condition>
 
 ## 4. Scope
 ### In Scope
-- SCP-IN-001: <included area>
+- SSIN-001: <included area>
 ### Out of Scope
-- SCP-OUT-001: <excluded area>
+- SSOUT-001: <excluded area>
 
 ## 5. Requirements
-- REQ-001: <required behavior or property>
+- SREQ-001: <required behavior or property>
 
 ## 6. Acceptance
-- ACC-001: <observable judgment criterion>
+- SACC-001: <observable judgment criterion>
 
 ## 7. Quality
 ### Constraints / Non-Negotiables
-- QUA-CON-001: <hard limit>
+- SQCON-001: <hard limit>
 ### Priorities
-- QUA-PRI-001: <priority>
+- SQPRI-001: <priority>
 
 ## 8. Expectations
-- EXP-001: <review, validation, evidence, or handoff expectation>
+- SEXP-001: <review, validation, evidence, or handoff expectation>
 
 ## 9. Uncertainties
 ### Risks
-- UNC-RISK-001: <risk>
+- SURISK-001: <risk>
 ### Questions
-- UNC-Q-001: <question>
+- SUQ-001: <question>
 ### Assumptions
-- UNC-ASM-001: <assumption>
+- SUASM-001: <assumption>
 ### Pre-Work Needed
-- UNC-PRE-001: <investigation, prototype, decision, or validation>
+- SUPRE-001: <investigation, prototype, decision, or validation>
 
 ## 10. Decisions
-- DEC-001: <decision, status, and rationale if useful>
+- SDEC-001: <decision, status, and rationale if useful>
 ```
 
 ## Rules
@@ -66,11 +66,11 @@ A spec is a traceable future-state artifact. It defines what should be true, why
 # SPEC-login-errors: Login Error Cleanup
 
 ## 1. Purpose
-- PUR-001: Users need clear recovery guidance after login failures.
+- SPUR-001: Users need clear recovery guidance after login failures.
 
 ## 3. Future State
-- FUT-001: Each login failure maps to one consistent user-facing message.
+- SFUT-001: Each login failure maps to one consistent user-facing message.
 
 ## 6. Acceptance
-- ACC-001: Review confirms every known login failure has approved copy and recovery guidance.
+- SACC-001: Review confirms every known login failure has approved copy and recovery guidance.
 ```

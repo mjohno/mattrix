@@ -33,7 +33,7 @@ Use-When: A user asks to decide on a next step, an option, or a course of action
 
 ## 3. Outputs
 
-- One `DEC-###` decision result with a suggestion and concise reason.
+- One `DDEC-###` decision result with a suggestion and concise reason.
 - Material disregarded options with reasons.
 - Material assumptions and uncertainties.
 

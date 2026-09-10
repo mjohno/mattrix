@@ -11,8 +11,8 @@ Use this checklist to assess rubric conformance and quality.
 
 - [ ] The rubric contains a `Criteria` section.
 - [ ] Criteria are grouped only by applicable domains.
-- [ ] Each criterion has a stable, unique `<PREFIX>-<three-digit sequence>` ID.
-- [ ] Each prefix uses numbering that starts at `001`.
+- [ ] Each criterion has a stable, unique `<RPREFIX>-<three-digit sequence>` ID from the domain catalog.
+- [ ] Each `R...` prefix uses numbering that starts at `001`.
 
 ## Quality
 

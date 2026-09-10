@@ -7,11 +7,11 @@ Use this for conformance checks. A plan passes when every critical item passes.
 - [ ] Defines a plan artifact, not an execution log or spec.
 - [ ] Includes `PLAN_ID`, `Source`, `Purpose`, `Source Summary`, `Gap Map`, and `Work Plan`.
 - [ ] Source Summary contains enough context to review the plan without reloading the full source.
-- [ ] Every gap has a stable `GAP-*` ID.
+- [ ] Every gap has a stable `PGAP-###` ID.
 - [ ] Every gap states a current problem and target state.
 - [ ] Every gap has at least one work item intended to close it.
-- [ ] Every work item has a stable item ID, title, `Closes`, `Status`, one `Task`, and a `Scenarios` declaration.
-- [ ] Scenario IDs are stable and unique within the plan; each scenario uses semantic Gherkin, or the work item explicitly states `Scenarios: none`.
+- [ ] Every work item has a stable `PITEM-###` ID, title, `Closes`, `Status`, one `Task`, and a `Scenarios` declaration.
+- [ ] `PSCN-###` IDs are stable and unique within the plan; each scenario uses semantic Gherkin, or the work item explicitly states `Scenarios: none`.
 - [ ] Every work item names the gap or source it serves.
 - [ ] Status values are limited to `todo`, `doing`, `verifying`, `reviewing`, or `done`.
 - [ ] `done` is not presented as verification evidence.

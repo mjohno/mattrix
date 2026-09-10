@@ -6,7 +6,7 @@ Use this for conformance checks. A spec passes when every critical item passes.
 
 - [ ] Has a title and stable `SPEC-<slug>` ID.
 - [ ] Includes Purpose, Current State Summary, Future State, Scope, Requirements, Acceptance, Quality, Expectations, Uncertainties, and Decisions.
-- [ ] Referenceable claims use stable IDs.
+- [ ] Referenceable claims use the defined stable `S...` IDs.
 - [ ] Scope includes both `In Scope` and `Out of Scope`.
 - [ ] Quality includes both `Constraints / Non-Negotiables` and `Priorities`.
 - [ ] Uncertainties includes `Risks`, `Questions`, `Assumptions`, and `Pre-Work Needed`.

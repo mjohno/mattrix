@@ -3,7 +3,7 @@
 - [ ] The title identifies the workflow purpose.
 - [ ] The flow contains one Mermaid `stateDiagram-v2` graph.
 - [ ] The graph contains a start state and an end state.
-- [ ] Each activity node has a short, stable ID.
+- [ ] Each activity node has a stable `NODE-###` ID.
 - [ ] Each activity node has one matching description.
 - [ ] Each description states plainly what the activity should do.
 - [ ] The final activity states goal-based completion criteria.

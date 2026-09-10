@@ -35,9 +35,9 @@ Status is encoded in the kind itself:
 
 ```text
 refs: [auth/middleware.ts:42]          # file:line
-refs: [SPEC-AUTH.md#ACC-3]              # file#anchor
+refs: [SPEC-AUTH.md#SACC-003]          # file#anchor
 refs: [https://example.com/spec#D-2]  # url#anchor
-refs: [SPEC-AUTH.md#ACC-3, RFC-AUTH#D-2]  # multiple refs
+refs: [SPEC-AUTH.md#SACC-003, RFC-AUTH#D-2]  # multiple refs
 ```
 
 Rules:

@@ -16,7 +16,7 @@ const mesh = new SidecarMesh();
 
 ```python
 # NOTE(AUTH-ARCH-2): Database connections use connection pooling with max 50 connections
-# refs: [config/db.py:22, SPEC-SYS.md#QUA-CON-1]
+# refs: [config/db.py:22, SPEC-SYS.md#SQCON-001]
 DB_POOL_SIZE = 50
 ```
 
@@ -54,7 +54,7 @@ services:
 
 ```sql
 -- TODO(AUTH-ARCH-6): Add unique constraint on (user_id, service_name) to prevent duplicate registrations
--- refs: [db/migrations/005_create_registrations.sql:12, SPEC-SYS.md#FUT-3]
+-- refs: [db/migrations/005_create_registrations.sql:12, SPEC-SYS.md#SFUT-003]
 CREATE TABLE registrations (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
@@ -105,8 +105,8 @@ class ConnectionPool { ... }
 ### Markdown
 
 ```markdown
-<!-- REVIEW(AUTH-ARCH-11): ADR-004 sidecar pattern conflicts with cost constraint in SPEC-SYS#QUA-CON-1 -->
-<!-- refs: [arch/decisions/ADR-004.md, SPEC-SYS.md#QUA-CON-1] -->
+<!-- REVIEW(AUTH-ARCH-11): ADR-004 sidecar pattern conflicts with cost constraint in SPEC-SYS#SQCON-001 -->
+<!-- refs: [arch/decisions/ADR-004.md, SPEC-SYS.md#SQCON-001] -->
 
 ## Architecture Decisions
 
@@ -145,7 +145,7 @@ circuit_breaker:
 
 ```markdown
 <!-- DONE(AUTH-ARCH-11): ADR-004 updated to include cost-optimized sidecar option -->
-<!-- refs: [arch/decisions/ADR-004.md, SPEC-SYS.md#QUA-CON-1] -->
+<!-- refs: [arch/decisions/ADR-004.md, SPEC-SYS.md#SQCON-001] -->
 
 ## Architecture Decisions
 
@@ -165,14 +165,14 @@ circuit_breaker:
 
 ```ts
 // REVIEW(AUTH-ARCH-14): Connection pool size may need tuning based on load test results
-// refs: [config/db.py:22, tests/db/load_test.py, SPEC-SYS.md#QUA-CON-1]
+// refs: [config/db.py:22, tests/db/load_test.py, SPEC-SYS.md#SQCON-001]
 ```
 
 ### Mixed reference types
 
 ```ts
 // TODO(AUTH-ARCH-15): Document connection pool configuration for ops team
-// refs: [config/db.py:22, https://docs.example.com/ops/pool-config#monitoring, SPEC-SYS.md#EXP-2]
+// refs: [config/db.py:22, https://docs.example.com/ops/pool-config#monitoring, SPEC-SYS.md#SEXP-002]
 ```
 
 ### Reference with anchor

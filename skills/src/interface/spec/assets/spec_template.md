@@ -2,66 +2,66 @@
 
 ## 1. Purpose
 
-- PUR-001: <purpose claim>
+- SPUR-001: <purpose claim>
 
 ## 2. Current State Summary
 
-- CUR-001: <current-state claim>
+- SCUR-001: <current-state claim>
 
 ## 3. Future State
 
-- FUT-001: <future-state target>
+- SFUT-001: <future-state target>
 
 ## 4. Scope
 
 ### In Scope
 
-- SCP-IN-001: <included area, behavior, artifact, or responsibility>
+- SSIN-001: <included area, behavior, artifact, or responsibility>
 
 ### Out of Scope
 
-- SCP-OUT-001: <excluded area, behavior, artifact, or responsibility>
+- SSOUT-001: <excluded area, behavior, artifact, or responsibility>
 
 ## 5. Requirements
 
-- REQ-001: <requirement>
+- SREQ-001: <requirement>
 
 ## 6. Acceptance
 
-- ACC-001: <acceptance criterion>
+- SACC-001: <acceptance criterion>
 
 ## 7. Quality
 
 ### Constraints / Non-Negotiables
 
-- QUA-CON-001: <hard constraint>
+- SQCON-001: <hard constraint>
 
 ### Priorities
 
-- QUA-PRI-001: <highest priority>
+- SQPRI-001: <highest priority>
 
 ## 8. Expectations
 
-- EXP-001: <expectation>
+- SEXP-001: <expectation>
 
 ## 9. Uncertainties
 
 ### Risks
 
-- UNC-RISK-001: <risk and possible impact>
+- SURISK-001: <risk and possible impact>
 
 ### Questions
 
-- UNC-Q-001: <open question>
+- SUQ-001: <open question>
 
 ### Assumptions
 
-- UNC-ASM-001: <assumption>
+- SUASM-001: <assumption>
 
 ### Pre-Work Needed
 
-- UNC-PRE-001: <investigation, prototype, decision, or validation needed>
+- SUPRE-001: <investigation, prototype, decision, or validation needed>
 
 ## 10. Decisions
 
-- DEC-001: <decision, status, and rationale if useful>
+- SDEC-001: <decision, status, and rationale if useful>
