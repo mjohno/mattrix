@@ -199,6 +199,7 @@ class StepLoop:
                 "lessons",
                 "history",
                 "current",
+                "coordination_blocked",
                 "recommended",
                 "completed",
             )

@@ -106,6 +106,8 @@ def test_afk_does_not_approve_an_initial_coordinator_blocker(cli):
     saved = state(step)
     assert saved["current"] is None
     assert saved["recommended"] == "resolve-flow-transition"
+    assert "## Coordination Blocker" in result.stdout
+    assert "**Manual approval required.**" in result.stdout
     assert "AFK enabled" not in result.stderr
     assert (
         "AFK remains disabled by coordinator blocker; returning to manual mode"

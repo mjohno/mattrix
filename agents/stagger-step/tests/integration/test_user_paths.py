@@ -58,6 +58,38 @@ def test_session_bootstraps_persisted_unstarted_workflow(cli):
     assert result.stdout.endswith("break\n\n---\n")
 
 
+def test_session_reprompts_invalid_feedback_without_reworking(cli):
+    run, step, log = cli
+    replies = {
+        "coordinator": [coordinator("first"), coordinator("second")],
+        "worker": [{"packet": complete("first")}],
+        "assessor": [assessor("first")],
+    }
+
+    result = run(
+        "--log-level",
+        "INFO",
+        "init",
+        "--goal",
+        "Goal",
+        "--session",
+        input="approved\n?\nbreak\n",
+        replies=replies,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert state(step)["current"]["slug"] == "first"
+    assert [call["role"] for call in calls(log)] == [
+        "coordinator",
+        "worker",
+        "validator",
+        "assessor",
+        "coordinator",
+    ]
+    assert result.stdout.count("**Response:**") == 3
+    assert "Ignored nonsensical STEP response" in result.stderr
+
+
 def test_gate_does_not_accept_a_response_until_initial_bootstrap_is_rendered(
     cli,
 ):

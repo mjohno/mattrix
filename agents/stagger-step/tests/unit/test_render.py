@@ -25,8 +25,29 @@ def test_bootstrap_review_omits_task_sections():
     assert "## Execution" not in output
     assert "## Validation" not in output
     assert "## Retro" not in output
+    assert "## Coordination Blocker" not in output
     assert "### first\n\n**RECOMMENDED**" in output
     assert output.endswith("**Response:**\n")
+
+
+def test_blocked_review_renders_manual_approval_notice():
+    output = render_gate(
+        {
+            "goal": "Ship it",
+            "lessons": [],
+            "current": None,
+            "proposals": [task("resolve-flow-transition")],
+            "recommended": "resolve-flow-transition",
+            "coordination_blocked": True,
+            "completed": False,
+        }
+    )
+
+    assert "## Coordination Blocker" in output
+    assert "**Manual approval required.**" in output
+    assert output.index("## Coordination Blocker") < output.index(
+        "## Next Tasks"
+    )
 
 
 def test_completed_review_renders_task_retro_and_ranked_proposals():

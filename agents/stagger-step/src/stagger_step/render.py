@@ -83,6 +83,18 @@ def render_gate(gate: dict[str, Any]) -> str:
             _list(lines, "Issues", retro.get("issues"))
             _list(lines, "Actions", retro.get("actions"))
 
+    if gate.get("coordination_blocked") is True:
+        lines.extend(
+            [
+                "## Coordination Blocker",
+                "",
+                "**Manual approval required.** The recommended task resolves a "
+                "coordination blocker. Do not continue ordinary goal-progress "
+                "work until this task is resolved.",
+                "",
+            ]
+        )
+
     lines.extend(["## Next Tasks", ""])
     if terminal_signoff:
         lines.extend(["No further tasks proposed.", ""])

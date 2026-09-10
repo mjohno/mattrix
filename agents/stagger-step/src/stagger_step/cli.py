@@ -314,44 +314,44 @@ def run_session(
                     "AFK disabled by %s; returning to manual mode", stop_reason
                 )
             emit_review(loop, prepared)
-            if afk:
-                _raise_if_interrupt_requested()
-                logger.info("AFK automatically approved the current gate")
-                user_input = "approved"
-                displayed_response = "afk"
-            else:
-                try:
-                    user_input = input()
-                except EOFError:
+            while True:
+                if afk:
+                    _raise_if_interrupt_requested()
+                    logger.info("AFK automatically approved the current gate")
+                    user_input = "approved"
+                    displayed_response = "afk"
+                else:
+                    try:
+                        user_input = input()
+                    except EOFError:
+                        return 0
+                    displayed_response = user_input
+                if user_input == "afk" and (
+                    stop_reason := _afk_blocker(prepared)
+                ):
+                    logger.info(
+                        "AFK remains disabled by %s; returning to manual mode",
+                        stop_reason,
+                    )
+                    afk = False
+                    emit_review(loop, prepared)
+                    continue
+                if user_input == "break":
+                    emit_response(displayed_response)
                     return 0
-                displayed_response = user_input
-            while user_input == "afk" and (
-                stop_reason := _afk_blocker(prepared)
-            ):
-                logger.info(
-                    "AFK remains disabled by %s; returning to manual mode",
-                    stop_reason,
-                )
-                afk = False
-                try:
-                    user_input = input()
-                except EOFError:
-                    return 0
-                displayed_response = user_input
-            if user_input == "break":
+                if user_input == "afk":
+                    afk = True
+                    outcomes.clear()
+                    logger.info("AFK enabled")
+                    user_input = "approved"
+                elif user_input != "approved" and not is_revision_feedback(
+                    user_input
+                ):
+                    logger.info("Ignored nonsensical STEP response")
+                    emit_review(loop, prepared)
+                    continue
                 emit_response(displayed_response)
-                return 0
-            if user_input == "afk":
-                afk = True
-                outcomes.clear()
-                logger.info("AFK enabled")
-                user_input = "approved"
-            elif user_input != "approved" and not is_revision_feedback(
-                user_input
-            ):
-                logger.info("Ignored nonsensical STEP response")
-                continue
-            emit_response(displayed_response)
+                break
             changed = (
                 approve(prepared, loop, commit)
                 if user_input == "approved"
