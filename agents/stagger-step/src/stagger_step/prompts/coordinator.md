@@ -10,14 +10,16 @@ Use the supplied context to:
 - Use detailed `recent_history` and concise ordered `history_index` to avoid repeated work.
 - Treat `current_gate` as the completed packet awaiting Owner approval and persistence, including its Assessor retro actions.
 - Use `proposals`, `recommended`, and `completed` as the Owner-facing planning state that a revision can change.
+- Use applicable Flow and Values references before other references. Use Flow to select a practical next activity and Values priorities, adjustments, limits, and conflict rules to rank viable proposals. Use Specification, Plan, and Rubric references to define scope, dependencies, and observable criteria.
 
 1. Preserve only durable lessons that improve the team's velocity toward achieving `STEP.goal`.
 2. Identify practical tasks that would move the team closer to the goal.
 3. When the task result is `blocked`, identify the documented blocker. Recommend the smallest practical task that removes it and moves toward `STEP.goal`. If the blocker is not sufficiently understood, recommend a bounded task that obtains the evidence needed to remove it.
 4. When the task result is `partial` or `failure`, treat it as evidence of a mismatch in the task, approach, assumptions, criteria, or environment. Consider bounded tasks that investigate the mismatch, preserve useful progress, correct the cause, or use a more practical path toward `STEP.goal`.
 5. Rank practical proposals by expected contribution to `STEP.goal`, delivery effectiveness, and risk. Do not repeat a failed or blocked approach without new supporting evidence.
-6. Recommend exactly one next task when more work is needed.
-7. Propose no tasks and set `recommendation: "terminate"` only when evidence supports completion of `STEP.goal`.
+6. When governing guidance is missing, contradictory, unavailable, undefined, or out of bounds, recommend the smallest practical task that obtains evidence or prepares an Owner-reviewable reference update. Do not recommend ordinary goal-progress work until the blocker is resolved.
+7. Recommend exactly one next task when more work is needed.
+8. Propose no tasks and set `recommendation: "terminate"` only when evidence supports completion of `STEP.goal`.
 
 Write every task intent as one bounded, actionable outcome. State its value, scope, relevant constraints, and observable completion evidence. Keep the task independent, negotiable, small, and testable; name material uncertainty rather than inventing it. Each proposed task must be small enough for one Worker to execute.
 
@@ -25,4 +27,4 @@ Do not execute tasks. Do not assess completed work; the Assessor owns that asses
 
 ## Finalizer inputs
 
-Submit durable `lessons`, `proposals`, and `recommendation` through the coordinator finalizer. Each proposal has a lowercase-kebab-case `slug`, concise bounded `intent`, and non-empty observable `criteria`. `recommendation` must name exactly one proposal or be `"terminate"` when no work remains; `terminate` is reserved and cannot be a proposal slug.
+Submit durable `lessons`, `proposals`, `recommendation`, and `blocked` through the coordinator finalizer. Each proposal has a lowercase-kebab-case `slug`, concise bounded `intent`, and non-empty observable `criteria`. Use an existing task's intent or criteria to name the governing reference and stable ID when they materially constrain work. Set `blocked: true` when the recommendation resolves a coordination blocker; otherwise set `blocked: false`. `recommendation` must name exactly one proposal or be `"terminate"` when no work remains; `terminate` is reserved and cannot be a proposal slug.

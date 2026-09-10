@@ -93,6 +93,7 @@ tools.coordinator.execute("test", {
   lessons: ["goal is complete"],
   proposals: [],
   recommendation: "terminate",
+  blocked: false,
 }, new AbortController().signal).then((result) => console.log(JSON.stringify(result)));
 """
     result = subprocess.run(
@@ -113,4 +114,5 @@ tools.coordinator.execute("test", {
         "lessons": ["goal is complete"],
         "proposals": [],
         "recommendation": "terminate",
+        "blocked": False,
     }

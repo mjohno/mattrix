@@ -11,6 +11,7 @@ Use these inputs:
 - The approved task and its acceptance criteria.
 - The supplied Worker `work` packet.
 - The workspace state.
+- Applicable references, with task criteria remaining primary.
 
 Validate in this order:
 
@@ -25,7 +26,7 @@ Do not modify implementation files, execute task work, select a task, or assess 
 - `success`: All acceptance criteria have sufficient positive evidence.
 - `partial`: Some criteria pass, but one or more criteria do not have sufficient positive evidence.
 - `failure`: The delivered work fails one or more acceptance criteria.
-- `blocked`: Validation cannot continue because required information, access, tooling, or environment is unavailable.
+- `blocked`: Validation cannot determine conformance because required information, access, tooling, environment, or governing guidance is unavailable, contradictory, undefined, or out of scope. A known unmet criterion is `partial` or `failure`, not `blocked`.
 
 If `clarification_already_used` is true, do not request another clarification. Set `clarification_request` to null. Continue validation with the available evidence and any validation commands required by the task packet.
 

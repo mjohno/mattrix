@@ -66,7 +66,8 @@ def test_role_prompt_directs_roles_to_use_opaque_references():
 
     assert "ordered, opaque Owner-provided shared context" in prompt
     assert "Stagger Step does not resolve or validate it" in prompt
-    assert "reference is unavailable or unsuitable" in prompt
+    assert "reference is unavailable, unsuitable" in prompt
+    assert "Flow guides useful activity" in prompt
     assert "Specification: docs/spec.md" in prompt
 
 
@@ -85,6 +86,7 @@ def test_coordinator_guides_recovery_planning():
     assert "partial` or `failure" in prompt
     assert "Do not repeat a failed or blocked approach" in prompt
     assert "exactly one next task" in prompt
+    assert "Set `blocked: true`" in prompt
 
 
 def test_role_prompts_preserve_evidence_boundaries():
@@ -97,6 +99,7 @@ def test_role_prompts_preserve_evidence_boundaries():
     assert "/skill:check" in validator
     assert "Report evidence of both success and failure" in validator
     assert "credible failure evidence as delivery learning" in assessor
+    assert "A known unmet criterion is `partial` or `failure`" in validator
 
 
 def test_unknown_role_is_rejected():

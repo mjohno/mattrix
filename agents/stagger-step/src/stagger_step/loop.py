@@ -172,6 +172,7 @@ class StepLoop:
                 "bootstrap state requires a recommended next step"
             )
         next_state = deepcopy(state)
+        next_state["coordination_blocked"] = False
         if current is not None:
             next_state["history"].append(current)
         next_state["current"] = deepcopy(selected) if selected else None
@@ -467,6 +468,22 @@ class StepLoop:
             response.get("proposals"),
             response.get("recommendation"),
         )
+        blocked = response.get("blocked")
+        if not isinstance(blocked, bool):
+            raise TransitionError("coordinator.blocked must be boolean")
+        if blocked and (
+            not isinstance(proposals, list)
+            or len(proposals) != 1
+            or not isinstance(proposals[0], dict)
+            or recommendation != proposals[0].get("slug")
+        ):
+            raise TransitionError(
+                "blocked coordinator response requires one recommended proposal"
+            )
+        if recommendation == "terminate" and blocked:
+            raise TransitionError(
+                "terminal coordinator response must not be blocked"
+            )
         reserved = {step["slug"] for step in state["history"]}
         if state["current"] is not None:
             reserved.add(state["current"]["slug"])
@@ -475,6 +492,7 @@ class StepLoop:
         )
         candidate = deepcopy(state)
         candidate["lessons"] = _dedupe(lessons or [])
+        candidate["coordination_blocked"] = blocked
         candidate["next"] = proposals
         candidate["recommended"] = recommendation
         return validate_state(candidate)

@@ -22,7 +22,7 @@ const clarificationSchema = Type.Object({
 function isRole(value: unknown): value is Role { return typeof value === "string" && ROLES.includes(value as Role); }
 
 function parametersFor(role: Role) {
-  if (role === "coordinator") return Type.Object({ lessons: stringsSchema, proposals: Type.Array(proposalSchema), recommendation: Type.String() }, { additionalProperties: false });
+  if (role === "coordinator") return Type.Object({ lessons: stringsSchema, proposals: Type.Array(proposalSchema), recommendation: Type.String(), blocked: Type.Boolean() }, { additionalProperties: false });
   if (role === "worker") return Type.Object({ work_summary: Type.String({ minLength: 1 }), work_evidence: stringsSchema }, { additionalProperties: false });
   if (role === "validator") return Type.Object({
     result: resultSchema,
@@ -57,7 +57,10 @@ function canonicalInput(role: Role, params: Record<string, unknown>): Record<str
     if (new Set(slugs).size !== slugs.length) throw new Error("proposals contains duplicate slugs");
     if (slugs.some((slug) => slug === "terminate")) throw new Error("terminate is reserved for terminal recommendations");
     if (params.recommendation !== "terminate" && !slugs.includes(params.recommendation as string)) throw new Error('recommendation must name a proposal or be "terminate"');
-    return { lessons: params.lessons, proposals: params.proposals, recommendation: params.recommendation };
+    if (typeof params.blocked !== "boolean") throw new Error("blocked must be boolean");
+    if (params.blocked && (slugs.length !== 1 || params.recommendation !== slugs[0])) throw new Error("blocked coordinator response requires one recommended proposal");
+    if (params.recommendation === "terminate" && params.blocked) throw new Error("terminal coordinator response must not be blocked");
+    return { lessons: params.lessons, proposals: params.proposals, recommendation: params.recommendation, blocked: params.blocked };
   }
   if (role === "worker") {
     nonEmptyString(params.work_summary, "work_summary"); nonEmptyStrings(params.work_evidence, "work_evidence");

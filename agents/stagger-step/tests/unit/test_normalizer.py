@@ -20,6 +20,7 @@ from stagger_step.state import StateError
                     }
                 ],
                 "recommendation": "validate-cli",
+                "blocked": False,
             },
             {
                 "lessons": ["Keep evidence"],
@@ -31,6 +32,7 @@ from stagger_step.state import StateError
                     }
                 ],
                 "recommendation": "validate-cli",
+                "blocked": False,
             },
         ),
         (
@@ -78,6 +80,49 @@ def test_normalizes_each_role(role, candidate, expected):
     assert normalized is not candidate
 
 
+@pytest.mark.parametrize("blocked", (None, "true", 1))
+def test_rejects_missing_or_non_boolean_coordinator_blocked(blocked):
+    with pytest.raises(StateError, match="coordinator.blocked must be boolean"):
+        normalize_packet(
+            "coordinator",
+            {
+                "lessons": [],
+                "proposals": [],
+                "recommendation": "terminate",
+                "blocked": blocked,
+            },
+        )
+
+
+@pytest.mark.parametrize(
+    "proposals,recommendation",
+    (
+        ([], "terminate"),
+        (
+            [
+                {"slug": "one", "intent": "One", "criteria": ["done"]},
+                {"slug": "two", "intent": "Two", "criteria": ["done"]},
+            ],
+            "one",
+        ),
+    ),
+)
+def test_rejects_invalid_blocked_coordinator_shape(proposals, recommendation):
+    with pytest.raises(
+        StateError,
+        match="blocked coordinator response requires one recommended proposal",
+    ):
+        normalize_packet(
+            "coordinator",
+            {
+                "lessons": [],
+                "proposals": proposals,
+                "recommendation": recommendation,
+                "blocked": True,
+            },
+        )
+
+
 def test_allows_proposal_slug_with_terminate_prefix():
     proposal = {
         "slug": "terminate-xyz-thingy",
@@ -92,6 +137,7 @@ def test_allows_proposal_slug_with_terminate_prefix():
                 "lessons": [],
                 "proposals": [proposal],
                 "recommendation": "terminate-xyz-thingy",
+                "blocked": False,
             },
         )["recommendation"]
         == "terminate-xyz-thingy"
@@ -161,6 +207,7 @@ def test_rejects_worker_owned_fields_in_coordinator_proposals():
                     }
                 ],
                 "recommendation": "validate-cli",
+                "blocked": False,
             },
         )
 
@@ -178,5 +225,6 @@ def test_rejects_duplicate_coordinator_proposals():
                 "lessons": [],
                 "proposals": [proposal, proposal],
                 "recommendation": "validate-cli",
+                "blocked": False,
             },
         )

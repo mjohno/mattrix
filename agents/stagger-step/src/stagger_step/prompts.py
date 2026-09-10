@@ -27,7 +27,7 @@ def _finalizer(role: str) -> str:
 
 def _finalizer_example(role: str) -> str:
     if role == "coordinator":
-        return '{"lessons":["durable lesson"],"proposals":[{"slug":"next-task","intent":"bounded outcome","criteria":["observable criterion"]}],"recommendation":"next-task"}'
+        return '{"lessons":["durable lesson"],"proposals":[{"slug":"next-task","intent":"bounded outcome","criteria":["observable criterion"]}],"recommendation":"next-task","blocked":false}'
     if role == "worker":
         return '{"work_summary":"work performed","work_evidence":["evidence"]}'
     if role == "validator":

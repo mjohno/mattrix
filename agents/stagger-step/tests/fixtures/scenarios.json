@@ -14,7 +14,8 @@
             ]
           }
         ],
-        "recommendation": "first"
+        "recommendation": "first",
+        "blocked": false
       }
     ]
   },
@@ -91,7 +92,8 @@
             ]
           }
         ],
-        "recommendation": "second"
+        "recommendation": "second",
+        "blocked": false
       }
     ]
   },
@@ -160,7 +162,8 @@
           "terminal lesson"
         ],
         "proposals": [],
-        "recommendation": "terminate"
+        "recommendation": "terminate",
+        "blocked": false
       }
     ]
   },

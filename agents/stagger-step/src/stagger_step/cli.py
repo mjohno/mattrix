@@ -255,14 +255,25 @@ def approve(
     return changed
 
 
+def _afk_blocker(prepared: dict[str, Any]) -> str | None:
+    if prepared.get("coordination_blocked") is True:
+        return "coordinator blocker"
+    current = prepared.get("current")
+    validation = current.get("validate") if isinstance(current, dict) else None
+    result = validation.get("result") if isinstance(validation, dict) else None
+    if result == "blocked":
+        return "blocked result"
+    return None
+
+
 def _afk_stop(prepared: dict[str, Any], outcomes: list[str]) -> str | None:
+    if blocker := _afk_blocker(prepared):
+        return blocker
     current = prepared.get("current")
     validation = current.get("validate") if isinstance(current, dict) else None
     result = validation.get("result") if isinstance(validation, dict) else None
     if not isinstance(result, str):
         return None
-    if result == "blocked":
-        return "blocked result"
     outcomes.append(result)
     del outcomes[:-10]
     failures = sum(outcome == "failure" for outcome in outcomes)
@@ -297,12 +308,12 @@ def run_session(
             prepared = prepare(state, loop, commit)
             _raise_if_interrupt_requested()
             _raise_if_interrupt_requested()
-            emit_review(loop, prepared)
             if afk and (stop_reason := _afk_stop(prepared, outcomes)):
                 afk = False
                 logger.info(
                     "AFK disabled by %s; returning to manual mode", stop_reason
                 )
+            emit_review(loop, prepared)
             if afk:
                 _raise_if_interrupt_requested()
                 logger.info("AFK automatically approved the current gate")
@@ -314,8 +325,21 @@ def run_session(
                 except EOFError:
                     return 0
                 displayed_response = user_input
-            emit_response(displayed_response)
+            while user_input == "afk" and (
+                stop_reason := _afk_blocker(prepared)
+            ):
+                logger.info(
+                    "AFK remains disabled by %s; returning to manual mode",
+                    stop_reason,
+                )
+                afk = False
+                try:
+                    user_input = input()
+                except EOFError:
+                    return 0
+                displayed_response = user_input
             if user_input == "break":
+                emit_response(displayed_response)
                 return 0
             if user_input == "afk":
                 afk = True
@@ -327,6 +351,7 @@ def run_session(
             ):
                 logger.info("Ignored nonsensical STEP response")
                 continue
+            emit_response(displayed_response)
             changed = (
                 approve(prepared, loop, commit)
                 if user_input == "approved"

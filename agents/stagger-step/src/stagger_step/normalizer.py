@@ -94,6 +94,9 @@ def normalize_packet(role: str, candidate: Any) -> dict[str, Any]:
         if len(slugs) != len(set(slugs)):
             raise StateError("coordinator.proposals contains duplicate slugs")
         recommendation = packet.get("recommendation")
+        blocked = packet.get("blocked")
+        if not isinstance(blocked, bool):
+            raise StateError("coordinator.blocked must be boolean")
         if any(slug == "terminate" for slug in slugs):
             raise StateError(
                 "coordinator.proposals must not use reserved slug: terminate"
@@ -102,10 +105,19 @@ def normalize_packet(role: str, candidate: Any) -> dict[str, Any]:
             raise StateError(
                 'coordinator.recommendation must name a proposal or be "terminate"'
             )
+        if blocked and (len(slugs) != 1 or recommendation != slugs[0]):
+            raise StateError(
+                "blocked coordinator response requires one recommended proposal"
+            )
+        if recommendation == "terminate" and blocked:
+            raise StateError(
+                "terminal coordinator response must not be blocked"
+            )
         return {
             "lessons": deepcopy(packet["lessons"]),
             "proposals": deepcopy(proposals),
             "recommendation": recommendation,
+            "blocked": blocked,
         }
     if role == "worker":
         work = _mapping(packet.get("work"), "worker.work")

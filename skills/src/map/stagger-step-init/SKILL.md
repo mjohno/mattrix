@@ -28,7 +28,7 @@ Use-When: Use when a user wants to start a Stagger Step workflow for a goal.
 ## 2. Processes
 
 1. If no goal is supplied, use `goal`; show its proposed SMART goal and wait for approval.
-2. Ask the user whether the workflow needs references or lessons. Let them provide free-form text or existing artifacts, such as a SPEC, PLAN, or RUBRIC. Collect supplied values in order.
+2. Ask the user whether the workflow needs references or lessons. Ask for known Markdown artifacts in this order: `Flow:`, `Values:`, `Specification:`, `Plan:`, and `Rubric:`. Accept free-form text and other existing artifacts unchanged. Collect supplied values in Owner-supplied order. Do not infer, locate, validate, parse, or create reference artifacts.
 3. If paths are absent, derive a lower-case kebab-case `<goal-slug>` from the approved goal and propose `tmp/CHANGE-<goal-slug>/STEP-<goal-slug>.yaml` from the checked-out project root.
 4. If the change directory is absent, use `tmp/CHANGE-<goal-slug>/`.
 5. Show inferred paths and wait for approval before initialization.

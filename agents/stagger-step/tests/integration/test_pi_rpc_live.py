@@ -25,11 +25,12 @@ def test_real_pi_rpc_adapter_returns_typed_coordinator_json():
     payload = PiRpcHarness().invoke(
         "coordinator",
         "Call stagger_step_finalize_coordinator exactly once with "
-        'lessons=[], proposals=[], and recommendation="terminate". '
+        'lessons=[], proposals=[], recommendation="terminate", and blocked=false. '
         "Do not return a YAML packet in assistant text.",
     )
     assert payload == {
         "lessons": [],
         "proposals": [],
         "recommendation": "terminate",
+        "blocked": False,
     }

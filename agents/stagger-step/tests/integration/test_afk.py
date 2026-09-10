@@ -4,7 +4,7 @@ import re
 
 import pytest
 
-from .conftest import assessor, complete, coordinator, state
+from .conftest import assessor, complete, coordinator, state, task
 
 pytestmark = pytest.mark.integration
 
@@ -78,6 +78,41 @@ def test_ctrl_c_during_afk_returns_to_a_manual_unapproved_gate(cli):
     assert "AFK disabled by Ctrl+C; returning to manual mode" in result.stderr
 
 
+def test_afk_does_not_approve_an_initial_coordinator_blocker(cli):
+    run, step, _ = cli
+    replies = {
+        "coordinator": [
+            {
+                "lessons": [],
+                "proposals": [task("resolve-flow-transition")],
+                "recommendation": "resolve-flow-transition",
+                "blocked": True,
+            }
+        ]
+    }
+
+    result = run(
+        "--log-level",
+        "INFO",
+        "init",
+        "--goal",
+        "Goal",
+        "--session",
+        input="afk\nbreak\n",
+        replies=replies,
+    )
+
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["current"] is None
+    assert saved["recommended"] == "resolve-flow-transition"
+    assert "AFK enabled" not in result.stderr
+    assert (
+        "AFK remains disabled by coordinator blocker; returning to manual mode"
+        in result.stderr
+    )
+
+
 def test_afk_stops_at_the_first_blocked_gate(cli):
     run, step, _ = cli
     first = complete("first")
@@ -109,6 +144,47 @@ def test_afk_stops_at_the_first_blocked_gate(cli):
     assert "AFK automatically approved the current gate" not in result.stderr
     assert (
         "AFK disabled by blocked result; returning to manual mode"
+        in result.stderr
+    )
+
+
+def test_afk_stops_at_a_coordinator_blocked_gate(cli):
+    run, step, _ = cli
+    first = complete("first")
+    first_assessed = assessor("first")
+    replies = {
+        "coordinator": [
+            coordinator("first"),
+            {
+                "lessons": [],
+                "proposals": [task("resolve-flow-transition")],
+                "recommendation": "resolve-flow-transition",
+                "blocked": True,
+            },
+        ],
+        "worker": [{"packet": first}],
+        "assessor": [first_assessed],
+    }
+
+    result = run(
+        "--log-level",
+        "INFO",
+        "init",
+        "--goal",
+        "Goal",
+        "--session",
+        input="afk\nbreak\n",
+        replies=replies,
+    )
+
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["history"] == []
+    assert saved["current"]["slug"] == "first"
+    assert saved["coordination_blocked"] is False
+    assert "AFK automatically approved the current gate" not in result.stderr
+    assert (
+        "AFK disabled by coordinator blocker; returning to manual mode"
         in result.stderr
     )
 

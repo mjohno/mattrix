@@ -92,6 +92,7 @@ def test_harness_retains_finalizer_details_but_parses_text(
                         "lessons": [],
                         "proposals": [],
                         "recommendation": "terminate",
+                        "blocked": False,
                     }
                 ]
             }
@@ -109,12 +110,14 @@ def test_harness_retains_finalizer_details_but_parses_text(
         "lessons": [],
         "proposals": [],
         "recommendation": "terminate",
+        "blocked": False,
     }
     assert adapter.last_finalizer_details == {
         "canonical": {
             "lessons": [],
             "proposals": [],
             "recommendation": "terminate",
+            "blocked": False,
         }
     }
 

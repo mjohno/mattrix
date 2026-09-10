@@ -45,7 +45,12 @@ def _retro(requests=None, issues=None, actions=None):
 
 
 def _coordinator():
-    return {"lessons": [], "proposals": [], "recommendation": "terminate"}
+    return {
+        "lessons": [],
+        "proposals": [],
+        "recommendation": "terminate",
+        "blocked": False,
+    }
 
 
 def test_prepare_runs_independent_validator_before_assessor():
@@ -264,6 +269,7 @@ def test_coordinator_receives_recovery_evidence_and_persists_ranked_proposals(
                     "lessons": [],
                     "proposals": proposals,
                     "recommendation": slugs[0],
+                    "blocked": False,
                 }
             ],
         }
@@ -318,6 +324,7 @@ def test_coordinator_context_partitions_history_and_retains_revision_gate():
                         }
                     ],
                     "recommendation": "future",
+                    "blocked": False,
                 }
             ]
         }

@@ -791,6 +791,7 @@ def test_gate_approval_prepares_the_promoted_step_before_exit(cli):
                         },
                     ],
                     "recommendation": "first",
+                    "blocked": False,
                 }
             ]
         },
@@ -866,6 +867,7 @@ def test_session_continues_through_work_cycle_to_final_signoff(cli):
                 "lessons": ["terminal lesson"],
                 "proposals": [],
                 "recommendation": "terminate",
+                "blocked": False,
             },
         ],
         "worker": [

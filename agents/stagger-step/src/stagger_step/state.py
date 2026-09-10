@@ -188,6 +188,9 @@ def validate_state(state: Any) -> dict[str, Any]:
     ):
         raise StateError("packet_history must be a positive integer")
     _strings(state.get("lessons"), "lessons")
+    coordination_blocked = state.setdefault("coordination_blocked", False)
+    if not isinstance(coordination_blocked, bool):
+        raise StateError("coordination_blocked must be boolean")
     # Version 1 states created before references remain valid. Normalize them
     # when loaded so all later workflow paths receive the same shared context.
     references = state.setdefault("references", [])
@@ -272,6 +275,7 @@ def create_state(
         "packet_history": packet_history,
         "references": [],
         "lessons": lessons or [],
+        "coordination_blocked": False,
         "history": [],
         "current": None,
         "next": [],
