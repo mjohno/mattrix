@@ -1059,7 +1059,9 @@ def test_session_revision_keeps_running_then_breaks_without_promotion(cli):
     assert result.returncode == 0, result.stderr
     saved = state(step)
     assert saved["history"] == [] and saved["current"]["slug"] == "first"
-    assert saved["next"] == [] and saved["recommended"] is None
+    assert [proposal["slug"] for proposal in saved["next"]] == ["third"]
+    assert saved["recommended"] == "third"
+    assert saved["lessons"] == ["revised lesson"]
     assert "### third" in result.stdout
     assert result.stdout.endswith("break\n\n---\n")
     assert "STEP response:" not in result.stderr

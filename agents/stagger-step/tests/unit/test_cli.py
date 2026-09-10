@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import pytest
+from stagger_step import cli
 from stagger_step.cli import is_revision_feedback, parser, select_commit_mode
-from stagger_step.state import create_state
+from stagger_step.state import create_state, load_state
 
 
 @pytest.mark.parametrize("command", ("gate", "session"))
@@ -87,6 +88,73 @@ def test_init_role_settings_default_and_accept_per_role_overrides():
     assert selected.worker_thinking == "high"
     assert selected.validator_model == "validator-model"
     assert selected.assessor_thinking == "low"
+
+
+def test_manual_ctrl_c_persists_the_prepared_gate(monkeypatch, tmp_path):
+    state = create_state("Goal")
+    prepared = create_state("Goal")
+    prepared["coordination_blocked"] = True
+    prepared["next"] = [
+        {
+            "slug": "resolve-flow-transition",
+            "intent": "resolve flow transition",
+            "criteria": ["done"],
+        }
+    ]
+    prepared["recommended"] = "resolve-flow-transition"
+    path = tmp_path / "STEP-test.yaml"
+
+    monkeypatch.setattr(cli, "enter_session", lambda *_: state)
+    monkeypatch.setattr(cli, "prepare", lambda *_: prepared)
+    monkeypatch.setattr(cli, "emit_review", lambda *_: None)
+
+    def interrupt() -> str:
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr("builtins.input", interrupt)
+
+    with pytest.raises(KeyboardInterrupt):
+        cli.run_session(path, state, object())
+
+    assert load_state(path) == prepared
+
+
+def test_post_approval_ctrl_c_does_not_restore_the_prepared_gate(
+    monkeypatch, tmp_path
+):
+    state = create_state("Goal")
+    prepared = create_state("Goal")
+    prepared["coordination_blocked"] = True
+    prepared["next"] = [
+        {
+            "slug": "resolve-flow-transition",
+            "intent": "resolve flow transition",
+            "criteria": ["done"],
+        }
+    ]
+    prepared["recommended"] = "resolve-flow-transition"
+    changed = create_state("Goal")
+    changed["current"] = prepared["next"][0].copy()
+    path = tmp_path / "STEP-test.yaml"
+
+    monkeypatch.setattr(cli, "enter_session", lambda *_: state)
+    monkeypatch.setattr(cli, "prepare", lambda *_: prepared)
+    monkeypatch.setattr(cli, "approve", lambda *_: changed)
+    monkeypatch.setattr(cli, "emit_review", lambda *_: None)
+    monkeypatch.setattr("builtins.input", lambda: "approved")
+    interrupts = iter((None, None, None, KeyboardInterrupt()))
+
+    def raise_interrupt() -> None:
+        outcome = next(interrupts)
+        if isinstance(outcome, KeyboardInterrupt):
+            raise outcome
+
+    monkeypatch.setattr(cli, "_raise_if_interrupt_requested", raise_interrupt)
+
+    with pytest.raises(KeyboardInterrupt):
+        cli.run_session(path, state, object())
+
+    assert load_state(path) == changed
 
 
 def test_disabled_persisted_commit_mode_selects_no_commit_collaborator(

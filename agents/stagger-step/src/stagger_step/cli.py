@@ -306,6 +306,7 @@ def run_session(
     outcomes: list[str] = []
     state = enter_session(path, state, loop)
     while True:
+        prepared: dict[str, Any] | None = None
         try:
             prepared = prepare(state, loop, commit)
             _raise_if_interrupt_requested()
@@ -325,21 +326,15 @@ def run_session(
                 else:
                     try:
                         user_input = input()
+                    except KeyboardInterrupt:
+                        write_atomic(path, prepared)
+                        raise
                     except EOFError:
                         return 0
                     displayed_response = user_input
-                if user_input == "afk" and (
-                    stop_reason := _afk_blocker(prepared)
-                ):
-                    logger.info(
-                        "AFK remains disabled by %s; returning to manual mode",
-                        stop_reason,
-                    )
-                    afk = False
-                    emit_review(loop, prepared)
-                    continue
                 if user_input == "break":
-                    emit_persisted_usage_at_exit(state, "break")
+                    write_atomic(path, prepared)
+                    emit_persisted_usage_at_exit(prepared, "break")
                     emit_response(displayed_response)
                     return 0
                 if user_input == "afk":

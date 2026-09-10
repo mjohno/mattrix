@@ -64,7 +64,8 @@ def test_ctrl_c_during_afk_returns_to_a_manual_unapproved_gate(cli):
     saved = state(step)
     assert saved["history"] == []
     assert saved["current"]["slug"] == "first"
-    assert "validate" not in saved["current"]
+    assert saved["current"]["validate"]["result"] == "success"
+    assert saved["recommended"] == "second"
     assert re.search(
         r"^stagger_step\.[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_]"
         r"[A-Za-z0-9_]*:\d+ \[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\] INFO: ",
@@ -78,7 +79,48 @@ def test_ctrl_c_during_afk_returns_to_a_manual_unapproved_gate(cli):
     assert "AFK disabled by Ctrl+C; returning to manual mode" in result.stderr
 
 
-def test_afk_does_not_approve_an_initial_coordinator_blocker(cli):
+def test_afk_approves_an_initial_coordinator_blocker(cli):
+    run, step, _ = cli
+    resolve = complete("resolve-flow-transition")
+    resolved_assessment = assessor("resolve-flow-transition")
+    resolved_assessment["current_packet"] = resolve
+    replies = {
+        "coordinator": [
+            {
+                "lessons": [],
+                "proposals": [task("resolve-flow-transition")],
+                "recommendation": "resolve-flow-transition",
+                "blocked": True,
+            },
+            coordinator(None),
+        ],
+        "worker": [{"packet": resolve}],
+        "assessor": [resolved_assessment],
+    }
+
+    result = run(
+        "--log-level",
+        "INFO",
+        "init",
+        "--goal",
+        "Goal",
+        "--session",
+        input="afk\n",
+        replies=replies,
+    )
+
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["completed"] is True
+    assert saved["coordination_blocked"] is False
+    assert [entry["slug"] for entry in saved["history"]] == [
+        "resolve-flow-transition"
+    ]
+    assert "## Coordination Blocker" in result.stdout
+    assert "AFK enabled" in result.stderr
+
+
+def test_break_preserves_an_initial_coordinator_blocker(cli):
     run, step, _ = cli
     replies = {
         "coordinator": [
@@ -98,31 +140,23 @@ def test_afk_does_not_approve_an_initial_coordinator_blocker(cli):
         "--goal",
         "Goal",
         "--session",
-        input="afk\nbreak\n",
+        input="break\n",
         replies=replies,
     )
 
     assert result.returncode == 0, result.stderr
     saved = state(step)
+    assert saved["coordination_blocked"] is True
     assert saved["current"] is None
     assert saved["recommended"] == "resolve-flow-transition"
-    assert "## Coordination Blocker" in result.stdout
-    assert "**Manual approval required.**" in result.stdout
-    assert "AFK enabled" not in result.stderr
-    assert (
-        "AFK remains disabled by coordinator blocker; returning to manual mode"
-        in result.stderr
-    )
 
 
-def test_afk_stops_at_the_first_blocked_gate(cli):
+def test_break_persists_a_later_ordinary_gate(cli):
     run, step, _ = cli
     first = complete("first")
-    first["validate"]["result"] = "blocked"
     first_assessed = assessor("first")
-    first_assessed["current_packet"] = first
     replies = {
-        "coordinator": [coordinator("first"), coordinator(None)],
+        "coordinator": [coordinator("first"), coordinator("second")],
         "worker": [{"packet": first}],
         "assessor": [first_assessed],
     }
@@ -134,23 +168,24 @@ def test_afk_stops_at_the_first_blocked_gate(cli):
         "--goal",
         "Goal",
         "--session",
-        input="afk\nbreak\n",
+        input="approved\nbreak\n",
         replies=replies,
     )
 
     assert result.returncode == 0, result.stderr
     saved = state(step)
-    assert saved["history"] == []
+    assert saved["coordination_blocked"] is False
     assert saved["current"]["slug"] == "first"
-    assert "validate" not in saved["current"]
-    assert "AFK automatically approved the current gate" not in result.stderr
-    assert (
-        "AFK disabled by blocked result; returning to manual mode"
-        in result.stderr
-    )
+    assert saved["current"]["validate"]["result"] == "success"
+    assert saved["recommended"] == "second"
+
+    resumed = run("session", input="break\n", replies={})
+
+    assert resumed.returncode == 0, resumed.stderr
+    assert state(step)["recommended"] == "second"
 
 
-def test_afk_stops_at_a_coordinator_blocked_gate(cli):
+def test_break_persists_a_later_coordinator_blocker(cli):
     run, step, _ = cli
     first = complete("first")
     first_assessed = assessor("first")
@@ -175,16 +210,140 @@ def test_afk_stops_at_a_coordinator_blocked_gate(cli):
         "--goal",
         "Goal",
         "--session",
-        input="afk\nbreak\n",
+        input="approved\nbreak\n",
         replies=replies,
     )
 
     assert result.returncode == 0, result.stderr
     saved = state(step)
-    assert saved["history"] == []
+    assert saved["coordination_blocked"] is True
     assert saved["current"]["slug"] == "first"
+    assert saved["current"]["validate"]["result"] == "success"
+    assert saved["recommended"] == "resolve-flow-transition"
+
+
+def test_revision_uses_the_coordinator_blocker_value(cli):
+    run, step, _ = cli
+    replies = {
+        "coordinator": [
+            {
+                "lessons": [],
+                "proposals": [task("resolve-flow-transition")],
+                "recommendation": "resolve-flow-transition",
+                "blocked": True,
+            },
+            coordinator("revised-flow-transition"),
+        ]
+    }
+
+    result = run(
+        "--log-level",
+        "INFO",
+        "init",
+        "--goal",
+        "Goal",
+        "--session",
+        input="use a revised flow\nbreak\n",
+        replies=replies,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.count("## Coordination Blocker") == 1
+    assert "### revised-flow-transition" in result.stdout
+    assert state(step)["coordination_blocked"] is False
+
+
+def test_afk_resumes_after_a_validator_blocker(cli):
+    run, step, _ = cli
+    first = complete("first")
+    first["validate"]["result"] = "blocked"
+    first_assessed = assessor("first")
+    first_assessed["current_packet"] = first
+    recover = complete("recover-validation-blocker")
+    recovered_assessment = assessor("recover-validation-blocker")
+    recovered_assessment["current_packet"] = recover
+    replies = {
+        "coordinator": [
+            coordinator("first"),
+            {
+                "lessons": [],
+                "proposals": [task("recover-validation-blocker")],
+                "recommendation": "recover-validation-blocker",
+                "blocked": True,
+            },
+            coordinator(None),
+        ],
+        "worker": [{"packet": first}, {"packet": recover}],
+        "assessor": [first_assessed, recovered_assessment],
+    }
+
+    result = run(
+        "--log-level",
+        "INFO",
+        "init",
+        "--goal",
+        "Goal",
+        "--session",
+        input="afk\nafk\n",
+        replies=replies,
+    )
+
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["completed"] is True
+    assert [entry["slug"] for entry in saved["history"]] == [
+        "first",
+        "recover-validation-blocker",
+    ]
+    assert result.stderr.count("AFK enabled") == 2
+    assert (
+        "AFK disabled by coordinator blocker; returning to manual mode"
+        in result.stderr
+    )
+
+
+def test_afk_resumes_until_the_next_coordinator_blocker(cli):
+    run, step, _ = cli
+    first = complete("first")
+    first_assessed = assessor("first")
+    resolve = complete("resolve-flow-transition")
+    resolved_assessment = assessor("resolve-flow-transition")
+    resolved_assessment["current_packet"] = resolve
+    replies = {
+        "coordinator": [
+            coordinator("first"),
+            {
+                "lessons": [],
+                "proposals": [task("resolve-flow-transition")],
+                "recommendation": "resolve-flow-transition",
+                "blocked": True,
+            },
+            coordinator(None),
+        ],
+        "worker": [{"packet": first}, {"packet": resolve}],
+        "assessor": [first_assessed, resolved_assessment],
+    }
+
+    result = run(
+        "--log-level",
+        "INFO",
+        "init",
+        "--goal",
+        "Goal",
+        "--session",
+        input="afk\nafk\n",
+        replies=replies,
+    )
+
+    assert result.returncode == 0, result.stderr
+    saved = state(step)
+    assert saved["completed"] is True
     assert saved["coordination_blocked"] is False
-    assert "AFK automatically approved the current gate" not in result.stderr
+    assert [entry["slug"] for entry in saved["history"]] == [
+        "first",
+        "resolve-flow-transition",
+    ]
+    assert result.stderr.count("AFK enabled") == 2
     assert (
         "AFK disabled by coordinator blocker; returning to manual mode"
         in result.stderr
@@ -227,7 +386,8 @@ def test_afk_allows_one_failure_then_returns_to_manual_break_gate(cli):
     assert saved["completed"] is False
     assert [entry["slug"] for entry in saved["history"]] == ["first"]
     assert saved["current"]["slug"] == "second"
-    assert "validate" not in saved["current"]
+    assert saved["current"]["validate"]["result"] == "blocked"
+    assert saved["recommended"] == "terminate"
     assert (
         result.stderr.count("AFK automatically approved the current gate") == 1
     )

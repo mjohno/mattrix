@@ -160,11 +160,12 @@ def test_session_commit_off_preserves_existing_packet_commit_state(git_cli):
         "completed": False,
     }
     step.write_text(yaml.safe_dump(configured, sort_keys=False))
-    before = step.read_bytes()
     (repository / "unrelated.txt").write_text("dirty\n")
 
     result = run("session", "--commit-off", input="break\n")
 
     assert result.returncode == 0, result.stderr
-    assert step.read_bytes() == before
+    saved = state(step)
+    assert saved["current"]["commit_base"] == base
+    assert saved["recommended"] == "terminate"
     assert git(repository, "rev-parse", "HEAD") == base
