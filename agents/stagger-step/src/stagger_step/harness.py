@@ -18,6 +18,7 @@ from typing import Any, Protocol
 from .logging import StructuredLogger
 from .prompts import build_finalization_prompt
 from .state import StateError, default_role_settings
+from .usage import cache_hit_ratio
 
 
 class HarnessError(RuntimeError):
@@ -214,8 +215,7 @@ class PiRpcHarness:
         for key, value in delta.items():
             self._transition_usage[key] += value
         context = data.get("contextUsage")
-        cache_base = values["input"] + values["cache_read"]
-        cache_ratio = values["cache_read"] / cache_base if cache_base else 0
+        cache_ratio = cache_hit_ratio(values)
         logger.info(
             "pi usage role=%s task=%s input=%s output=%s cache_read=%s cache_write=%s total=%s cost=%s cache_hit_ratio=%.4f context_usage=%s",
             role,

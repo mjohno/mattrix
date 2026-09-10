@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import queue
 import sys
 from pathlib import Path
@@ -149,6 +150,30 @@ def test_harness_records_only_consistent_integer_token_statistics():
         "total": 16,
         "cost": 0.5,
     }
+
+
+def test_harness_logs_owner_cache_hit_ratio(caplog):
+    adapter = PiRpcHarness()
+    session = RoleSession("session", "STEP-default-bootstrap-worker")
+
+    with caplog.at_level(logging.INFO, logger="stagger_step.harness"):
+        adapter._record_session_stats(
+            "worker",
+            "task",
+            session,
+            {
+                "tokens": {
+                    "input": 10,
+                    "output": 2,
+                    "cacheRead": 3,
+                    "cacheWrite": 2,
+                    "total": 17,
+                },
+                "cost": 0.5,
+            },
+        )
+
+    assert "cache_hit_ratio=0.2000" in caplog.text
 
 
 @pytest.mark.parametrize(

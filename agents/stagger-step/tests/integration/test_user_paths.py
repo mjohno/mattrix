@@ -125,6 +125,11 @@ def test_gate_persists_bootstrap_usage_and_logs_it_before_review(cli):
     assert result.stderr.index(
         "pi usage role=coordinator"
     ) < result.stderr.index("STEP token usage")
+    assert "cache_hit_ratio=0.2000" in result.stderr
+    assert (
+        "**Usage:** Total: 175 · Input: 100 · Output: 50 · "
+        "Cache hit ratio: 20.00% · Cost: 0.001"
+    ) in result.stdout
     assert [call["role"] for call in calls(log)] == ["coordinator"]
 
 
@@ -882,12 +887,50 @@ def test_gate_feedback_revises_next_without_promoting_history_or_current(cli):
     assert "revised lesson" in result.stdout
 
 
-def test_gate_break_is_non_mutating(cli):
+def test_gate_break_is_non_mutating_and_logs_persisted_usage(cli):
     run, step, _ = cli
     init(run)
     before = step.read_bytes()
-    result = run("gate", "break")
+    result = run("--log-level", "INFO", "gate", "break")
+
     assert result.returncode == 0 and step.read_bytes() == before
+    assert "STEP persisted usage at exit reason=break" in result.stderr
+    assert "total=175" in result.stderr
+
+
+def test_session_break_logs_persisted_usage(cli):
+    run, _, _ = cli
+    result = run(
+        "--log-level",
+        "INFO",
+        "init",
+        "--goal",
+        "Goal",
+        "--session",
+        input="break\n",
+        replies=scenario("fresh"),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "STEP persisted usage at exit reason=break" in result.stderr
+    assert "total=175" in result.stderr
+
+
+def test_ctrl_c_logs_persisted_usage_at_exit(cli):
+    run, _, _ = cli
+    init(run)
+
+    result = run(
+        "--log-level",
+        "INFO",
+        "gate",
+        "approved",
+        replies={"worker": ["interrupt"]},
+    )
+
+    assert result.returncode == 130
+    assert "STEP persisted usage at exit reason=Ctrl+C" in result.stderr
+    assert "total=175" in result.stderr
 
 
 def test_session_continues_through_work_cycle_to_final_signoff(cli):

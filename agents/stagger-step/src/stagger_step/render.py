@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .state import is_completed
+from .usage import format_markdown_usage
 
 
 def _list(lines: list[str], label: str, values: Any) -> None:
@@ -17,6 +18,12 @@ def _task(lines: list[str], task: dict[str, Any], recommended: bool) -> None:
         lines.extend(["**RECOMMENDED**", ""])
     lines.extend([f"**Intent:** {task['intent']}", ""])
     _list(lines, "Criteria", task["criteria"])
+
+
+def _usage(lines: list[str], gate: dict[str, Any]) -> None:
+    usage = gate.get("token_usage")
+    if isinstance(usage, dict):
+        lines.extend([format_markdown_usage(usage), ""])
 
 
 def render_gate(gate: dict[str, Any]) -> str:
@@ -34,6 +41,7 @@ def render_gate(gate: dict[str, Any]) -> str:
     )
     title = current["slug"] if isinstance(current, dict) else "Initial Plan"
     lines = [f"# STEP Review - {title}", "", f"**Goal:** {gate['goal']}", ""]
+    _usage(lines, gate)
     _list(lines, "References", gate.get("references"))
     _list(lines, "Lessons", gate["lessons"])
 

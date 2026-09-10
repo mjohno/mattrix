@@ -30,6 +30,55 @@ def test_bootstrap_review_omits_task_sections():
     assert output.endswith("**Response:**\n")
 
 
+def test_review_renders_cumulative_usage():
+    output = render_gate(
+        {
+            "goal": "Ship it",
+            "lessons": [],
+            "current": None,
+            "proposals": [task("first")],
+            "recommended": "first",
+            "completed": False,
+            "token_usage": {
+                "input": 100,
+                "output": 50,
+                "cache_read": 25,
+                "cache_write": 0,
+                "total": 175,
+                "cost": 0.001,
+            },
+        }
+    )
+
+    assert (
+        "**Usage:** Total: 175 · Input: 100 · Output: 50 · "
+        "Cache hit ratio: 20.00% · Cost: 0.001"
+    ) in output
+
+
+def test_review_renders_zero_cache_hit_ratio():
+    output = render_gate(
+        {
+            "goal": "Ship it",
+            "lessons": [],
+            "current": None,
+            "proposals": [task("first")],
+            "recommended": "first",
+            "completed": False,
+            "token_usage": {
+                "input": 0,
+                "output": 2,
+                "cache_read": 0,
+                "cache_write": 0,
+                "total": 2,
+                "cost": 0.0,
+            },
+        }
+    )
+
+    assert "Cache hit ratio: 0.00%" in output
+
+
 def test_blocked_review_renders_manual_approval_notice():
     output = render_gate(
         {

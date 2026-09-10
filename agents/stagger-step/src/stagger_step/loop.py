@@ -202,6 +202,7 @@ class StepLoop:
                 "coordination_blocked",
                 "recommended",
                 "completed",
+                "token_usage",
             )
         }
         gate["proposals"] = deepcopy(state["next"])

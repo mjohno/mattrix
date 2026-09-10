@@ -27,6 +27,7 @@ from .state import (
     validate_role_settings,
     write_atomic,
 )
+from .usage import format_usage
 
 logger = StructuredLogger("stagger_step.cli")
 MINIMUM_REVISION_FEEDBACK_LENGTH = 3
@@ -62,17 +63,18 @@ def emit_gate(gate: dict[str, Any]) -> None:
     print(render_gate(gate), end="")
 
 
-def emit_review(loop: StepLoop, state: dict[str, Any]) -> None:
-    usage = state["token_usage"]
-    logger.info(
-        "STEP token usage input=%s output=%s cache_read=%s cache_write=%s total=%s cost=%s",
-        usage["input"],
-        usage["output"],
-        usage["cache_read"],
-        usage["cache_write"],
-        usage["total"],
-        usage["cost"],
+def log_usage(label: str, usage: dict[str, Any]) -> None:
+    logger.info("%s %s", label, format_usage(usage))
+
+
+def emit_persisted_usage_at_exit(state: dict[str, Any], reason: str) -> None:
+    log_usage(
+        f"STEP persisted usage at exit reason={reason}", state["token_usage"]
     )
+
+
+def emit_review(loop: StepLoop, state: dict[str, Any]) -> None:
+    log_usage("STEP token usage", state["token_usage"])
     emit_gate(loop.gate(state))
 
 
@@ -337,6 +339,7 @@ def run_session(
                     emit_review(loop, prepared)
                     continue
                 if user_input == "break":
+                    emit_persisted_usage_at_exit(state, "break")
                     emit_response(displayed_response)
                     return 0
                 if user_input == "afk":
@@ -381,6 +384,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     raw_path = args.file or os.getenv("STEP_FILE")
     diagnostic_path = Path(raw_path) if raw_path else None
+    persisted_state: dict[str, Any] | None = None
     _consume_interrupt()
 
     def on_sigint(signum: int, frame: Any) -> None:
@@ -437,12 +441,15 @@ def main(argv: list[str] | None = None) -> int:
                 change_path,
             )
             write_atomic(path, state)
+            persisted_state = state
             if args.session:
                 return run_session(path, state, loop, commit)
             return 0
         path = path_from(args)
         state = load_state(path)
+        persisted_state = state
         if args.command == "gate" and args.response == "break":
+            emit_persisted_usage_at_exit(state, "break")
             return 0
         change_path = resolve_change_path(path, state["change_path"])
         commit = select_commit_mode(state, path, Path.cwd(), args.commit_off)
@@ -494,6 +501,15 @@ def main(argv: list[str] | None = None) -> int:
         logger.error("STEP error: %s", exc)
         return 2
     except KeyboardInterrupt:
+        if diagnostic_path is not None:
+            try:
+                emit_persisted_usage_at_exit(
+                    load_state(diagnostic_path), "Ctrl+C"
+                )
+            except (OSError, StateError):
+                pass
+        elif persisted_state is not None:
+            emit_persisted_usage_at_exit(persisted_state, "Ctrl+C")
         return 130
     except Exception as exc:
         write_diagnostics(diagnostic_path, event="unhandled_failure", error=exc)
