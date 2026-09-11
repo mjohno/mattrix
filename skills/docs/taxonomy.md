@@ -68,7 +68,7 @@ Verb-shaped production skills that turn working context into a communicated, der
 - Produces reports, validation results, rankings, decisions, revisions, records, logs, or artifacts
 - May return its result in chat or write it to a requested destination
 - Consumes interface-defined artifact nouns and storage contracts when structure matters
-- Examples: `output/task`, `output/goal`, `output/check`, `output/decide`, `output/review`, `output/record`, `output/annotate`, `output/handoff`
+- Examples: `output/outline`, `output/task`, `output/goal`, `output/check`, `output/decide`, `output/review`, `output/record`, `output/annotate`, `output/handoff`
 - **Do NOT use if** the package only defines an artifact schema or canonical form — use an interface skill for nouns; if it primarily coordinates multiple skills or approvals, use map
 
 ### map
@@ -133,7 +133,7 @@ Interfaces define contract data that invocable skills consume:
 
 A user loads communications personas as session context. Their location under `persona/` does not make them model-invocable.
 
-- **persona/comms** — User-load project terms such as `study`, `outline`, `draft`, `modify`, `simplify`, or `lean`, and ASD-STE100 rules for generated chat prose. Keep exact text unchanged when the package excludes it, and follow higher-priority instructions if rules conflict.
+- **persona/comms** — User-load project terms such as `study`, `draft`, `modify`, `simplify`, or `lean`, and ASD-STE100 rules for generated chat prose. Keep exact text unchanged when the package excludes it, and follow higher-priority instructions if rules conflict.
 
 Personas modify how information is evaluated at any pipeline stage:
 

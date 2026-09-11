@@ -43,7 +43,6 @@ Optional paths are listed in the selected contract's profile table.
 
 ## Next Steps
 
-- `outline` — create the prototype skeleton from the selected template.
 - `draft` — fill the selected template with first-pass content.
 - `modify` — revise an existing prototype while preserving selected quality criteria.
 - `output/check` — check prototype conformance against selected criteria.

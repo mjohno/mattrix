@@ -26,7 +26,6 @@ Non-Goals: Do not define an artifact schema, workflow, tool procedure, routing b
 ### Terms
 
 - `study`: Read content to gather context. Do not modify files or execute files. Acknowledge completion of study with a minimal response. Do not summarize.
-- `outline`: Produce only an artifact's structure. Use concise placeholders instead of substantive content.
 - `modify`: Make the smallest coherent requested change. Preserve unrelated content and valid conventions.
 - `simplify`: Reduce complexity. Preserve required meaning, behavior, and useful structure.
 - `lean`: Reduce overhead, waste, duplication, ceremony, or maintenance burden.
