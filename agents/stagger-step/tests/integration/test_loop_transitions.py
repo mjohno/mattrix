@@ -57,6 +57,33 @@ def test_approval_consumes_the_promoted_step_and_clears_recommendation():
     assert approved["recommended"] is None
 
 
+def test_transition_usage_refreshes_persisted_cache_hit_ratio():
+    class UsageHarness:
+        def consume_transition_usage(self):
+            return {
+                "input": 100,
+                "output": 50,
+                "cache_read": 25,
+                "cache_write": 0,
+                "total": 175,
+                "cost": 0.001,
+            }
+
+    state = create_state("Goal")
+
+    updated = StepLoop(UsageHarness())._with_transition_usage(state)
+
+    assert updated["token_usage"] == {
+        "input": 100,
+        "output": 50,
+        "cache_read": 25,
+        "cache_write": 0,
+        "total": 175,
+        "cost": 0.001,
+        "cache_hit_ratio": 0.2,
+    }
+
+
 def test_gate_exposes_next_steps_as_proposals():
     """Keep the human-facing gate aligned with coordinator packets."""
 

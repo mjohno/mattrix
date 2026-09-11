@@ -153,6 +153,7 @@ def test_fresh_state_has_root_change_commit_and_packet_history_fields():
         "cache_write": 0,
         "total": 0,
         "cost": 0.0,
+        "cache_hit_ratio": 0.0,
     }
 
 
@@ -185,6 +186,15 @@ def test_state_rejects_inconsistent_token_usage_total():
     state["token_usage"]["input"] = 1
 
     with pytest.raises(StateError, match="token_usage.total"):
+        validate_state(state)
+
+
+@pytest.mark.parametrize("value", (-0.1, 1.1, True, "0.2"))
+def test_state_rejects_invalid_cache_hit_ratio(value):
+    state = create_state("Goal")
+    state["token_usage"]["cache_hit_ratio"] = value
+
+    with pytest.raises(StateError, match="token_usage.cache_hit_ratio"):
         validate_state(state)
 
 

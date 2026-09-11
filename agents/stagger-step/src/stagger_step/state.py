@@ -133,8 +133,11 @@ def validate_token_usage(value: Any) -> dict[str, Any]:
         "cache_write",
         "total",
         "cost",
+        "cache_hit_ratio",
     }:
-        raise StateError("token_usage must contain token totals and cost")
+        raise StateError(
+            "token_usage must contain token totals, cost, and cache hit ratio"
+        )
     for key in ("input", "output", "cache_read", "cache_write", "total"):
         item = value[key]
         if not isinstance(item, int) or isinstance(item, bool) or item < 0:
@@ -144,6 +147,15 @@ def validate_token_usage(value: Any) -> dict[str, Any]:
     cost = value["cost"]
     if not isinstance(cost, (int, float)) or isinstance(cost, bool) or cost < 0:
         raise StateError("token_usage.cost must be a non-negative number")
+    cache_hit_ratio = value["cache_hit_ratio"]
+    if (
+        not isinstance(cache_hit_ratio, (int, float))
+        or isinstance(cache_hit_ratio, bool)
+        or not 0 <= cache_hit_ratio <= 1
+    ):
+        raise StateError(
+            "token_usage.cache_hit_ratio must be a number from 0 through 1"
+        )
     expected = sum(
         value[key] for key in ("input", "output", "cache_read", "cache_write")
     )
@@ -160,6 +172,7 @@ def default_token_usage() -> dict[str, int | float | str]:
         "cache_write": 0,
         "total": 0,
         "cost": 0.0,
+        "cache_hit_ratio": 0.0,
     }
 
 

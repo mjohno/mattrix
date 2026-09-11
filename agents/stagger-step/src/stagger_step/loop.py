@@ -7,6 +7,7 @@ from typing import Any, cast
 from .harness import Harness
 from .prompts import build_prompt
 from .state import StateError, is_completed, validate_state, validate_task
+from .usage import cache_hit_ratio
 
 
 class TransitionError(StateError):
@@ -81,6 +82,7 @@ class StepLoop:
             token_usage[key]
             for key in ("input", "output", "cache_read", "cache_write")
         )
+        token_usage["cache_hit_ratio"] = cache_hit_ratio(token_usage)
         return state
 
     def bootstrap(self, state: dict[str, Any]) -> dict[str, Any]:

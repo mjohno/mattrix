@@ -121,6 +121,7 @@ def test_gate_persists_bootstrap_usage_and_logs_it_before_review(cli):
         "cache_write": 0,
         "total": 175,
         "cost": 0.001,
+        "cache_hit_ratio": 0.2,
     }
     assert result.stderr.index(
         "pi usage role=coordinator"

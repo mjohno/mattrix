@@ -46,6 +46,7 @@ def test_review_renders_cumulative_usage():
                 "cache_write": 0,
                 "total": 175,
                 "cost": 0.001,
+                "cache_hit_ratio": 0.2,
             },
         }
     )
@@ -72,6 +73,7 @@ def test_review_renders_zero_cache_hit_ratio():
                 "cache_write": 0,
                 "total": 2,
                 "cost": 0.0,
+                "cache_hit_ratio": 0.0,
             },
         }
     )
