@@ -1,6 +1,6 @@
 ---
 name: terra-reader
-description: Terra research and review agent
+description: Terra research and review agent. Use when a handoff requires read-only access for reviews or checks.
 model: openai-codex/gpt-5.6-terra
 thinking: medium
 max_turns: 20

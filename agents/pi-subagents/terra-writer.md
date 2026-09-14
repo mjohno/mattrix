@@ -1,6 +1,6 @@
 ---
 name: terra-writer
-description: Terra implementation agent
+description: Terra implementation agent. Use when a handoff requires write access for implementations.
 model: openai-codex/gpt-5.6-terra
 thinking: medium
 max_turns: 20
