@@ -48,5 +48,5 @@ Use-When: The user explicitly asks to run RFC, rfc, or request-for-comment feedb
 
 ### Example 1
 
-**Prompt:** "Run RFC for the supplied change path on `docs/auth.md` with security and system-architect lenses. Use subagents."
+**Prompt:** "Run RFC for the supplied change path on `docs/auth.md` with security and architect lenses. Use subagents."
 **Outcome:** The protocol creates `RFC-auth.md`, runs clean independent reviews, merges the reports, assesses every finding, validates routed annotations or plans, and closes only resolved findings.

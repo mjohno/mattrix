@@ -24,6 +24,7 @@ Use-When: [triggers for following this protocol]
 
 ## 2. Invariants
 - [approval, ordering, state, or transition rule that cannot be violated]
+- Start with the highest-value low-effort action; require evidence, risk, or explicit requirements before broader or more expensive stages.
 
 ## 3. Outputs
 - [state, prompt output, artifacts, or handoff produced by the protocol]

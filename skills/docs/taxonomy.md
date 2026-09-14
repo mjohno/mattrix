@@ -96,6 +96,8 @@ All persona-category packages load `reference/lifecycle_contract.md` only for ex
 **Lens personas** use `metadata.type: persona` and `metadata.category: persona`.
 - Encode a consistent perspective, tradeoff-awareness, or output style across any pipeline stage
 - Apply priorities, tradeoffs, voice, and evaluation emphasis to another skill's work
+- Translate shared values into domain-independent priorities
+- Define what to inspect first, what to defer, when deeper work is justified, and what must not be traded away
 - Provide perspective or evaluation criteria independent of data flow
 - Compose with any invocable skill
 
@@ -140,6 +142,11 @@ A user loads communications personas as session context. Their location under `p
 Personas modify how information is evaluated at any pipeline stage:
 
 - **output/review + persona/security** — Review an artifact through the security lens.
+- **output/review + persona/architect** — Review boundaries, dependencies, and ownership through the architect lens.
+- **output/review + persona/documenter** — Review clarity, placement, and navigation through the documenter lens.
+- **output/review + persona/performance** — Review measured cost and frequent paths through the performance lens.
+- **output/review + persona/reliability** — Review targets, failure tolerance, and recovery through the reliability lens.
+- **output/review + persona/tester** — Review confidence and test selection through the tester lens.
 - **input/grill-me + persona/adversarial** — Stress-test a design, then re-evaluate residual risks through the adversarial persona.
 - **output/check + persona/adversarial** — Validate whether claims, results, or outcomes survive a hostile reading of the criteria.
 

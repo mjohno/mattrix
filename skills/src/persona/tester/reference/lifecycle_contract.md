@@ -2,7 +2,7 @@
 
 ## Commands
 
-- Recognize only exact commands: `deactivate adversarial` and `reactivate adversarial`.
+- Recognize only exact commands: `deactivate tester` and `reactivate tester`.
 - A command changes only the named persona.
 - Do not infer lifecycle actions from other prose.
 
@@ -17,7 +17,7 @@
 
 ## Responses
 
-- Successful deactivation: `Deactivated: adversarial.`
-- Successful reactivation: `Reactivated: adversarial.`
+- Successful deactivation: `Deactivated: tester.`
+- Successful reactivation: `Reactivated: tester.`
 - Unknown personas, inactive deactivation targets, and active reactivation targets return a short status message.
 - Lifecycle commands remain available when `comms` is inactive.

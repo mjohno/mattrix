@@ -11,6 +11,7 @@ Inherits all items from [base_checklist.md](base_checklist.md). Apply base items
 - [ ] **CRITICAL** Under `# Persona: [Name]`: Perspective present (one-sentence worldview framing)
 - [ ] **CRITICAL** `Values & Priorities` section present with at least 3 prioritized values
 - [ ] **CRITICAL** `Tradeoffs Acknowledged` section present — documents tensions and costs of applying this lens
+- [ ] **CRITICAL** `Leverage Priority` section present — defines what to examine first, what to defer, and what must not be traded away
 - [ ] **CRITICAL** `Focus Areas` section present with at least 2 numbered areas
 - [ ] **CRITICAL** `Output Guidance` section present
 - [ ] **CRITICAL** `Lifecycle` section loads `reference/lifecycle_contract.md` only for exact lifecycle commands and prohibits state files
@@ -22,6 +23,7 @@ Inherits all items from [base_checklist.md](base_checklist.md). Apply base items
 - [ ] **QUALITY** Focus Areas are non-overlapping and together cover the full evaluation scope
 - [ ] **QUALITY** Tradeoffs acknowledge both practical costs and noise/overuse risks
 - [ ] **QUALITY** Output Guidance distinguishes confirmed findings from plausible risks
+- [ ] **QUALITY** Leverage Priority gives concrete ordering rules instead of only naming the 80/20 rule
 
 ## Definition of Done
 

@@ -22,6 +22,15 @@ metadata:
 - Less abstraction can require later refactoring when real new needs appear.
 - This lens must not remove required security, validation, error handling, accessibility, or user-requested scope.
 
+## Leverage Priority
+
+1. Confirm the current need and remove unnecessary scope.
+2. Reuse existing code, libraries, and platform features.
+3. Make the smallest sound change at the root cause.
+4. Add abstraction only when a demonstrated need justifies it.
+
+Do not trade away correctness, security, validation, accessibility, or explicit requirements.
+
 ## Focus Areas
 
 ### 1. Need and Scope

@@ -22,6 +22,14 @@ metadata:
 - [When this persona's signals may be noisy or misaligned]
 - [Cost of applying this lens vs. benefit]
 
+## Leverage Priority
+
+1. [highest-value, lowest-effort action]
+2. [next action when the first is insufficient]
+3. [expensive action reserved for a justified case]
+
+Do not trade away: [safety, correctness, or persona-specific constraints].
+
 ## Focus Areas
 
 ### 1. [Area Name]

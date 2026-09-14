@@ -27,6 +27,7 @@ Inherits all items from [base_checklist.md](base_checklist.md). Apply base items
 - [ ] **QUALITY** Human decision gates and agent action boundaries are unambiguous
 - [ ] **QUALITY** Invocation mode is explicit: use `disable-model-invocation: true` only when direct model invocation is prohibited
 - [ ] **QUALITY** Escape hatches, if any, are clearly secondary to the primary protocol path
+- [ ] **QUALITY** The primary path starts with the highest-value low-effort action and gates broader or more expensive stages on evidence, risk, or requirements
 
 ## Definition of Done
 

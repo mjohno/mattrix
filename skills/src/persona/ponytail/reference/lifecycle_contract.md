@@ -9,7 +9,7 @@
 ## Session State
 
 - Session context tracks whether each persona is active.
-- Deactivation stops application of the named persona's perspective, priorities, focus areas, tradeoffs, and output guidance.
+- Deactivation stops application of the named persona's perspective, priorities, leverage priority, focus areas, tradeoffs, and output guidance.
 - Reactivation restores the named persona.
 - State persists until reactivation or a new chat.
 - A new chat resets persona activation state.

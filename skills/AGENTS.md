@@ -28,6 +28,7 @@ A beautifully simple skill has these properties:
 4. **Minimal default output** — essentials only; detail is opt-in
 5. **Graceful handoff** — suggests concrete next skills when it can't solve something
 6. **Structure matches purpose** — flows logically and reads like a contract
+7. **Leverage first** — starts with the highest expected value for the lowest justified effort; escalates only when evidence, risk, or requirements justify it
 
 See [skill_checklist.md](docs/skill_checklist.md) (data-flow) or [persona_checklist.md](docs/persona_checklist.md) (persona) for evaluation criteria.
 

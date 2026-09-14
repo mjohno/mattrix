@@ -22,6 +22,7 @@ Use-When: [triggers for invoking this skill]
 
 ## 2. Processes
 - [actions, steps, or workflow behavior this skill performs]
+- Order actions by expected value and effort. State the trigger for broad or expensive actions.
 
 ## 3. Outputs
 - [information this skill creates, returns, writes, or updates]

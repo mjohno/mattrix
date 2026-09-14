@@ -19,6 +19,7 @@ Shared compliance items for all skills — personas and data-flow skills alike. 
 - [ ] **QUALITY** References one level deep (no nested external links)
 - [ ] **QUALITY** **Single responsibility** — Does the skill describe one clear goal or perspective with at least one explicit non-goal or acknowledged tradeoff?
 - [ ] **QUALITY** **Human-aligned design** — Would a person naturally ask about this task? Does the prompt map directly to invoking it?
+- [ ] **QUALITY** **Leverage first** — When the package selects, recommends, or performs work, does it start with the highest expected value for the lowest justified effort and preserve safety, correctness, and explicit requirements?
 
 ## Definition of Done
 

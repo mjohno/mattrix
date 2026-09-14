@@ -79,7 +79,10 @@ Create or update a skill package that is structurally valid and beautifully simp
 
 - Develop self-contained, idempotent behavior and scripts where needed.
 - Consume interface-defined contracts when structure, schema, or quality criteria matter.
-- **Quality reminder**: Remember the six simplicity principles — single responsibility, clear scope, graceful handoff, etc.
+- Start with the smallest action likely to produce the required result.
+- Escalate to broad or expensive work only when evidence, risk, or acceptance criteria justify it.
+- Never use low effort as a reason to weaken safety, correctness, or explicit requirements.
+- **Quality reminder**: Apply the simplicity principles — single responsibility, clear scope, graceful handoff, leverage first, etc.
 
 #### Protocol packages
 
@@ -88,12 +91,14 @@ Create or update a skill package that is structurally valid and beautifully simp
 - Keep skill prose compact; if an authoritative interface exists, make the skill an adapter to that interface.
 - CLIs, APIs, and scripts are optional for protocol packages, but when present they should expose the primary workflow and enforce state rules.
 - Do not require agents to mutate protocol state outside the authoritative interface.
+- Start with the highest-value low-effort stage and gate broader or more expensive stages on evidence, risk, or explicit requirements.
 
 #### Persona skills
 
 - Persona skills are documentation — no `scripts/` or persistent state files.
 - Add `reference/lifecycle_contract.md` for session-only persona deactivation and reactivation rules.
-- Focus on writing a sharp Perspective statement, distinct Values & Priorities, honest Tradeoffs, and non-overlapping Focus Areas.
+- Focus on writing a sharp Perspective statement, distinct Values & Priorities, honest Tradeoffs, a concrete Leverage Priority, and non-overlapping Focus Areas.
+- Define what the lens examines first, what it defers, when deeper work is justified, and what it must not trade away.
 - **Quality reminder**: A persona is a *lens*, not a checklist. It should guide how the evaluator thinks, not produce a rigid rubric to fill in.
 
 #### Anti-patterns to Avoid
