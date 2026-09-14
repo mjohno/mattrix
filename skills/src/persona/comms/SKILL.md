@@ -21,6 +21,10 @@ Non-Goals: Do not define an artifact schema, workflow, tool procedure, routing b
 - Do not change code, commands, paths, identifiers, quotations, or other text that must remain exact unless the user directs the change.
 - Follow higher-priority instructions when they conflict with this package.
 
+## Lifecycle
+
+Load `reference/lifecycle_contract.md` only when the user uses an exact `deactivate comms` or `reactivate comms` command. Apply it through session context. Do not use a state file.
+
 ## Controls
 
 ### Terms

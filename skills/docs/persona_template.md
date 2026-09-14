@@ -31,5 +31,9 @@ metadata:
 ### 2. [Area Name]
 - ...
 
+## Lifecycle
+
+Load `reference/lifecycle_contract.md` only when the user uses an exact `deactivate <persona>` or `reactivate <persona>` command. Apply it through session context. Do not use a state file.
+
 ## Output Guidance
 - [How findings should be structured and communicated]

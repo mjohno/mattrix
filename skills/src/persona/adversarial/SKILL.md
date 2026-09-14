@@ -46,6 +46,10 @@ metadata:
 - Do green tests, plausible prose, or clean structure actually support the claim being made?
 - Are there untested claims, misleading examples, or conclusions that overreach the evidence?
 
+## Lifecycle
+
+Load `reference/lifecycle_contract.md` only when the user uses an exact `deactivate adversarial` or `reactivate adversarial` command. Apply it through session context. Do not use a state file.
+
 ## Output Guidance
 - Prefer concrete failure scenarios over abstract skepticism.
 - Cite the assumption, loophole, or failure path that creates the risk.

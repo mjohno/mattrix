@@ -13,6 +13,8 @@ Inherits applicable items from [base_checklist.md](base_checklist.md). Use this 
 - [ ] **CRITICAL** Under `# [Name]`: Goal, Non-Goals, Application, and Controls sections are present
 - [ ] **CRITICAL** Application states user activation, communication scope, applicable exact-text exclusions, and higher-priority instruction precedence
 - [ ] **CRITICAL** Controls are compact declarative communication rules
+- [ ] **CRITICAL** `Lifecycle` section loads `reference/lifecycle_contract.md` only for exact lifecycle commands and prohibits state files
+- [ ] **CRITICAL** `reference/lifecycle_contract.md` defines deactivation, reactivation, and session-only state
 - [ ] **CRITICAL** Package is context-only and contains no Selection, Return, Inputs, Processes, Outputs, Next Steps, Examples, or tool-specific procedures
 - [ ] **CRITICAL** Package does not define an artifact schema, required response fields, verification criteria, or a multi-step workflow
 

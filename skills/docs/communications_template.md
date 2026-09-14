@@ -22,6 +22,10 @@ Non-Goals: [communication behavior this package does not control]
 - State any exclusions for code, commands, paths, identifiers, quotations, or text that must remain exact.
 - Follow higher-priority instructions when they conflict with this package.
 
+## Lifecycle
+
+Load `reference/lifecycle_contract.md` only when the user uses an exact `deactivate <persona>` or `reactivate <persona>` command. Apply it through session context. Do not use a state file.
+
 ## Controls
 
 - [one concise declarative control]

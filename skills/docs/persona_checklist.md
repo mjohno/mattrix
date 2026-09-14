@@ -13,6 +13,8 @@ Inherits all items from [base_checklist.md](base_checklist.md). Apply base items
 - [ ] **CRITICAL** `Tradeoffs Acknowledged` section present — documents tensions and costs of applying this lens
 - [ ] **CRITICAL** `Focus Areas` section present with at least 2 numbered areas
 - [ ] **CRITICAL** `Output Guidance` section present
+- [ ] **CRITICAL** `Lifecycle` section loads `reference/lifecycle_contract.md` only for exact lifecycle commands and prohibits state files
+- [ ] **CRITICAL** `reference/lifecycle_contract.md` defines deactivation, reactivation, and session-only state
 
 ## Persona-Specific QUALITY
 

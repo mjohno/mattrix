@@ -73,6 +73,7 @@ Create or update a skill package that is structurally valid and beautifully simp
 - Use package-specific sections such as `Terms` or `Language Rules` when they improve clarity.
 - Do not include terms that match existing skill names or meanings already defined by skill descriptions. Keep domain-local terminology in the relevant knowledge-base glossary.
 - Avoid Selection, Return, Inputs, Processes, Outputs, Next Steps, Examples, artifact schemas, verification, and tool-specific procedures.
+- Add `reference/lifecycle_contract.md` for session-only persona deactivation and reactivation rules.
 
 #### Invocable skills
 
@@ -90,7 +91,8 @@ Create or update a skill package that is structurally valid and beautifully simp
 
 #### Persona skills
 
-- Persona skills are pure documentation — no `scripts/`, `references/`, or `assets/` needed.
+- Persona skills are documentation — no `scripts/` or persistent state files.
+- Add `reference/lifecycle_contract.md` for session-only persona deactivation and reactivation rules.
 - Focus on writing a sharp Perspective statement, distinct Values & Priorities, honest Tradeoffs, and non-overlapping Focus Areas.
 - **Quality reminder**: A persona is a *lens*, not a checklist. It should guide how the evaluator thinks, not produce a rigid rubric to fill in.
 

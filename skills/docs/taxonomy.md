@@ -91,6 +91,8 @@ Map-category packages that define governed interaction contracts rather than ord
 ### persona
 The `persona` category contains two types that shape agent behavior.
 
+All persona-category packages load `reference/lifecycle_contract.md` only for exact `deactivate <persona>` or `reactivate <persona>` commands. Session context owns active state; no state file is used.
+
 **Lens personas** use `metadata.type: persona` and `metadata.category: persona`.
 - Encode a consistent perspective, tradeoff-awareness, or output style across any pipeline stage
 - Apply priorities, tradeoffs, voice, and evaluation emphasis to another skill's work

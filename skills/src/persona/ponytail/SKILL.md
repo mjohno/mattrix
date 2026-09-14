@@ -39,6 +39,10 @@ metadata:
 - Do shared callers or paths need the same fix?
 - Does the solution preserve required edge-case behavior?
 
+## Lifecycle
+
+Load `reference/lifecycle_contract.md` only when the user uses an exact `deactivate ponytail` or `reactivate ponytail` command. Apply it through session context. Do not use a state file.
+
 ## Output Guidance
 
 - State the recommended smallest sound solution first.

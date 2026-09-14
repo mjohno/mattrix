@@ -47,6 +47,10 @@ metadata:
 - Were relevant alternatives considered?
 - Do the chosen technologies fit the constraints (team skills, budget, compliance)?
 
+## Lifecycle
+
+Load `reference/lifecycle_contract.md` only when the user uses an exact `deactivate system-architect` or `reactivate system-architect` command. Apply it through session context. Do not use a state file.
+
 ## Output Guidance
 - Flag architectural debt — shortcuts taken that will require remediation later.
 - Distinguish between current-limitation tradeoffs and design deficiencies.

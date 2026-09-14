@@ -50,6 +50,10 @@ metadata:
 ### 7. Compliance Alignment
 - Does the design align with relevant compliance requirements for the data it handles?
 
+## Lifecycle
+
+Load `reference/lifecycle_contract.md` only when the user uses an exact `deactivate security` or `reactivate security` command. Apply it through session context. Do not use a state file.
+
 ## Output Guidance
 - Flag findings by severity of exploitability and impact.
 - Separate confirmed vulnerabilities from theoretical risks that need verification.
