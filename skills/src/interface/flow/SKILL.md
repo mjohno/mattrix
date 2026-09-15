@@ -1,6 +1,6 @@
 ---
 name: flow
-description: Use when work needs a simple state graph and plain-language activity descriptions.
+description: Use when work needs a process-flow diagram with typed nodes, transition criteria, and plain-language descriptions.
 metadata:
   type: interface
   category: interface
@@ -8,11 +8,11 @@ metadata:
 
 # flow
 
-Goal: Define a compact workflow artifact with activity nodes and allowed transitions.
+Goal: Define a compact process-flow artifact with typed nodes, allowed transitions, and testable transition criteria.
 
 Non-Goals: Do not select tasks or workers, execute work, store state, or enforce transitions.
 
-Use-When: Use when a user needs to describe, draft, review, or follow a visible workflow with stages, return paths, and completion.
+Use-When: Use when a user needs to describe, draft, review, or follow a visible process flow with activities, decisions, rework paths, and completion criteria.
 
 ## Selection
 
