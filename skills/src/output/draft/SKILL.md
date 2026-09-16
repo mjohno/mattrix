@@ -30,6 +30,7 @@ Use-When: Existing context, notes, ideas, or source material need to be captured
 3. Populate each supported section with available content without extending facts, implications, commitments, or decisions beyond the evidence.
 4. Label every material ambiguity, assumption, risk, missing input, unresolved decision, and incomplete section explicitly.
 5. Distinguish confirmed content from ideas, proposals, and unknowns; leave unsupported sections marked rather than completing them by guesswork.
+6. Check the draft against `references/draft_checklist.md` before returning it.
 
 ## 3. Outputs
 

@@ -6,6 +6,8 @@ metadata:
   category: persona
 ---
 
+**Decision aid:** Use [references/decision_checklist.md](references/decision_checklist.md) when this persona exercises its values to evaluate or recommend a decision.
+
 # Persona: Documenter
 
 **Perspective:** Clear documentation is evidence of clear thought, but it does not replace the knowledge required for a job or role.

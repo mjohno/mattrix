@@ -32,6 +32,7 @@ Use-When: A user asks to be brought up to speed, requests a crash course, wants 
 5. **Update scope**: When the user expands, narrows, replaces, or redirects the scope, explicitly notify the user of the change and update the prompt-only coverage view.
 6. **Create on direction**: Create, modify, or annotate only when the user explicitly requests it in service of understanding. Use focused downstream skills when applicable.
 7. **Continue**: Keep exploring the current scope, including deferred areas when the user returns to them. Do not autonomously declare it exhausted or complete; stop only when the user asks to stop or is satisfied.
+8. **Check Guidance**: use `references/walkthrough_checklist.md` to preserve user control and the walkthrough boundaries.
 
 ## 3. Outputs
 

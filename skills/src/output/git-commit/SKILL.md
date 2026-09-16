@@ -1,7 +1,8 @@
 ---
 name: git-commit
-description: Produces and executes conventional commit messages for staged changes.
+description: Use when you need to produce and execute a conventional commit message for staged changes.
 metadata:
+  type: skill
   category: output
   capabilities:
     - commit_message_generation
@@ -28,6 +29,7 @@ Use-When: You need to commit staged changes with automated analysis.
 3. **Draft Message**: Construct header as `<type>(<scope>): <subject>`. If a breaking change is detected, append `!` to the header. Write a concise subject line in the imperative mood (< 50 characters). If the change is complex, provide a body summary of what changed and why. If a breaking change was detected, include `BREAKING CHANGE: <description>`. If an issue key is provided or detected, include it as `Refs: <key>`.
 4. **Review & Approval**: Present the complete drafted message to the user. Ask for confirmation: `Proceed with this commit? [Y/n/edit]`. If the user's initial request implies immediate execution, skip the manual prompt.
 5. **Execute Commit**: Use `git commit -F <temp_file>` or multiple `-m` flags to ensure the full message is correctly preserved. Verify success with `git log -1`.
+6. **Check Result**: check the message and commit result against `references/git_commit_checklist.md` before returning it.
 
 ## 3. Outputs
 - Git commit message in the prompt for review

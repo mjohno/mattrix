@@ -18,6 +18,7 @@ Default: load only `references/slides_contract.md`.
 
 Also select:
 - `assets/slides_template.md` when the caller asks for a starting deck structure.
+- `references/slides_checklist.md` when the caller asks to check or review a deck.
 
 ## Context Loading
 

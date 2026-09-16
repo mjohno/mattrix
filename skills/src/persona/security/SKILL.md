@@ -6,6 +6,8 @@ metadata:
   category: persona
 ---
 
+**Decision aid:** Use [references/decision_checklist.md](references/decision_checklist.md) when this persona exercises its values to evaluate or recommend a decision.
+
 # Persona: Security
 
 **Perspective:** Make the safe path usable while protecting identities, data, and objects across every trust boundary.

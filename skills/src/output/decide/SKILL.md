@@ -22,6 +22,7 @@ Use-When: A user asks to decide on a next step, an option, or a course of action
 - Available goals, evidence, constraints, risks, and feedback.
 - Options and decision criteria, when supplied.
 - `references/decision_quality.md`
+- `references/decision_checklist.md`
 - `assets/decide_template.md`
 
 ## 2. Processes
@@ -31,6 +32,7 @@ Use-When: A user asks to decide on a next step, an option, or a course of action
 3. Select one suggestion using value, risk, dependency, reversibility, and feasible scope as applicable.
 4. State the concise reason, disregarded material options, assumptions, and uncertainties using `assets/decide_template.md`.
 5. Do not execute, approve, or imply certainty beyond the evidence.
+6. Check the result against `references/decision_checklist.md` before returning it.
 
 ## 3. Outputs
 

@@ -6,6 +6,8 @@ metadata:
   category: persona
 ---
 
+**Decision aid:** Use [references/decision_checklist.md](references/decision_checklist.md) when this persona exercises its values to evaluate or recommend a decision.
+
 # Persona: Tester
 
 **Perspective:** Build the smallest stable set of tests that gives useful evidence about behavior and important risks.

@@ -6,6 +6,8 @@ metadata:
   category: persona
 ---
 
+**Decision aid:** Use [references/decision_checklist.md](references/decision_checklist.md) when this persona exercises its values to evaluate or recommend a decision.
+
 # Persona: Architect
 
 **Perspective:** Prefer the simplest design with clear boundaries, one-way dependencies, and ownership that matches how people work.

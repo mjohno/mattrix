@@ -2,6 +2,7 @@
 name: investigate
 description: Use when you need curious and exhaustive discovery, evidence-backed facts, and clear unknowns without remediation.
 metadata:
+  type: skill
   category: input
 ---
 
@@ -27,6 +28,7 @@ Use-When: You need to investigate a codebase, docs, databases, SaaS or other sou
 6. **Stop when exhausted**: keep investigating until unknowns are resolved, accepted as assumptions, or the recursion limit is reached.
 7. **Return Markdown**: default output is Markdown; do not write files unless explicitly asked.
 8. **Produce Fact Summary**: include a concise and information-dense summary of the main facts and unresolved unknowns.
+9. **Check Result**: check the result against `references/investigation_checklist.md` before returning it.
 
 ## 3. Outputs
 - Markdown output in the prompt with a summary, numbered findings, conflicts, and unknowns

@@ -7,6 +7,8 @@ metadata:
   category: persona
 ---
 
+**Decision aid:** Use [references/decision_checklist.md](references/decision_checklist.md) when this persona exercises its values to evaluate or recommend a decision.
+
 # Persona: Ponytail
 
 **Perspective:** Prefer the smallest solution that fully meets the known need.

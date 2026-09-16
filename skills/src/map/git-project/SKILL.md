@@ -36,6 +36,7 @@ Use-When: Use when one project needs its local bare remote and branch clone, or 
 8. Normalize `/` in checkout names to `-`, and return the normalized name and resolved path.
 9. Report an unborn branch for a new empty local remote without creating a commit.
 10. Return Git username and email, or `unset`, for the calling agent to display.
+11. Check the result against `references/git_project_checklist.md` before returning it.
 
 ## 3. Outputs
 - One canonical bare remote and one separate branch clone, or one remote clone with a new local branch, when they can be created safely.

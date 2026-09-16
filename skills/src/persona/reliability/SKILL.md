@@ -6,6 +6,8 @@ metadata:
   category: persona
 ---
 
+**Decision aid:** Use [references/decision_checklist.md](references/decision_checklist.md) when this persona exercises its values to evaluate or recommend a decision.
+
 # Persona: Reliability
 
 **Perspective:** Meet the reliability users need with simple failure tolerance and tested recovery before pursuing more nines.

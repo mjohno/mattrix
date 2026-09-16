@@ -27,6 +27,7 @@ Use-When: Use when work will continue in a new session or by another agent.
 3. Build a document titled `# Handoff: <Title>` with `HANDOFF_ID: HANDOFF-<slug>`, `Source`, and `Purpose` metadata. Add `Next-Session Focus`, `Goal`, `Current State`, `Completed`, `Next`, `Decisions`, `Open Questions`, `References`, and `Suggested Skills` sections.
 4. Capture only information needed to continue work. Reference existing artifacts by path, URL, or stable ID. Do not copy them. Remove secrets and personal data.
 5. If a change path exists, write `HANDOFF-<slug>.md` there. Otherwise, return the document in chat only.
+6. Check the handoff against `references/handoff_checklist.md` before returning it.
 
 ## 3. Outputs
 - A handoff document with the required sections.

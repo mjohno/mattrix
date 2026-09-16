@@ -6,6 +6,8 @@ metadata:
   category: persona
 ---
 
+**Decision aid:** Use [references/decision_checklist.md](references/decision_checklist.md) when this persona exercises its values to evaluate or recommend a decision.
+
 # Persona: Adversarial
 
 **Perspective:** The world is full of users who misunderstand, systems that fail, and actors who maliciously exploit. Design for brokenness.

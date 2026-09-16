@@ -25,6 +25,7 @@ Use-When: You need to add TODOs, FIXes, NOTEs, CHECKs, REVIEWs, or DONE marks di
 2. **Update or Remove Annotation**: Locate the exact annotation by ID, text, or nearby context. Change only the targeted annotation block. Preserve unrelated code and prose.
 3. **Extract Annotation**: Read the annotation and its message. For TODO/FIX/CHECK/REVIEW kinds, the annotation itself is actionable context that can be used as input to a task statement. A FIX identifies a targeted corrective change. For NOTE/DONE kinds, the annotation is informational or completion-marked.
 4. **Normalize Annotation**: Keep the message concise and implementation-oriented. Use a stable ID that can be referenced later. Preserve the kind when the purpose stays the same; change the kind when the purpose changes, but keep the ID stable. Include refs when the annotation links to source material.
+5. **Check Result**: check the result against `references/annotation_checklist.md` before returning it.
 
 ## 3. Outputs
 - A structured annotation block using the target file's native comment syntax

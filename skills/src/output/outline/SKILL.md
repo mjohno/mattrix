@@ -29,6 +29,7 @@ Use-When: Use when a user asks to outline a project, code change, test, document
 3. Use concise placeholders where content is not yet known.
 4. Add an ASCII or Mermaid diagram only when it improves review.
 5. Do not add finished content or implementation unless requested.
+6. Check the outline against `references/outline_checklist.md` before returning it.
 
 ### Context Formats
 

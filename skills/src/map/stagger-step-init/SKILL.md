@@ -37,6 +37,7 @@ Use-When: Use when a user wants to start a Stagger Step workflow for a goal.
 8. Validate packet history and commit-mode requirements.
 9. Run `init` from the checked-out project root. Pass each supplied reference as `--reference <text>` and each supplied lesson as `--lesson <text>`. If the STEP file is in the change directory, pass `--change .`; otherwise pass the resolved change directory.
 10. Return the rendered initial owner gate. Do not approve it or start a session.
+11. Check the result against `references/stagger_step_init_checklist.md` before returning it.
 
 ## 3. Outputs
 
