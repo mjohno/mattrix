@@ -19,6 +19,7 @@ Use-When: Use when you need to validate whether an object, solution, result, out
 ## 1. Inputs
 - Object, solution, result or outcome to evaluate (e.g. drafted files, modified files, execution results, review findings, test results)
 - Requirements, acceptance criteria, target outcomes, or source evidence to evaluate against (e.g. project documentation, plan done criteria, cited files, URLs, tool output, or user-provided sources)
+- `assets/check_template.md`
 
 ## 2. Processes
 1. Extract requirements, acceptance criteria or target outcomes from provided context or files
@@ -27,7 +28,7 @@ Use-When: Use when you need to validate whether an object, solution, result, out
 4. Check if delivery is complete
 5. When checking factual claims or sourced outputs, compare each claim against the provided sources and classify provenance as `supported`, `unsupported`, `contradicted`, or `insufficient evidence`.
 6. Cite source references for provenance-sensitive checks when sources are provided or required by the criteria.
-7. Assign a short, numbered `CHK-##` reference to each result, and capture any partial successes or failures with confidence (high, medium, low) and impact (high, medium, low) for each requirement
+7. Use `assets/check_template.md`; assign a short, numbered `CHK-##` reference to each result, and capture any partial successes or failures with confidence (high, medium, low) and impact (high, medium, low) for each requirement
 8. Capture if there are blockers or dependencies which indicate an error in the requirements, acceptance criteria or target outcomes themselves
 
 ## 3. Outputs

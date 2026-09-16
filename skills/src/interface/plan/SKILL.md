@@ -17,6 +17,7 @@ Use-When: Another skill needs the `plan` interface contract before drafting, mod
 Default: load only the compact plan contract.
 
 Also select:
+- `plan_template.md` when the caller asks to outline or draft a plan.
 - `plan_checklist.md` when the caller asks to check plan conformance or review plan quality.
 
 If caller intent is unclear, assume default contract only and state the assumption.
@@ -32,10 +33,12 @@ Default path:
 - `references/plan_contract.md`
 
 Optional paths:
+- `assets/plan_template.md`
 - `references/plan_checklist.md`
 
 ## Next Steps
 
+- `outline` — create a plan skeleton using `plan_template.md`.
 - `draft` — create a first-pass plan from source context.
 - `modify` — revise an existing plan while preserving stable IDs.
 - `output/check` — check plan conformance and quality with `plan_checklist.md`.

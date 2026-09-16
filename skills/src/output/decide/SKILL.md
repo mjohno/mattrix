@@ -22,13 +22,14 @@ Use-When: A user asks to decide on a next step, an option, or a course of action
 - Available goals, evidence, constraints, risks, and feedback.
 - Options and decision criteria, when supplied.
 - `references/decision_quality.md`
+- `assets/decide_template.md`
 
 ## 2. Processes
 
 1. Identify the requested decision and relevant supplied context.
 2. Identify meaningful options from supplied context. State when options or criteria are missing.
 3. Select one suggestion using value, risk, dependency, reversibility, and feasible scope as applicable.
-4. State the concise reason, disregarded material options, assumptions, and uncertainties.
+4. State the concise reason, disregarded material options, assumptions, and uncertainties using `assets/decide_template.md`.
 5. Do not execute, approve, or imply certainty beyond the evidence.
 
 ## 3. Outputs

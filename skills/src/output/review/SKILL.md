@@ -28,12 +28,12 @@ Use-When: You need to review an artifact against its criteria.
    - **Clarity**: The language is precise and the reader can understand the intent without guessing.
 3. Compare the target against the combined criteria. Identify matches, deviations, and omissions.
 4. Categorize findings by severity (P1–P5 per `assets/severity.md`).
-5. Produce a report using `assets/template_report.md`.
+5. Produce a report using `assets/review_template.md`.
 
 Include an applicable specification as criteria when one exists, whether or not the user named it. Do not create requirements that are not present in the selected criteria sources.
 
 ## 3. Outputs
-- A structured review report using `assets/template_report.md`.
+- A structured review report using `assets/review_template.md`.
 - The target artifact and review scope.
 - The selected criteria sources.
 - Findings grouped by severity, with a concrete recommended change for each finding.

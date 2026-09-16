@@ -19,23 +19,25 @@ Use-When: Use when a user needs to describe, draft, review, or follow a visible 
 Default: load `references/flow_contract.md`.
 
 Also select:
+- `assets/flow_template.md` when the user asks to outline or draft a flow.
 - `references/flow_quality.md` when the user asks to check, review, or improve a flow.
 
 ## Context Loading
 
-Load each selected package-local reference into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
+Load each selected package-local reference or asset into context. Do not paste, quote, summarize, or otherwise reproduce loaded content in chat.
 
 When invoked alone, respond only with `Loaded: <relative path(s)>.` When composed with another task, continue that task without an interface-only response.
 
 Default path:
 - `references/flow_contract.md`
 
-Optional path:
+Optional paths:
+- `assets/flow_template.md`
 - `references/flow_quality.md`
 
 ## Next Steps
 
-- `outline` — create a flow structure.
+- `outline` — create a flow structure using `flow_template.md`.
 - `draft` — create a first-pass flow.
 - `modify` — change a flow.
 - `check` — validate a flow.

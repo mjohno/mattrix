@@ -12,10 +12,11 @@ Create or update one MKF concept safely and validate the shared contract program
 4. Ask before overwriting, resolving a collision, or making a substantial replacement.
 5. Draft or update Markdown while preserving unknown frontmatter keys and existing body content.
 6. Add `sources`, trust, lifecycle, or computation metadata only for an explicit advanced-OKF request.
-7. Run `scripts/validate_frontmatter.py` on changed concept files.
-8. Write only valid concepts.
-9. Run `scripts/rebuild_indexes.py --write` only when the user explicitly requests index rebuilding.
-10. Report changed concept paths and any explicitly requested index results.
+7. When using a source-skill template, add the matching type frontmatter before its body.
+8. Run `scripts/validate_frontmatter.py` on changed concept files.
+9. Write only valid concepts.
+10. Run `scripts/rebuild_indexes.py --write` only when the user explicitly requests index rebuilding.
+11. Report changed concept paths and any explicitly requested index results.
 
 ## Scripts
 
@@ -35,13 +36,36 @@ Without `--write`, index rebuilding is a dry run.
 
 ## Templates
 
-Record owns producer templates:
+Record owns producer templates for concepts without a source-skill template:
 
 - `assets/undefined_concept_template.md`
 - `assets/checklist_concept_template.md`
 - `assets/llm_template_concept_template.md`
 - `assets/adr_concept_template.md`
 - `assets/adr_register_concept_template.md`
+
+For the following concept types, load the body template from the source skill. The source templates do not include frontmatter. Record adds this frontmatter before the source-template body:
+
+```yaml
+---
+type: <type from the table>
+# title: <Optional Concept Title>
+# description: <Optional one-line description>
+# tags: []
+---
+```
+
+| Type | Source template |
+| --- | --- |
+| `retro` | `/skill:retro/assets/retro_template.md` |
+| `rubric` | `/skill:rubric/assets/rubric_template.md` |
+| `slides` | `/skill:slides/assets/slides_template.md` |
+| `spec` | `/skill:spec/assets/spec_template.md` |
+| `values` | `/skill:values/assets/values_template.md` |
+| `decide` | `/skill:decide/assets/decide_template.md` |
+| `check` | `/skill:check/assets/check_template.md` |
+| `review` | `/skill:review/assets/review_template.md` |
+| `flow` | `/skill:flow/assets/flow_template.md` |
 
 ## Safety Rules
 
