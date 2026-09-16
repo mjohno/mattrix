@@ -1,6 +1,6 @@
 ---
 name: reflect
-description: Use when a session needs a recent retro and referenceable learning-update proposals for agent instructions, project documentation, or durable knowledge.
+description: Route current-session learning from an existing retro into approved, scoped short-term and long-term knowledge updates.
 metadata:
   type: skill
   category: map
@@ -8,47 +8,68 @@ metadata:
 
 # reflect
 
-Goal: Turn current-session learning into a retro and routed improvement proposals.
-Non-Goals: Do not update files without user approval, implement changes, or update skill packages.
-Use-When: A user invokes `/reflect` to capture session learning, reuse or create a recent retro, and identify candidate documentation or knowledge updates.
+Goal: Route current-session learning from an existing retro into approved, scoped short-term and long-term knowledge updates.
+Non-Goals: Do not create a retro, invent lessons, write unapproved updates, or update skill packages.
+Use-When: A user invokes `/reflect` after a current-session retro exists and wants reviewable learning proposals or approved persistence.
 
 ## 0. Prerequisites
 
-- Current-session context, results, feedback, or actions.
-- The `retro` interface.
-- User-approved targets before any downstream skill updates files.
+- A current-session retro with Session, Goal, Evidence, Wins, Issues, and Actions.
+- User-approved targets before persistence.
+- An unambiguous MKF bundle path before long-term-memory persistence.
 
 ## 1. Inputs
 
-- Supplied session context, results, feedback, and existing retro content.
-- Optional target paths, documentation scope, or MKF bundle path.
-- `references/reflect_routing.md`
+- Current-session retro.
+- Optional target paths or MKF bundle path.
+- Optional approved `RFL-###` references to apply.
+- `references/reflect_routing.md`.
 
 ## 2. Processes
 
-1. Ignore tool-status messages and skill-load blocks. Check the three most recent meaningful conversation turns for a current-session retro that meets the `retro` contract.
-2. If no recent retro exists, use `retro` with `draft` to create one in the prompt. Use its Actions section; do not create a separate task list.
-3. Classify each supported learning item as an `AGENTS.md`, `docs/`, or MKF candidate. Assign each item a stable `RFL-###` reference. Mark unsupported targets and unknown paths explicitly.
-4. Suggest target paths and downstream skills: `outline` for structure and paths, `draft` for new content, `modify` or `fix` for approved changes, and `record` for an approved MKF target.
-5. Incorporate user feedback into the proposals. Keep each `RFL-###` reference stable. Do not update files until the user approves the targets and changes.
+1. Read the supplied current-session retro. Do not create, revise, or search for a retro.
+2. Derive learning items only from supported retro evidence and actions.
+3. Assign each learning item a stable `RFL-###` reference.
+4. For each item, propose in this order:
+   1. A scoped `AGENTS.md` update when it changes short-term agent behavior.
+   2. An MKF lookup query when it may be durable reusable knowledge.
+   3. An MKF record target when lookup confirms no duplicate or identifies a concept to update.
+5. Set each item's promotion status to `not_eligible`, `candidate`, `duplicate`, `promote`, or `defer`.
+6. In proposal mode, return proposals only. Do not update files.
+7. In explicit apply mode, apply only user-approved `RFL-###` items:
+   1. Use `agentsmd` to update the nearest applicable `AGENTS.md`, when proposed.
+   2. Use `lookup` before every MKF write.
+   3. Use `record` to create or update the selected MKF concept.
+   4. Explicitly request index rebuilding through `record`.
+8. Report each persisted path, lookup result, record validation result, and index-rebuild result.
+9. Preserve each `RFL-###` reference when user feedback changes its target, content, or route.
 
 ## 3. Outputs
 
-- A current-session retro in the prompt, when no recent retro exists.
-- Referenceable `RFL-###` learning-update proposals with suggested paths and downstream skills.
-- Explicit unknowns, unsupported items, and user decisions needed.
+- Ordered, referenceable `RFL-###` proposals.
+- For each proposal: retro evidence, short-term target, lookup query, long-term target, promotion status, and required approval.
+- In apply mode: changed paths and validation results.
+- Explicit unresolved targets, ambiguous MKF bundles, duplicates, and user decisions needed.
 
 ## 4. Next Steps
 
-- `outline` — propose a target structure and file paths.
-- `draft` — create new approved content.
-- `modify` — apply approved focused changes.
-- `fix` — apply approved corrections, when available.
-- `record` — create or update one approved MKF concept.
+- `agentsmd` — update an approved short-term directive.
+- `lookup` — find related long-term knowledge.
+- `record` — persist approved long-term knowledge and rebuild indexes.
 
 ## 5. Examples
 
-### Example 1
+### Example 1: Propose learning updates
 
 **Prompt:** `/reflect`
-**Outcome:** Reuses a compliant retro from the last three meaningful turns, or drafts one in the prompt. Returns `RFL-###` proposals for `AGENTS.md`, `docs/`, and MKF targets without updating files.
+**Outcome:** Returns ordered `RFL-###` proposals from the supplied retro without updating files.
+
+### Example 2: Apply approved updates
+
+**Prompt:** `/reflect apply RFL-001 RFL-003`
+**Outcome:** Applies only the named proposals in order, using lookup before each MKF record and explicitly rebuilding indexes after every record.
+
+### Example 3: Apply all proposals
+
+**Prompt:** `/reflect apply all`
+**Outcome:** Applies every current proposal in displayed order unless an unresolved target, ambiguous MKF bundle, or failed lookup blocks an item.
