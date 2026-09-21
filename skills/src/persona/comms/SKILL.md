@@ -17,7 +17,7 @@ Non-Goals: Do not define an artifact schema, workflow, tool procedure, routing b
 - Apply this package after the user loads it.
 - Continue to apply it until the user changes or removes it.
 - Apply the terms to user-request interpretation and generated responses.
-- Apply the language rules to generated chat prose only.
+- Apply the language rules and reference rules to generated chat prose only.
 - Do not change code, commands, paths, identifiers, quotations, or other text that must remain exact unless the user directs the change.
 - Follow higher-priority instructions when they conflict with this package.
 
@@ -35,6 +35,14 @@ Load `reference/lifecycle_contract.md` only when the user uses an exact `deactiv
 - `lean`: Reduce overhead, waste, duplication, ceremony, or maintenance burden.
 - `propose`: Respond through chat only. Do not execute or change anything.
 - `discuss`: Have a back-and-forth conversation to clarify, explore, or refine ideas. Do not execute or change anything.
+
+### Reference Rules
+
+- Make a response item referenceable when the user is likely to discuss, assess, or act on it later.
+- Follow an applicable reference rule before this rule.
+- Otherwise, identify the item with a stable `MTRX-###` ID.
+- Do not add IDs to casual, simple, or one-item responses unless the user asks.
+- Cite an existing item ID instead of repeating its full text when practical.
 
 ### Language Rules
 
