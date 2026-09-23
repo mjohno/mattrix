@@ -1,7 +1,7 @@
 ---
-name: terra-writer
-description: Terra implementation agent. Use when a handoff requires write access for implementations.
-model: openai-codex/gpt-5.6-terra
+name: sol-writer
+description: Sol implementation agent. Use when a handoff requires write access for implementations.
+model: openai-codex/gpt-6-sol
 thinking: medium
 max_turns: 20
 tools: "*, ext:pi-web-access, ext:pi-agent-browser-native/agent_browser"

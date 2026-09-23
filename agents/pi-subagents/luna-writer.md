@@ -1,7 +1,7 @@
 ---
 name: luna-writer
 description: Luna implementation agent. Use when a task requires write access.
-model: openai-codex/gpt-5.6-luna
+model: openai-codex/gpt-6-luna
 thinking: medium
 max_turns: 20
 tools: "*, ext:pi-web-access, ext:pi-agent-browser-native/agent_browser"

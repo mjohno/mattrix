@@ -1,7 +1,7 @@
 ---
 name: luna-reader
 description: Luna research and review agent. Use when a task requires read-only access.
-model: openai-codex/gpt-5.6-luna
+model: openai-codex/gpt-6-luna
 thinking: medium
 max_turns: 20
 tools: read, grep, find, ls, ext:pi-web-access

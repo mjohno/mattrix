@@ -1,7 +1,7 @@
 ---
-name: terra-reader
-description: Terra research and review agent. Use when a handoff requires read-only access for reviews or checks.
-model: openai-codex/gpt-5.6-terra
+name: sol-reader
+description: Sol research and review agent. Use when a handoff requires read-only access for reviews or checks.
+model: openai-codex/gpt-6-sol
 thinking: medium
 max_turns: 20
 tools: read, grep, find, ls, ext:pi-web-access

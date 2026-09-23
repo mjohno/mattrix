@@ -14,8 +14,8 @@ The authoritative implementations are in `agents/pi-subagents/`:
 
 - `luna-reader.md`
 - `luna-writer.md`
-- `terra-reader.md`
-- `terra-writer.md`
+- `sol-reader.md`
+- `sol-writer.md`
 
 `~/.pi/agent/agents` is a symbolic link to `agents/pi-subagents/`, which makes
 these profiles available to Pi globally.
@@ -24,8 +24,8 @@ these profiles available to Pi globally.
 
 ### Model profiles
 
-- Luna profiles use `openai-codex/gpt-5.6-luna`.
-- Terra profiles use `openai-codex/gpt-5.6-terra`.
+- Luna profiles use `openai-codex/gpt-6-luna`.
+- Sol profiles use `openai-codex/gpt-6-sol`.
 
 ### Permission profiles
 
@@ -51,10 +51,10 @@ persona named in its task before task work begins.
 
 | Profile | Model | Local tools | Extensions |
 | --- | --- | --- | --- |
-| `luna-reader` | `openai-codex/gpt-5.6-luna` | Read-only tools | `pi-web-access` |
-| `luna-writer` | `openai-codex/gpt-5.6-luna` | All built-in tools | `pi-web-access`, `pi-agent-browser-native` |
-| `terra-reader` | `openai-codex/gpt-5.6-terra` | Read-only tools | `pi-web-access` |
-| `terra-writer` | `openai-codex/gpt-5.6-terra` | All built-in tools | `pi-web-access`, `pi-agent-browser-native` |
+| `luna-reader` | `openai-codex/gpt-6-luna` | Read-only tools | `pi-web-access` |
+| `luna-writer` | `openai-codex/gpt-6-luna` | All built-in tools | `pi-web-access`, `pi-agent-browser-native` |
+| `sol-reader` | `openai-codex/gpt-6-sol` | Read-only tools | `pi-web-access` |
+| `sol-writer` | `openai-codex/gpt-6-sol` | All built-in tools | `pi-web-access`, `pi-agent-browser-native` |
 
 ## Usage
 
